@@ -84,9 +84,10 @@ function install_dmg()
 #  #TODO: ERROR
 
   verbose "Installing ${target}"
+  verbose " NOTE: You might have to enter your password to allow that package to be installed!"
   package=$(find ${mount} -name '*.pkg' -mindepth 1 -maxdepth 1)
   verbose "  Package: ${package}"
-#  sudo installer -pkg ${package} -target / > /dev/null
+  sudo installer -pkg ${package} -target / > /dev/null
 
   verbose "Unmounting ${target}"
   hdiutil eject ${mount} > /dev/null
