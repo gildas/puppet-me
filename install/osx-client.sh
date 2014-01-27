@@ -67,10 +67,10 @@ function install_dmg()
     verbose "Targetting version ${version} for module ${module}"
     archive="${module}-${version}.dmg"
   fi
-#  verbose "Downloading $archive"
-#  source="${url}/${archive}"
-#  target="$HOME/Downloads/${archive}"
-#  [ -f "${target}" ] && echo "Deleting existing archive" && rm -f "$target"
+  verbose "Downloading $archive"
+  source="${url}/${archive}"
+  target="$HOME/Downloads/${archive}"
+  [ -f "${target}" ] && verbose "Deleting existing archive" && rm -f "$target"
 #  curl --location --show-error --progress-bar --output "${target}" "${source}"
 
 #  verbose "mounting ${target}"
