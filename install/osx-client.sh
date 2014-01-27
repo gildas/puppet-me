@@ -71,7 +71,8 @@ function install_dmg()
   source="${url}/${archive}"
   target="$HOME/Downloads/${archive}"
   [ -f "${target}" ] && verbose "Deleting existing archive" && rm -f "$target"
-#  curl --location --show-error --progress-bar --output "${target}" "${source}"
+  verbose "Downloading ${source} into ${target}"
+  curl --location --show-error --progress-bar --output "${target}" "${source}"
 
 #  verbose "mounting ${target}"
 #  local plist_path=$(mktemp -t $module)
