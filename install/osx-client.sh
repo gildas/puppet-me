@@ -62,7 +62,7 @@ function install_dmg()
 
   if [ "$version" = "*" ]; then
     verbose "Checking version numbers for ${module}"
-    archive=$(curl --silent --list-only "${url}/" | grep --ignore-case "$module" | grep --invert-match --regexp="rc\d*\.dmg" | tail -1 | sed -e 's/.*href="\([^"]*\)".*/\1/')
+    archive=$(curl --silent --list-only "${url}/" | grep --ignore-case "${module}-\d" | grep --invert-match --regexp="rc\d*\.dmg" | tail -1 | sed -e 's/.*href="\([^"]*\)".*/\1/')
   else
     verbose "Targetting version ${version} for module ${module}"
     archive="${module}-${version}.dmg"
