@@ -5,6 +5,9 @@ set -o errexit
 set -o errtrace
 set +o noclobber
 
+export VERBOSE=1
+export DEBUG=1
+
 function log()
 {
   printf "%b\n" "$*";
