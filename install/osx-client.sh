@@ -74,22 +74,22 @@ function install_dmg()
   verbose "Downloading ${source} into ${target}"
   curl --location --show-error --progress-bar --output "${target}" "${source}"
 
-#  verbose "mounting ${target}"
-#  local plist_path=$(mktemp -t $module)
-#  hdiutil attach -plist ${target} > ${plist_path}
-#  verbose "plist_path: ${plist_path}"
-#  mount=$(grep -E -o '/Volumes/[-.a-zA-Z0-9]+' ${plist_path})
-#  verbose "mounted on ${mount}"
+  verbose "mounting ${target}"
+  local plist_path=$(mktemp -t $module)
+  hdiutil attach -plist ${target} > ${plist_path}
+  verbose "plist_path: ${plist_path}"
+  mount=$(grep -E -o '/Volumes/[-.a-zA-Z0-9]+' ${plist_path})
+  verbose "mounted on ${mount}"
 
 #  #TODO: ERROR
 
-#  verbose "Installing ${target}"
-#  package=$(find ${mount} -name '*.pkg' -mindepth 1 -maxdepth 1)
-#  verbose "  Package: ${package}"
+  verbose "Installing ${target}"
+  package=$(find ${mount} -name '*.pkg' -mindepth 1 -maxdepth 1)
+  verbose "  Package: ${package}"
 #  sudo installer -pkg ${package} -target / > /dev/null
 
-#  verbose "Unmounting ${target}"
-#  hdiutil eject ${mount} > /dev/null
+  verbose "Unmounting ${target}"
+  hdiutil eject ${mount} > /dev/null
 }
 
 # Main
