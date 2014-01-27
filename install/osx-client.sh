@@ -12,12 +12,12 @@ function log()
 
 function debug()
 {
-  [[ ${DEBUG:-0} -eq 0 ]] || printf "[debug] $#: $*"; }
+  [[ ${DEBUG:-0} -eq 0 ]] || printf "[debug] $#: $*";
 }
 
 function verbose()
 {
-  [[ ${VERBOSE:-0} -eq 0 ]] || printf "$*\n"; }
+  [[ ${VERBOSE:-0} -eq 0 ]] || printf "$*\n";
 }
 
 function parse_args()
