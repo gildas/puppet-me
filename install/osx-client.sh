@@ -104,3 +104,27 @@ parse_args "$@"
 install_dmg facter "*" http://downloads.puppetlabs.com/mac/
 install_dmg hiera  "*" http://downloads.puppetlabs.com/mac/
 install_dmg puppet "*" http://downloads.puppetlabs.com/mac/
+
+verbose "Creating user/group resources"
+sudo puppet resource group puppet ensure=present
+sudo puppet resource user  puppet ensure=present gid=puppet shell="/sbin/nologin"
+
+# Hide all users from the loginwindow with uid below 500, which will include the puppet user
+hide_500=$(/usr/libexec/PlistBuddy -c "print :Hide500Users" /Library/Preferences/com.apple.loginwindow.plist)
+if [ -z "$hide_500" -o "$hide_500" = "false" ]; then
+  sudo /usr/libexec/PlistBuddy -c "set :Hide500Users:true" /Library/Preferences/com.apple.loginwindow.plist
+# sudo defaults write /Library/Preferences/com.apple.loginwindow Hide500Users -bool YES
+fi
+
+verbose "Creating folders"
+sudo mkdir -p /var/log/puppet
+sudo mkdir -p /var/lib/puppet
+sudo mkdir -p /var/lib/puppet/cache
+sudo mkdir -p /etc/puppet/manifests
+sudo mkdir -p /etc/puppet/ssl
+sudo chown -R puppet:puppet /var/lib/puppet
+sudo chmod 750 /var/lib/puppet
+sudo chown -R puppet:puppet /var/log/puppet
+sudo chmod 750 /var/log/puppet
+sudo chown -R puppet:puppet /etc/puppet
+sudo chmod 750 /etc/puppet /etc/puppet/manifest
