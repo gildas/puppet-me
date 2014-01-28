@@ -184,7 +184,7 @@ fi
 
 verbose "Installing the puppet agent daemon"
 if [ ! -f "/Library/LaunchDaemons/com.puppetlabs.puppet.plist" ]; then
-  curl --location --show-error --progress-bar --output "$HOME/Download/com.puppetlabs.puppet.plist" http://docs.puppetlabs.com/guides/files/com.puppetlabs.puppet.plist
+  curl --location --show-error --progress-bar --output "$HOME/Download/com.puppetlabs.puppet.plist" https://raw.github.com/inin-apac/puppet-me/master/config/osx/com.puppetlabs.puppet.plist
   sudo install -m 0644 -o root -g wheel $HOME/Download/com.puppetlabs.puppet.plist /Library/LaunchDaemons
   sudo launchctl load -w /Library/LaunchDaemons/com.puppetlabs.puppet.plist
 fi
