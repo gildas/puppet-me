@@ -58,39 +58,45 @@ function install_dmg()
 {
   local module="$1"
   local version="$2"
+  local basename="${module}-${version}"
+  local archive="${basename}.dmg"
   local url="$3"
 
   if [ "$version" = "*" ]; then
     verbose "Checking version numbers for ${module}"
     archive=$(curl --silent --list-only "${url}/" | grep --ignore-case "${module}-\d" | grep --invert-match --regexp="rc\d*\.dmg" | tail -1 | sed -e 's/.*href="\([^"]*\)".*/\1/')
-  else
-    verbose "Targetting version ${version} for module ${module}"
-    archive="${module}-${version}.dmg"
+    basename=${archive%.*}
+    version=${basename#*-}
   fi
-  verbose "Downloading $archive"
-  source="${url}/${archive}"
-  target="$HOME/Downloads/${archive}"
-  [ -f "${target}" ] && verbose "Deleting existing archive" && rm -f "$target"
-  verbose "Downloading ${source} into ${target}"
-  curl --location --show-error --progress-bar --output "${target}" "${source}"
+  verbose "Targetting version ${version} for module ${module}"
+  if [[ -x $(which $module) && "$($(which $module) --version)" == "${version}" ]]; then
+    verbose "${module} is already installed properly"
+  else
+    verbose "Downloading $archive"
+    source="${url}/${archive}"
+    target="$HOME/Downloads/${archive}"
+    [ -f "${target}" ] && verbose "Deleting existing archive" && rm -f "$target"
+    verbose "Downloading ${source} into ${target}"
+    curl --location --show-error --progress-bar --output "${target}" "${source}"
 
-  verbose "mounting ${target}"
-  local plist_path=$(mktemp -t $module)
-  hdiutil attach -plist ${target} > ${plist_path}
-  verbose "plist_path: ${plist_path}"
-  mount=$(grep -E -o '/Volumes/[-.a-zA-Z0-9]+' ${plist_path})
-  verbose "mounted on ${mount}"
+    verbose "mounting ${target}"
+    local plist_path=$(mktemp -t $module)
+    hdiutil attach -plist ${target} > ${plist_path}
+    verbose "plist_path: ${plist_path}"
+    mount=$(grep -E -o '/Volumes/[-.a-zA-Z0-9]+' ${plist_path})
+    verbose "mounted on ${mount}"
 
-#  #TODO: ERROR
+  #  #TODO: ERROR
 
-  verbose "Installing ${target}"
-  verbose " NOTE: You might have to enter your password to allow that package to be installed!"
-  package=$(find ${mount} -name '*.pkg' -mindepth 1 -maxdepth 1)
-  verbose "  Package: ${package}"
-  sudo installer -pkg ${package} -target /
+    verbose "Installing ${target}"
+    verbose " NOTE: You might have to enter your password to allow that package to be installed!"
+    package=$(find ${mount} -name '*.pkg' -mindepth 1 -maxdepth 1)
+    verbose "  Package: ${package}"
+    sudo installer -pkg ${package} -target /
 
-  verbose "Unmounting ${target}"
-  hdiutil eject ${mount} > /dev/null
+    verbose "Unmounting ${target}"
+    hdiutil eject ${mount} > /dev/null
+  fi
 }
 
 # Main
