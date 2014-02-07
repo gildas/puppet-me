@@ -25,4 +25,12 @@ function Curl-File(
 $destination = Curl-File -Module "Puppet" -Version "*" -Source "http://downloads.puppetlabs.com/windows/"
 
 Write-Host "Installing $destination"
-Start-Process -File "msiexec.exe" -arg "/qn /i $destination /l*v install-puppet.log PUPPET_MASTER_SERVER=$PuppetMaster PUPPET_AGENT_CERTNAME=$ClientCert" -PassThru | Wait-Process
+if(([System.Security.Principal.WindowsPrincipal][System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
+{
+  Start-Process -File "msiexec.exe" -arg "/qn /i $destination /l*v install-puppet.log PUPPET_MASTER_SERVER=$PuppetMaster PUPPET_AGENT_CERTNAME=$ClientCert" -PassThru | Wait-Process
+}
+else
+{
+  Write-Host "Running installer in elevated process"
+  Start-Process -Verb runAs -File "msiexec.exe" -arg "/qn /i $destination /l*v install-puppet.log PUPPET_MASTER_SERVER=$PuppetMaster PUPPET_AGENT_CERTNAME=$ClientCert" -PassThru | Wait-Process
+}
