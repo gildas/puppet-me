@@ -8,5 +8,5 @@ $ curl -sSL https://raw.github.com/inin-apac/puppet-me/master/install/osx-client
 
 On Windows, run:
 ```cmd
-C:\> @powershell -NoProfile -ExecutionPolicy unrestricted -Command "((new-object net.webclient).DownloadString('https:/raw.github.com/inin-apac/puppet-me/master/install/install.ps1'))"
+C:\> @powershell -NoProfile -ExecutionPolicy unrestricted -Command "((new-object net.webclient).DownloadString('https://raw.github.com/inin-apac/puppet-me/master/install/install.ps1'))"
 ```
