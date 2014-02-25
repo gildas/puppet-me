@@ -16,10 +16,17 @@ if (! $PuppetMaster)
 
 if (! $ClientCert)
 {
-  $ID=(Get-WmiObject Win32_NetworkAdapterConfiguration | where {$_.IpEnabled -eq $True}).MACAddress.Replace(':', '')
-  if (! $ID)
+  if (! ('Administrator', 'Admin', 'IT', 'I3 User', 'I3User', 'Guest') -contains $ENV:USERNAME)
   {
-    $ID=$ENV:COMPUTERNAME
+    $ID=$ENV:USERNAME
+  }
+  else
+  {
+    $ID=(Get-WmiObject Win32_NetworkAdapterConfiguration | where {$_.IpEnabled -eq $True}).MACAddress.Replace(':', '')
+    if (! $ID)
+    {
+      $ID=$ENV:COMPUTERNAME
+    }
   }
   $DefaultClientCert="windows-$Environment-$ID"
   $ClientCert = Read-Host "Client Certificate Name [$DefaultClientCert]"
