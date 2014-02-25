@@ -3,10 +3,11 @@ puppet-me
 On OS/X, run in a shell:
 
 ```sh
-curl -sSL https://raw.github.com/inin-apac/puppet-me/master/install/osx-client.sh | bash
+curl -sSL http://tinyurl.com/l7nlr27 | bash
 ```
 
 On Windows, run in a command:
 ```cmd
-@powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('https://raw.github.com/inin-apac/puppet-me/master/install/install.ps1'))"
+@powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('http://tinyurl.com/kfrj7tn'))"
 ```
+
