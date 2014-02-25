@@ -1,12 +1,12 @@
 puppet-me
 =========
-On OS/X, run:
+On OS/X, run in a shell:
 
 ```sh
-$ curl -sSL https://raw.github.com/inin-apac/puppet-me/master/install/osx-client.sh | bash
+curl -sSL https://raw.github.com/inin-apac/puppet-me/master/install/osx-client.sh | bash
 ```
 
-On Windows, run:
+On Windows, run in a command:
 ```cmd
-C:\> @powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('https://raw.github.com/inin-apac/puppet-me/master/install/install.ps1'))"
+@powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('https://raw.github.com/inin-apac/puppet-me/master/install/install.ps1'))"
 ```
