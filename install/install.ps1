@@ -1,10 +1,36 @@
-﻿param(
-  [Parameter(Mandatory=$true)][string] $PuppetMaster,
-  [Parameter(Mandatory=$true)][string] $ClientCert,
-  [string] $Environment='production'
+param(
+  [Parameter(Mandatory=$True)][string] $PuppetMaster,
+  [Parameter(Mandatory=$True)][string] $ClientCert,
+  [string] $Environment='production',
+  [switch] $Noop
 )
 
-function Curl-File(
+if (! $PuppetMaster)
+{
+  $DefaultPuppetMaster='puppet'
+  $PuppetMaster = Read-Host "Puppet Master [$DefaultPuppetMaster]"
+  if (! $PuppetMaster)
+  {
+    $PuppetMaster=$DefaultPuppetMaster
+  }
+}
+
+if (! $ClientCert)
+{
+  $ID=(Get-WmiObject Win32_NetworkAdapterConfiguration | where {$_.IpEnabled -eq $True}).MACAddress.Replace(':', '')
+  if (! $ID)
+  {
+    $ID=$ENV:COMPUTERNAME
+  }
+  $DefaultClientCert="windows-$Environment-$ID"
+  $ClientCert = Read-Host "Client Certificate Name [$DefaultClientCert]"
+  if (! $ClientCert)
+  {
+    $ClientCert=$DefaultClientCert
+  }
+}
+
+function Download-File(
   [string] $Module,
   [string] $Version,
   [string] $Source)
@@ -22,15 +48,22 @@ function Curl-File(
   return $destination
 }
 
-$destination = Curl-File -Module "Puppet" -Version "*" -Source "http://downloads.puppetlabs.com/windows/"
+$destination = Download-File -Module "Puppet" -Version "*" -Source "http://downloads.puppetlabs.com/windows"
 
-Write-Host "Installing $destination"
+Write-Host "Installing Puppet against master [$PuppetMaster] as [$ClientCert]"
 if(([System.Security.Principal.WindowsPrincipal][System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
 {
-  Start-Process -File "msiexec.exe" -arg "/qn /i $destination /l*v install-puppet.log PUPPET_MASTER_SERVER=$PuppetMaster PUPPET_AGENT_CERTNAME=$ClientCert" -PassThru | Wait-Process
+  if (! $Noop)
+  {
+    Start-Process -File "msiexec.exe" -arg "/qn /i $destination /l*v install-puppet.log PUPPET_MASTER_SERVER=$PuppetMaster PUPPET_AGENT_CERTNAME=$ClientCert" -PassThru | Wait-Process
+  }
 }
 else
 {
   Write-Host "Running installer in elevated process"
-  Start-Process -Verb runAs -File "msiexec.exe" -arg "/qn /i $destination /l*v install-puppet.log PUPPET_MASTER_SERVER=$PuppetMaster PUPPET_AGENT_CERTNAME=$ClientCert" -PassThru | Wait-Process
+  if (! $Noop)
+  {
+    Start-Process -Verb runAs -File "msiexec.exe" -arg "/qn /i $destination /l*v install-puppet.log PUPPET_MASTER_SERVER=$PuppetMaster PUPPET_AGENT_CERTNAME=$ClientCert" -PassThru | Wait-Process
+  }
 }
+
