@@ -108,15 +108,15 @@ else
   Write-Debug "[main]: config=[server=$DefaultPuppetMaster, ca_server=$DefaultCertServer, certname=$DefaultCertname, environment=$Environment]"
 }
 
-$PuppetMaster = Read-HostEx -Prompt "Puppet Master" -CurrentValue $PuppetMaster -Default $DefaultPuppetMaster -Force
-$CertServer   = Read-HostEx -Prompt "Certificate Server" -CurrentValue $CertServer -Default $DefaultCertServer -Force
-$Certname     = Read-HostEx -Prompt "Certificate Name" -CurrentValue $Certname -Default $DefaultCertname -Force
-$Environment  = Read-HostEx -Prompt "Environment" -CurrentValue $Environment -Default $DefaultEnvironment -Force
-
 if ($want_install)
 {
   Write-Debug "[main]: We need to download!"
   Download-File -Target $info.target -Source $info.source
+
+  $PuppetMaster = Read-HostEx -Prompt "Puppet Master" -CurrentValue $PuppetMaster -Default $DefaultPuppetMaster -Force
+  $CertServer   = Read-HostEx -Prompt "Certificate Server" -CurrentValue $CertServer -Default $DefaultCertServer -Force
+  $Certname     = Read-HostEx -Prompt "Certificate Name" -CurrentValue $Certname -Default $DefaultCertname -Force
+  $Environment  = Read-HostEx -Prompt "Environment" -CurrentValue $Environment -Default $DefaultEnvironment -Force
 
   Write-Host "Installing Puppet against master [$PuppetMaster] as [$Certname]"
   $MSI_Path=$info.target
