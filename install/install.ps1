@@ -120,7 +120,7 @@ if ($want_install)
 
   Write-Host "Installing Puppet against master [$PuppetMaster] as [$Certname]"
   $MSI_Path=$info.target
-  $MSI_Logs="C:/Windows/Logs/install-puppet.log"
+  $MSI_Logs="C:/Windows/Logs/install-puppet-$(Get-Date -UFormat '%Y%m%d%H%M%S').log"
   $MSI_Arguments="PUPPET_MASTER_SERVER=$PuppetMaster PUPPET_AGENT_CERTNAME=$Certname"
   if ($CertServer)  { $MSI_Arguments="$MSI_Arguments PUPPET_CA_SERVER=$CertServer" }
   if ($Environment) { $MSI_Arguments="$MSI_Arguments PUPPET_AGENT_ENVIRONMENT=$Environment" }
