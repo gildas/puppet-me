@@ -98,7 +98,7 @@ else
   }
   else
   {
-    $ID=(Get-WmiObject Win32_NetworkAdapterConfiguration | where {$_.IpEnabled -eq $True}).MACAddress.Replace(':', '')
+    $ID=(Get-WmiObject Win32_NetworkAdapterConfiguration | where {$_.IpEnabled -eq $True}).MACAddress.Replace(':', '').ToLower()
     if (! $ID)
     {
       $ID=$ENV:COMPUTERNAME
@@ -121,7 +121,7 @@ if ($want_install)
   Write-Host "Installing Puppet against master [$PuppetMaster] as [$Certname]"
   $MSI_Path=$info.target
   $MSI_Logs="C:/Windows/Logs/install-puppet-$(Get-Date -UFormat '%Y%m%d%H%M%S').log"
-  $MSI_Arguments="PUPPET_MASTER_SERVER=$PuppetMaster PUPPET_AGENT_CERTNAME=$Certname"
+  $MSI_Arguments="PUPPET_MASTER_SERVER=$PuppetMaster PUPPET_AGENT_CERTNAME=$($Certname.ToLower())"
   if ($CertServer)  { $MSI_Arguments="$MSI_Arguments PUPPET_CA_SERVER=$CertServer" }
   if ($Environment) { $MSI_Arguments="$MSI_Arguments PUPPET_AGENT_ENVIRONMENT=$Environment" }
   Write-Debug "MSI Arguments: $MSI_Arguments"
