@@ -76,12 +76,12 @@ Write-Host "Checking if puppet version $($info.version) is installed already"
 if (Get-Command 'puppet')
 {
   Write-Debug "[main]: Command $module has been installed already, collecting current configuration"
-  $config = Get-Content C:/ProgramData/PuppetLabs/puppet/etc/puppet.conf | where {$_ -match '^\s*(ca_server|certname|server|environment)\s*='} | ConvertFrom-StringData
+  $config = (Get-Content C:/ProgramData/PuppetLabs/puppet/etc/puppet.conf | where {$_ -match '^\s*(ca_server|certname|server|environment)\s*='}) -join "`n" | ConvertFrom-StringData
   Write-Debug "[main]: config=@{$(($config.keys | %{ "$_ = $($config[$_])"}) -join ', ' | Out-String)}"
-  $DefaultPuppetMaster=$config.server
-  $DefaultCertServer  =$config.ca_server
-  $DefaultCertname    =$config.certname
-  $DefaultEnvironment =$config.environment
+  $DefaultPuppetMaster=$config['server']
+  $DefaultCertServer  =$config['ca_server']
+  $DefaultCertname    =$config['certname']
+  $DefaultEnvironment =$config['environment']
   $puppet_version=$(puppet --version)
   $want_install = ! ($puppet_version -eq $info.version)
   Write-Debug "[main]: Current puppet is at version: $puppet_version, required version: $($info.version), install required: $want_install"
