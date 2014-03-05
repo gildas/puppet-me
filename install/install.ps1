@@ -73,7 +73,7 @@ function Download-File(
 $info = Get-Info -Module 'puppet' -Version "*" -Source "http://downloads.puppetlabs.com/windows"
 Write-Host "Checking if puppet version $($info.version) is installed already"
 
-if (Get-Command 'puppet')
+if (Get-Command 'puppet' 2> $null)
 {
   Write-Debug "[main]: Command $module has been installed already, collecting current configuration"
   $config = (Get-Content C:/ProgramData/PuppetLabs/puppet/etc/puppet.conf | where {$_ -match '^\s*(ca_server|certname|server|environment)\s*='}) -join "`n" | ConvertFrom-StringData
