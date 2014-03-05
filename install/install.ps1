@@ -41,7 +41,7 @@ function Get-Info(
     $matched = $filename -match "$Module-(?<version>\d.\d.\d)\.msi"
     Write-Debug "[Get-Info]: matches=@{$(($matches.keys | %{ "$_ = $($matches[$_])"}) -join ', ' | Out-String)}"
     $version = $matches['version']
-    $target  = Join-Path (Join-Path $env:USERPROFILE "DownLoads") $filename
+    $target  = Join-Path $env:TEMP $filename
     $source  = "$Source/$filename"
     Write-Debug "[Get-Info]: filename=$filename, version=$version, target=$target, source=$source"
     New-Object -TypeName PSObject -Property @{ target = $target; source = $source; version = $version }
