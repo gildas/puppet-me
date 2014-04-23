@@ -104,7 +104,7 @@ else
       $ID=$ENV:COMPUTERNAME
     }
   }
-  $DefaultCertname="windows-$Environment-$ID"
+  $DefaultCertname="windows-$ID"
   Write-Debug "[main]: config=[server=$DefaultPuppetMaster, ca_server=$DefaultCertServer, certname=$DefaultCertname, environment=$Environment]"
 }
 
@@ -114,6 +114,10 @@ if ($want_install)
   Download-File -Target $info.target -Source $info.source
 
   $PuppetMaster = Read-HostEx -Prompt "Puppet Master" -CurrentValue $PuppetMaster -Default $DefaultPuppetMaster -Force
+  if ($DefaultCertServer -eq 'puppet')
+  {
+    $DefaultCertServer = $PuppetMaster
+  }
   $CertServer   = Read-HostEx -Prompt "Certificate Server" -CurrentValue $CertServer -Default $DefaultCertServer -Force
   $Certname     = Read-HostEx -Prompt "Certificate Name" -CurrentValue $Certname -Default $DefaultCertname -Force
   $Environment  = Read-HostEx -Prompt "Environment" -CurrentValue $Environment -Default $DefaultEnvironment -Force
