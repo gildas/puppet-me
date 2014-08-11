@@ -85,6 +85,7 @@ if (Get-Command 'puppet' 2> $null)
   $puppet_version=$(puppet --version)
   $want_install = ! ($puppet_version -eq $info.version)
   Write-Debug "[main]: Current puppet is at version: $puppet_version, required version: $($info.version), install required: $want_install"
+  #TODO: Collect UserId and Hostname from the Certname
 }
 else
 {
@@ -119,8 +120,10 @@ if ($want_install)
     $DefaultCertServer = $PuppetMaster
   }
   $CertServer   = Read-HostEx -Prompt "Certificate Server" -CurrentValue $CertServer -Default $DefaultCertServer -Force
-  $Certname     = Read-HostEx -Prompt "Certificate Name" -CurrentValue $Certname -Default $DefaultCertname -Force
+  $UserId       = Read-HostEx -Prompt "What is your user identifier (typically firstname.lastname)" -CurrentValue '' -Default '' -Force
+  $Hostname     = Read-HostEx -Prompt "Hostname" -CurrentValue $ID -Default $ID -Force
   $Environment  = Read-HostEx -Prompt "Environment" -CurrentValue $Environment -Default $DefaultEnvironment -Force
+  $Certname     = "windows-$Environment-$UserId-$Hostname"
 
   Write-Host "Installing Puppet against master [$PuppetMaster] as [$Certname]"
   $MSI_Path=$info.target
