@@ -11,21 +11,21 @@ function Start-ProcessAsAdmin(
   [switch] $Wait
 )
 {
+  if ($FilePath -match ".*powershell")
+  {
+    $Arguments = "-NoProfile -ExecutionPolicy Unrestricted -Command `"$Arguments`""
+  }
+
   if(([System.Security.Principal.WindowsPrincipal][System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
   {
     Write-Host "Running in elevated process"
-    $Verb = "-Verb runAs"
-    if ($FilePath -match ".*powershell")
-    {
-      $Arguments = "-NoProfile -ExecutionPolicy Unrestricted -Command `"$Arguments`""
-    }
+    Start-Process -FilePath $FilePath -ArgumentList $Arguments -Verb runAs $Wait
   }
   else
   {
     Write-Debug "Running in an already elevated process"
-    $Verb = ""
+    Start-Process -FilePath $FilePath -ArgumentList $Arguments $Wait
   }
-  Start-Process -FilePath $FilePath -ArgumentList $Arguments $Verb $Wait
 }
 
 function Read-HostEx(
