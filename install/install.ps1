@@ -7,9 +7,7 @@ param(
 
 function Start-ProcessAsAdmin(
   [string] $FilePath,
-  [string] $Arguments,
-  [switch] $Wait
-)
+  [string] $Arguments)
 {
   if ($FilePath -match ".*powershell")
   {
@@ -19,12 +17,12 @@ function Start-ProcessAsAdmin(
   if(([System.Security.Principal.WindowsPrincipal][System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
   {
     Write-Host "Running in elevated process"
-    Start-Process -FilePath $FilePath -ArgumentList $Arguments -Verb runAs $Wait
+    Start-Process -FilePath $FilePath -ArgumentList $Arguments -Verb runAs -Wait
   }
   else
   {
     Write-Debug "Running in an already elevated process"
-    Start-Process -FilePath $FilePath -ArgumentList $Arguments $Wait
+    Start-Process -FilePath $FilePath -ArgumentList $Arguments -Wait
   }
 }
 
