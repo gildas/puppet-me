@@ -70,13 +70,14 @@ function Download-File(
   }
 }
 
+$PuppetConfig = 'C:/ProgramData/PuppetLabs/puppet/etc/puppet.conf'
 $info = Get-Info -Module 'puppet' -Version "*" -Source "http://downloads.puppetlabs.com/windows"
 Write-Host "Checking if puppet version $($info.version) is installed already"
 
 if (Get-Command 'puppet' 2> $null)
 {
   Write-Debug "[main]: Command $module has been installed already, collecting current configuration"
-  $config = (Get-Content C:/ProgramData/PuppetLabs/puppet/etc/puppet.conf | where {$_ -match '^\s*(ca_server|certname|server|environment)\s*='}) -join "`n" | ConvertFrom-StringData
+  $config = (Get-Content $PuppetConfig | where {$_ -match '^\s*(ca_server|certname|server|environment)\s*='}) -join "`n" | ConvertFrom-StringData
   Write-Debug "[main]: config=@{$(($config.keys | %{ "$_ = $($config[$_])"}) -join ', ' | Out-String)}"
   $DefaultPuppetMaster= $config['server']
   $DefaultCertServer  = $config['ca_server']
@@ -145,6 +146,13 @@ if ($want_install)
     Write-Host "Running installer in elevated process"
     Start-Process -Verb runAs -File "msiexec.exe" -arg "/qn /i $MSI_Path /l*v $MSI_Logs $MSI_Arguments" -PassThru | Wait-Process
   }
+  #Update the runinterval to 5 minutes, so puppet can configure this host earlier
+  Get-Content $PuppetConfig | % { $_ -replace '(^\s*runinterval\s*=\s*)\d+$','$1 300' } | Set-Content $PuppetConfig
+
+  #Configure the puppet service
+  Set-Service puppet -StartupType Automatic
+
+  Start-Service puppet
 }
 else
 {
