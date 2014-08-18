@@ -25,7 +25,7 @@ function Start-ProcessAsAdmin(
     Write-Debug "Running in an already elevated process"
     $Verb = ""
   }
-  Start-Process -FilePath $FilePath $Verb -ArgumentList $Arguments $Wait
+  Start-Process -FilePath $FilePath -ArgumentList $Arguments $Verb $Wait
 }
 
 function Read-HostEx(
