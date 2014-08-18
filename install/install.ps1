@@ -5,6 +5,29 @@ param(
   [Parameter(Mandatory=$False)][string] $Environment='production'
 )
 
+function Start-ProcessAsAdmin(
+  [string] $FilePath,
+  [string] $Arguments,
+  [switch] $Wait
+)
+{
+  if(([System.Security.Principal.WindowsPrincipal][System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
+  {
+    Write-Host "Running in elevated process"
+    $Verb = "-Verb runAs"
+    if ($FilePath -match ".*powershell")
+    {
+      $Arguments = "-NoProfile -ExecutionPolicy Unrestricted -Command `"$Arguments`""
+    }
+  }
+  else
+  {
+    Write-Debug "Running in an already elevated process"
+    $Verb = ""
+  }
+  StartProcess -FilePath $FilePath $Verb -ArgumentList $Arguments $Wait
+}
+
 function Read-HostEx(
   [string] $Prompt,
   [string] $CurrentValue,
@@ -136,23 +159,21 @@ if ($want_install)
   if ($Environment) { $MSI_Arguments="$MSI_Arguments PUPPET_AGENT_ENVIRONMENT=$Environment" }
   $MSI_Arguments="$MSI_Arguments PUPPET_AGENT_STARTUP_MODE=$StartupMode"
   Write-Debug "MSI Arguments: $MSI_Arguments"
-  if(([System.Security.Principal.WindowsPrincipal][System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
+
+  Start-ProcessAsAdmin "msiexec.exe" "/qn /i $MSI_Path /l*v $MSI_Logs $MSI_Arguments" Wait
+
+  # Update the runinterval to 5 minutes, so puppet can configure this host earlier
+  if (get-Content $PuppetMaster  | Where-Object ${ $_ -match '*^\s*runinterval\*=' })
   {
-    Write-Debug "Running in an already elevated process"
-    Start-Process -File "msiexec.exe" -arg "/qn /i $MSI_Path /l*v $MSI_Logs $MSI_Arguments" -PassThru | Wait-Process
+    Start-ProcessAsAdmin powershell "Get-Content $PuppetConfig | ForEach-Object { $_ -replace '(^\s*runinterval\s*=\s*)\d+$','$1 300' } | Set-Content $PuppetConfig" -Wait
   }
   else
   {
-    Write-Host "Running installer in elevated process"
-    Start-Process -Verb runAs -File "msiexec.exe" -arg "/qn /i $MSI_Path /l*v $MSI_Logs $MSI_Arguments" -PassThru | Wait-Process
+    Start-ProcessAsAdmin powershell "Add-Content $PuppetConfig `"`n  runinterval = 300`"" -Wait
   }
-  #Update the runinterval to 5 minutes, so puppet can configure this host earlier
-  Get-Content $PuppetConfig | % { $_ -replace '(^\s*runinterval\s*=\s*)\d+$','$1 300' } | Set-Content $PuppetConfig
 
-  #Configure the puppet service
-  Set-Service puppet -StartupType Automatic
-
-  Start-Service puppet
+  # Configure and starts the puppet service
+  Start-ProcessAsAdmin powershell "Set-Service puppet -StartupType Automatic -Status Running" -Wait
 }
 else
 {
