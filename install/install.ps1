@@ -158,7 +158,7 @@ if ($want_install)
   $MSI_Arguments="$MSI_Arguments PUPPET_AGENT_STARTUP_MODE=$StartupMode"
   Write-Debug "MSI Arguments: $MSI_Arguments"
 
-  Start-ProcessAsAdmin "msiexec.exe" "/qn /i $MSI_Path /l*v $MSI_Logs $MSI_Arguments" Wait
+  Start-ProcessAsAdmin "msiexec.exe" "/qn /i $MSI_Path /l*v $MSI_Logs $MSI_Arguments"
 
   # Update the runinterval to 5 minutes, so puppet can configure this host earlier
   if (get-Content $PuppetMaster  | Where-Object ${ $_ -match '*^\s*runinterval\*=' })
@@ -167,11 +167,11 @@ if ($want_install)
   }
   else
   {
-    Start-ProcessAsAdmin powershell "Add-Content $PuppetConfig `"`n  runinterval = 300`"" -Wait
+    Start-ProcessAsAdmin powershell "Add-Content $PuppetConfig `"`n  runinterval = 300`""
   }
 
   # Configure and starts the puppet service
-  Start-ProcessAsAdmin powershell "Set-Service puppet -StartupType Automatic -Status Running" -Wait
+  Start-ProcessAsAdmin powershell "Set-Service puppet -StartupType Automatic -Status Running"
 }
 else
 {
