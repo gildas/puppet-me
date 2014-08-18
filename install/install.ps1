@@ -78,14 +78,14 @@ if (Get-Command 'puppet' 2> $null)
   Write-Debug "[main]: Command $module has been installed already, collecting current configuration"
   $config = (Get-Content C:/ProgramData/PuppetLabs/puppet/etc/puppet.conf | where {$_ -match '^\s*(ca_server|certname|server|environment)\s*='}) -join "`n" | ConvertFrom-StringData
   Write-Debug "[main]: config=@{$(($config.keys | %{ "$_ = $($config[$_])"}) -join ', ' | Out-String)}"
-  $DefaultPuppetMaster=$config['server']
-  $DefaultCertServer  =$config['ca_server']
-  $DefaultCertname    =$config['certname']
-  $DefaultEnvironment =$config['environment']
+  $DefaultPuppetMaster= $config['server']
+  $DefaultCertServer  = $config['ca_server']
+  $DefaultCertname    = $config['certname']
+  $DefaultEnvironment = $config['environment']
+  $DefaultRunInterval = $config['runinterval']
   $puppet_version=$(puppet --version)
   $want_install = ! ($puppet_version -eq $info.version)
   Write-Debug "[main]: Current puppet is at version: $puppet_version, required version: $($info.version), install required: $want_install"
-  #TODO: Collect UserId and Hostname from the Certname
 }
 else
 {
@@ -114,6 +114,8 @@ if ($want_install)
   Write-Debug "[main]: We need to download!"
   Download-File -Target $info.target -Source $info.source
 
+  # Let's start puppet manually, so we can work on puppet.conf after the installer. We will configure the StartupMode later
+  $StartupMode  = 'Manual'
   $PuppetMaster = Read-HostEx -Prompt "Puppet Master" -CurrentValue $PuppetMaster -Default $DefaultPuppetMaster -Force
   if ($DefaultCertServer -eq 'puppet')
   {
@@ -131,6 +133,7 @@ if ($want_install)
   $MSI_Arguments="PUPPET_MASTER_SERVER=$PuppetMaster PUPPET_AGENT_CERTNAME=$($Certname.ToLower())"
   if ($CertServer)  { $MSI_Arguments="$MSI_Arguments PUPPET_CA_SERVER=$CertServer" }
   if ($Environment) { $MSI_Arguments="$MSI_Arguments PUPPET_AGENT_ENVIRONMENT=$Environment" }
+  $MSI_Arguments="$MSI_Arguments PUPPET_AGENT_STARTUP_MODE=$StartupMode"
   Write-Debug "MSI Arguments: $MSI_Arguments"
   if(([System.Security.Principal.WindowsPrincipal][System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
   {
