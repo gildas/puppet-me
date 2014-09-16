@@ -237,4 +237,13 @@ else
     Start-ProcessAsAdmin powershell "Stop-Service puppet"
     Start-ProcessAsAdmin powershell "Add-Content $PuppetConfig '`r`n  runinterval = 300' -Force"
   }
+  if (get-Content $PuppetConfig  | Where-Object { $_ -match "^\s*runinterval\*=\*300$" })
+  {
+    Write-Host "Configuring and Starting Puppet Windows Service"
+    Start-ProcessAsAdmin powershell "Set-Service puppet -StartupType Automatic -Status Running"
+  }
+  else
+  {
+    Write-Error "Could not set the runinterval"
+  }
 }
