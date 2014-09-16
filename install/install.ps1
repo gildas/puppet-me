@@ -161,7 +161,7 @@ if ($want_install)
   Start-ProcessAsAdmin "msiexec.exe" "/qn /i $MSI_Path /l*v $MSI_Logs $MSI_Arguments"
 
   # Update the runinterval to 5 minutes, so puppet can configure this host earlier
-  if (get-Content $PuppetMaster  | Where-Object ${ $_ -match '*^\s*runinterval\*=' })
+  if (get-Content $PuppetConfig  | Where-Object { $_ -match '*^\s*runinterval\*=' })
   {
     Start-ProcessAsAdmin powershell "Get-Content $PuppetConfig | ForEach-Object { $_ -replace '(^\s*runinterval\s*=\s*)\d+$','$1 300' } | Set-Content $PuppetConfig" -Wait
   }
