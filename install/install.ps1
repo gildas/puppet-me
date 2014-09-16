@@ -116,7 +116,7 @@ $PuppetConfig = 'C:/ProgramData/PuppetLabs/puppet/etc/puppet.conf'
 $info = Get-Info -Module 'puppet' -Version "*" -Source "http://downloads.puppetlabs.com/windows"
 Write-Host "Checking if puppet version $($info.version) is installed already"
 
-if (Get-Command 'puppet' 2> $null)
+if ((Get-Command 'puppet' 2> $null) -or (Test-Path $PuppetConfig))
 {
   Write-Debug "[main]: Command $module has been installed already, collecting current configuration"
   $config = (Get-Content $PuppetConfig | where {$_ -match '^\s*(ca_server|certname|server|environment)\s*='}) -join "`n" | ConvertFrom-StringData
