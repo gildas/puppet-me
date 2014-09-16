@@ -16,12 +16,12 @@ function Start-ProcessAsAdmin(
 
   if(([System.Security.Principal.WindowsPrincipal][System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
   {
-    Write-Host "Running in elevated process"
+    Write-Verbose "Running in elevated process"
     Start-Process -FilePath $FilePath -ArgumentList $Arguments -Verb runAs -Wait
   }
   else
   {
-    Write-Debug "Running in an already elevated process"
+    Write-Verbose "Running in an already elevated process"
     Start-Process -FilePath $FilePath -ArgumentList $Arguments -Wait
   }
 }
@@ -173,9 +173,14 @@ if ($want_install)
   }
 
   # Configure and starts the puppet service
-  if ($?)
+  if (get-Content $PuppetConfig  | Where-Object { $_ -match "^\s*runinterval\*=" })
   {
+    Write-Host "Configuring and Starting Puppet Windows Service"
     Start-ProcessAsAdmin powershell "Set-Service puppet -StartupType Automatic -Status Running"
+  }
+  else
+  {
+    Write-Error "Could not set the runinterval"
   }
 }
 else
