@@ -17,12 +17,12 @@ function Start-ProcessAsAdmin(
   if(([System.Security.Principal.WindowsPrincipal][System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
   {
     Write-Host "Running in elevated process"
-    Start-Process -FilePath $FilePath -ArgumentList $Arguments -Verb runAs -Wait
+    Start-Process -FilePath $FilePath -ArgumentList $Arguments -Verb runAs -Wait -RedirectStandardError C:\Windows\Temp\install-errors.log
   }
   else
   {
     Write-Debug "Running in an already elevated process"
-    Start-Process -FilePath $FilePath -ArgumentList $Arguments -Wait
+    Start-Process -FilePath $FilePath -ArgumentList $Arguments -Wait -RedirectStandardError C:\Windows\Temp\install-errors.log
   }
 }
 
@@ -163,10 +163,12 @@ if ($want_install)
   # Update the runinterval to 5 minutes, so puppet can configure this host earlier
   if (get-Content $PuppetConfig  | Where-Object { $_ -match "^\s*runinterval\*=" })
   {
-    Start-ProcessAsAdmin powershell "Get-Content $PuppetConfig | ForEach-Object { $_ -replace "(^\s*runinterval\s*=\s*)\d+$","$1 300" } | Set-Content $PuppetConfig" -Wait
+    Write-Host "Puppet Service: Replacing the runinterval to 300 seconds"
+    Start-ProcessAsAdmin powershell "Get-Content $PuppetConfig | ForEach-Object { $_ -replace "(^\s*runinterval\s*=\s*)\d+$","$1 300" } | Set-Content $PuppetConfig"
   }
   else
   {
+    Write-Host "Puppet Service: Adding a runinterval of 300 seconds"
     Start-ProcessAsAdmin powershell "Add-Content $PuppetConfig '`n  runinterval = 300' -Force -Confirm True"
   }
 
