@@ -190,7 +190,7 @@ if ($want_install)
   else
   {
     Write-Host "Puppet Service: Adding a runinterval of 300 seconds"
-    $process = Start-ProcessAsAdmin powershell "Add-Content $PuppetConfig '`n  runinterval = 300' -Force -Confirm `$true"
+    $process = Start-ProcessAsAdmin powershell "Add-Content $PuppetConfig '`n  runinterval = 300' -Force"
   }
 
   # Configure and starts the puppet service
@@ -215,7 +215,7 @@ else
     $DefaultCertServer = $PuppetMaster
   }
   $NewCertServer   = Read-HostEx -Prompt "Certificate Server" -CurrentValue $CertServer -Default $DefaultCertServer -Force
-  $NewCertname     = Read-HostEx -Prompt "Certificate Name" -CurrentValue $Certname -Default $Certname -Force
+  $NewCertname     = Read-HostEx -Prompt "Certificate Name" -CurrentValue $Certname -Default $DefaultCertname -Force
   $NewEnvironment  = Read-HostEx -Prompt "Environment" -CurrentValue $Environment -Default $DefaultEnvironment -Force
 
   # Update the runinterval to 5 minutes, so puppet can configure this host earlier
@@ -228,6 +228,6 @@ else
   {
     Write-Host "Puppet Service: Adding a runinterval of 300 seconds"
     Start-ProcessAsAdmin powershell "Stop-Service puppet"
-    Start-ProcessAsAdmin powershell "Add-Content $PuppetConfig '`n  runinterval = 300' -Force -Confirm `$true"
+    Start-ProcessAsAdmin powershell "Add-Content $PuppetConfig '`n  runinterval = 300' -Force"
   }
 }
