@@ -207,4 +207,27 @@ if ($want_install)
 else
 {
   Write-Debug "[main]: No need to install a new version"
+  Write-Host "Validating Puppet Configuration:"
+
+  $PuppetMaster = Read-HostEx -Prompt "Puppet Master" -CurrentValue $PuppetMaster -Default $DefaultPuppetMaster -Force
+  if ($DefaultCertServer -eq 'puppet')
+  {
+    $DefaultCertServer = $PuppetMaster
+  }
+  $NewCertServer   = Read-HostEx -Prompt "Certificate Server" -CurrentValue $CertServer -Default $DefaultCertServer -Force
+  $NewCertname     = Read-HostEx -Prompt "Certificate Name" -CurrentValue $Certname -Default $Certname -Force
+  $NewEnvironment  = Read-HostEx -Prompt "Environment" -CurrentValue $Environment -Default $DefaultEnvironment -Force
+
+  # Update the runinterval to 5 minutes, so puppet can configure this host earlier
+  if (get-Content $PuppetConfig  | Where-Object { $_ -match "^\s*runinterval\*=" })
+  {
+    Write-Host "Puppet Service: Replacing the runinterval to 300 seconds"
+    Start-ProcessAsAdmin powershell "Get-Content $PuppetConfig | ForEach-Object { $_ -replace "(^\s*runinterval\s*=\s*)\d+$","$1 300" } | Set-Content $PuppetConfig"
+  }
+  else
+  {
+    Write-Host "Puppet Service: Adding a runinterval of 300 seconds"
+    Start-ProcessAsAdmin powershell "Stop-Service puppet"
+    Start-ProcessAsAdmin powershell "Add-Content $PuppetConfig '`n  runinterval = 300' -Force -Confirm `$true"
+  }
 }
