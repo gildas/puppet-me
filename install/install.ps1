@@ -219,10 +219,14 @@ else
   $NewEnvironment  = Read-HostEx -Prompt "Environment" -CurrentValue $Environment -Default $DefaultEnvironment -Force
 
   # Update the runinterval to 5 minutes, so puppet can configure this host earlier
-  if (get-Content $PuppetConfig  | Where-Object { $_ -match "^\s*runinterval\*=" })
+  if (get-Content $PuppetConfig  | Where-Object { $_ -match "^\s*runinterval\s*=\s*(\d+)$" })
   {
-    Write-Host "Puppet Service: Replacing the runinterval to 300 seconds"
-    Start-ProcessAsAdmin powershell "Get-Content $PuppetConfig | ForEach-Object { $_ -replace "(^\s*runinterval\s*=\s*)\d+$","$1 300" } | Set-Content $PuppetConfig"
+    if ($Matches[1] -ne 300)
+    {
+      Write-Host "Puppet Service: Setting the runinterval to 300 seconds from $($Matches[1]) seconds"
+      Start-ProcessAsAdmin powershell "Stop-Service puppet"
+      Start-ProcessAsAdmin powershell "Get-Content $PuppetConfig | ForEach-Object { $_ -replace "(^\s*runinterval\s*=\s*)\d+$","$1 300" } | Set-Content $PuppetConfig"
+    }
   }
   else
   {
