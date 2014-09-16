@@ -171,7 +171,10 @@ if ($want_install)
   }
 
   # Configure and starts the puppet service
-  Start-ProcessAsAdmin powershell "Set-Service puppet -StartupType Automatic -Status Running"
+  if ($?)
+  {
+    Start-ProcessAsAdmin powershell "Set-Service puppet -StartupType Automatic -Status Running"
+  }
 }
 else
 {
