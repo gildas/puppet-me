@@ -17,8 +17,8 @@ function Start-ProcessAsAdmin(
   $process = New-Object System.Diagnostics.Process
   $process.StartInfo.Filename               = $FilePath
   $process.StartInfo.Arguments              = $Arguments
-  $process.StartInfo.RedirectStardardOutput = $true
-  $process.StartInfo.RedirectStardardError  = $true
+  $process.StartInfo.RedirectSndardOutput = $true
+  $process.StartInfo.RedirectStandardError  = $true
   $process.StartInfo.UseShellExecute        = $false
 
 
