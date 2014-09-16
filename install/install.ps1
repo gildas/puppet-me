@@ -31,15 +31,21 @@ function Start-ProcessAsAdmin(
   {
     Write-Verbose "Running in an already elevated process"
   }
-  $process.Start()
-  $process.WaitForExit()
-  [string] $err = $process.StandardError.ReadToEnd()
-  if ( $err -ne "" )
+  if ($process.Start())
   {
-    throw $err
+    $process.WaitForExit()
+    [string] $err = $process.StandardError.ReadToEnd()
+    if ( $err -ne "" )
+    {
+      throw $err
+    }
+    [string] $out = $process.StandardOutput.ReadToEnd()
+    $out
   }
-  [string] $out = $process.StandardOutput.ReadToEnd()
-  $out
+  else
+  {
+    Write-Error "Cannot start process"
+  }
 }
 
 function Read-HostEx(
