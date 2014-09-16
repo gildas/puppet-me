@@ -115,8 +115,9 @@ function Download-File(
 $PuppetConfig = 'C:/ProgramData/PuppetLabs/puppet/etc/puppet.conf'
 $info = Get-Info -Module 'puppet' -Version "*" -Source "http://downloads.puppetlabs.com/windows"
 Write-Host "Checking if puppet version $($info.version) is installed already"
+$puppet_version = (Get-ItemProperty HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Where { $_.DisplayName -eq 'Puppet' }).DisplayVersion
 
-if ((Get-Command 'puppet' 2> $null) -or (Test-Path $PuppetConfig))
+if ($puppet_version -ne $null)
 {
   Write-Debug "[main]: Command $module has been installed already, collecting current configuration"
   $config = (Get-Content $PuppetConfig | where {$_ -match '^\s*(ca_server|certname|server|environment)\s*='}) -join "`n" | ConvertFrom-StringData
@@ -126,7 +127,6 @@ if ((Get-Command 'puppet' 2> $null) -or (Test-Path $PuppetConfig))
   $DefaultCertname    = $config['certname']
   $DefaultEnvironment = $config['environment']
   $DefaultRunInterval = $config['runinterval']
-  $puppet_version=$(puppet --version)
   $want_install = ! ($puppet_version -eq $info.version)
   Write-Debug "[main]: Current puppet is at version: $puppet_version, required version: $($info.version), install required: $want_install"
 }
