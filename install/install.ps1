@@ -17,10 +17,9 @@ function Start-ProcessAsAdmin(
   $process = New-Object System.Diagnostics.Process
   $process.StartInfo.Filename               = $FilePath
   $process.StartInfo.Arguments              = $Arguments
-  $process.StartInfo.RedirectSndardOutput = $true
+  $process.StartInfo.RedirectStandardOutput = $true
   $process.StartInfo.RedirectStandardError  = $true
   $process.StartInfo.UseShellExecute        = $false
-
 
   if(([System.Security.Principal.WindowsPrincipal][System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
   {
@@ -191,7 +190,7 @@ if ($want_install)
   else
   {
     Write-Host "Puppet Service: Adding a runinterval of 300 seconds"
-    $process = Start-ProcessAsAdmin powershell "Add-Content $PuppetConfig '`n  runinterval = 300' -Force -Confirm True"
+    $process = Start-ProcessAsAdmin powershell "Add-Content $PuppetConfig '`n  runinterval = 300' -Force -Confirm `$true"
   }
 
   # Configure and starts the puppet service
