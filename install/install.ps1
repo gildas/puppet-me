@@ -225,13 +225,14 @@ else
     {
       Write-Host "Puppet Service: Setting the runinterval to 300 seconds from $($Matches[1]) seconds"
       Start-ProcessAsAdmin powershell "Stop-Service puppet"
-      Start-ProcessAsAdmin powershell "Get-Content $PuppetConfig | ForEach-Object { $_ -replace "(^\s*runinterval\s*=\s*)\d+$","$1 300" } | Set-Content $PuppetConfig"
+      Get-Content $PuppetConfig | ForEach-Object { $_ -replace "(^\s*runinterval\s*=\s*)\d+$","$1 300" } | Set-Content C:\Windows\TEMP\puppet.conf
+      Start-ProcessAsAdmin powershell "Move-Item C:\Windows\TEMP\puppet.conf $PuppetConfig"
     }
   }
   else
   {
     Write-Host "Puppet Service: Adding a runinterval of 300 seconds"
     Start-ProcessAsAdmin powershell "Stop-Service puppet"
-    Start-ProcessAsAdmin powershell "Add-Content $PuppetConfig '`n  runinterval = 300' -Force"
+    Start-ProcessAsAdmin powershell "Add-Content $PuppetConfig '`r`n  runinterval = 300' -Force"
   }
 }
