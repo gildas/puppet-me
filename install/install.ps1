@@ -14,16 +14,32 @@ function Start-ProcessAsAdmin(
     $Arguments = "-NoProfile -ExecutionPolicy Unrestricted -Command `"$Arguments`""
   }
 
+  $process = New-Object System.Diagnostics.Process
+  $process.StartInfo.Filename               = $FilePath
+  $process.StartInfo.Arguments              = $Arguments
+  $process.StartInfo.RedirectStardardOutput = $true
+  $process.StartInfo.RedirectStardardError  = $true
+  $process.StartInfo.UseShellExecute        = $false
+
+
   if(([System.Security.Principal.WindowsPrincipal][System.Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
   {
     Write-Verbose "Running in elevated process"
-    Start-Process -FilePath $FilePath -ArgumentList $Arguments -Verb runAs -Wait
+    $process.StartInfo.Verb = 'runAs'
   }
   else
   {
     Write-Verbose "Running in an already elevated process"
-    Start-Process -FilePath $FilePath -ArgumentList $Arguments -Wait
   }
+  $process.Start()
+  $process.WaitForExit()
+  [string] $err = $process.StandardError.ReadToEnd()
+  if ( $err -ne "" )
+  {
+    throw $err
+  }
+  [string] $out = $process.StandardOutput.ReadToEnd()
+  $out
 }
 
 function Read-HostEx(
@@ -169,7 +185,7 @@ if ($want_install)
   else
   {
     Write-Host "Puppet Service: Adding a runinterval of 300 seconds"
-    Start-ProcessAsAdmin powershell "Add-Content $PuppetConfig '`n  runinterval = 300' -Force -Confirm True"
+    $process = Start-ProcessAsAdmin powershell "Add-Content $PuppetConfig '`n  runinterval = 300' -Force -Confirm True"
   }
 
   # Configure and starts the puppet service
