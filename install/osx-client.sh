@@ -4,31 +4,59 @@ shopt -s extglob
 set -o errtrace
 set +o noclobber
 
-export VERBOSE=1
-export DEBUG=1
+export NOOP=
 
-function log()
+ASSUMEYES=0
+VERBOSE=0
+LOG="log/setup.log"
+tmp="tmp"
+whoami=$(whoami)
+puppet_master="puppet"
+userid=$(whoami)
+
+function trace() # {{{
 {
-  printf "%b\n" "$*";
-}
+  local caller_index=1
+  
+  if [[ $1 == "--trace-member" ]]; then
+    caller_index=2
+    shift
+  fi
+  echo "[$(date +'%Y%m%dT%H%M%S')]${BASH_SOURCE[$caller_index]}::${FUNCNAME[$caller_index]}@${BASH_LINENO[(($caller_index - 1))]}: $@" >> $LOG
+} # }}}
 
-function debug()
+function verbose() ## {{{
 {
-  [[ ${DEBUG:-0} -eq 0 ]] || printf "[debug] $#: $*";
-}
+  trace --trace-member $@
+  [[ $VERBOSE > 0 ]] && echo $@
+} # }}}
 
-function verbose()
+function warn() # {{{
 {
-  [[ ${VERBOSE:-0} -eq 0 ]] || printf "$*\n";
-}
+  trace --trace-member "[WARNING] $@"
+  echo "Warning: " $@
+} # }}}
 
-function init_config()
+function error() # {{{
 {
-  puppet_master="puppet"
-  userid=$(whoami)
-}
+  trace --trace-member "[ERROR] $@"
+  echo "Error:" $@ >&2
+} # }}}
 
-function parse_args()
+function die() # {{{
+{
+  local message=$1
+  local errorlevel=$2
+
+  [[ -z $message    ]] && message='Died'
+  [[ -z $errorlevel ]] && errorlevel=1
+  echo "[$(date +'%Y%m%dT%H%M%S')]${BASH_SOURCE[1]}::${FUNCNAME[1]}@${BASH_LINENO[0]}: [FATALERROR] $errorlevel $message" >> $LOG
+  echo "---- Finished: $(date +'%Y%m%dT%H%M%S')" >> $LOG
+  echo $message >&2
+  exit $errorlevel
+} # }}}
+
+function parse_args() # {{{
 {
   flags=()
 
@@ -62,9 +90,9 @@ function parse_args()
     esac
   done
 
-}
+} # }}}
 
-function install_dmg()
+function install_dmg() # {{{
 {
   local module="$1"
   local version="$2"
@@ -107,67 +135,68 @@ function install_dmg()
     verbose "    Unmounting ${target}"
     hdiutil eject ${mount} > /dev/null
   fi
-}
+} # }}}
 
 # Main
-init_config
-parse_args "$@"
-verbose "NOTE: You might have to enter your password to allow the script to modify your system!"
-install_dmg facter "*" http://downloads.puppetlabs.com/mac/
-install_dmg hiera  "*" http://downloads.puppetlabs.com/mac/
-install_dmg puppet "*" http://downloads.puppetlabs.com/mac/
+function main() # {{{
+{
+  parse_args "$@"
+  verbose "NOTE: You might have to enter your password to allow the script to modify your system!"
+  install_dmg facter "*" http://downloads.puppetlabs.com/mac/
+  install_dmg hiera  "*" http://downloads.puppetlabs.com/mac/
+  install_dmg puppet "*" http://downloads.puppetlabs.com/mac/
 
-verbose "Creating user/group resources"
-dseditgroup -o read puppet &> /dev/null
-if [ ! $? -eq 0 ]; then
-  verbose "  Creating group 'puppet'"
-  sudo puppet resource group puppet ensure=present
-else
-  verbose "  Group 'puppet' is already created"
-fi
-dseditgroup -o checkmember -m puppet puppet &> /dev/null
-if [ ! $? -eq 0 ]; then
-  verbose "  Adding puppet to group 'puppet'"
-  sudo puppet resource user  puppet ensure=present gid=puppet shell="/sbin/nologin"
-else
-  verbose "  User 'puppet' is already a member of group 'puppet"
-fi
+  verbose "Creating user/group resources"
+  dseditgroup -o read puppet &> /dev/null
+  if [ ! $? -eq 0 ]; then
+    verbose "  Creating group 'puppet'"
+    sudo puppet resource group puppet ensure=present
+  else
+    verbose "  Group 'puppet' is already created"
+  fi
+  dseditgroup -o checkmember -m puppet puppet &> /dev/null
+  if [ ! $? -eq 0 ]; then
+    verbose "  Adding puppet to group 'puppet'"
+    sudo puppet resource user  puppet ensure=present gid=puppet shell="/sbin/nologin"
+  else
+    verbose "  User 'puppet' is already a member of group 'puppet"
+  fi
 
-verbose "Hiding the puppet user from the Login window"
-hidden_users=$(/usr/libexec/PlistBuddy -c "Print :HiddenUsersList" /Library/Preferences/com.apple.loginwindow.plist)
-if [ ! $? -eq 0 ]; then
-  verbose "  Adding the HiddenUsersList entry"
-  sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList array" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
-fi
-if [[ ! ${hidden_users} =~ "puppet" ]]; then
-  verbose "  Adding puppet to the hidden user list"
-  sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList: string puppet" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
-else
-  verbose "  User puppet is already hidden from the Login window"
-fi
+  verbose "Hiding the puppet user from the Login window"
+  hidden_users=$(/usr/libexec/PlistBuddy -c "Print :HiddenUsersList" /Library/Preferences/com.apple.loginwindow.plist)
+  if [ ! $? -eq 0 ]; then
+    verbose "  Adding the HiddenUsersList entry"
+    sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList array" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
+  fi
+  if [[ ! ${hidden_users} =~ "puppet" ]]; then
+    verbose "  Adding puppet to the hidden user list"
+    sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList: string puppet" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
+  else
+    verbose "  User puppet is already hidden from the Login window"
+  fi
 
-verbose "Creating folders"
-[[ ! -d /var/log/puppet ]]       && sudo mkdir -p /var/log/puppet
-[[ ! -d /var/lib/puppet ]]       && sudo mkdir -p /var/lib/puppet
-[[ ! -d /var/lib/puppet/cache ]] && sudo mkdir -p /var/lib/puppet/cache
-[[ ! -d /etc/puppet/ssl ]]       && sudo mkdir -p /etc/puppet/ssl
-sudo chown -R puppet:puppet /var/lib/puppet
-sudo chmod 750 /var/lib/puppet
-sudo chown -R puppet:puppet /var/log/puppet
-sudo chmod 750 /var/log/puppet
-sudo chown -R puppet:puppet /etc/puppet
-sudo chmod 750 /etc/puppet
+  verbose "Creating folders"
+  [[ ! -d /var/log/puppet ]]       && sudo mkdir -p /var/log/puppet
+  [[ ! -d /var/lib/puppet ]]       && sudo mkdir -p /var/lib/puppet
+  [[ ! -d /var/lib/puppet/cache ]] && sudo mkdir -p /var/lib/puppet/cache
+  [[ ! -d /etc/puppet/ssl ]]       && sudo mkdir -p /etc/puppet/ssl
+  sudo chown -R puppet:puppet /var/lib/puppet
+  sudo chmod 750 /var/lib/puppet
+  sudo chown -R puppet:puppet /var/log/puppet
+  sudo chmod 750 /var/log/puppet
+  sudo chown -R puppet:puppet /etc/puppet
+  sudo chmod 750 /etc/puppet
 
-verbose "Configuring Puppet"
-if [ ! -f "/etc/puppet/puppet.conf" ]; then
-  config=$(mktemp -t puppet)
-  read -p "  Please enter the hostname or ip address of the puppet server [${puppet_master}]: " input_puppet_master
-  [[ ! -z "${input_puppet_master}" ]] && puppet_master=$input_puppet_master
-  read -p "  Please enter your userid [${userid}]: " input_userid
-  [[ ! -z "${input_userid}" ]] && userid=$input_userid
-  certname="osx-sandbox-${userid}"
-  verbose "  Configuring Puppet to connect to ${puppet_master} with certificate name: ${certname}"
-  cat > ${config} << EOF
+  verbose "Configuring Puppet"
+  if [ ! -f "/etc/puppet/puppet.conf" ]; then
+    config=$(mktemp -t puppet)
+    read -p "  Please enter the hostname or ip address of the puppet server [${puppet_master}]: " input_puppet_master
+    [[ ! -z "${input_puppet_master}" ]] && puppet_master=$input_puppet_master
+    read -p "  Please enter your userid [${userid}]: " input_userid
+    [[ ! -z "${input_userid}" ]] && userid=$input_userid
+    certname="osx-sandbox-${userid}"
+    verbose "  Configuring Puppet to connect to ${puppet_master} with certificate name: ${certname}"
+    cat > ${config} << EOF
 [main]
   pluginsync = true
   logdir     = /var/log/puppet
@@ -179,14 +208,17 @@ if [ ! -f "/etc/puppet/puppet.conf" ]; then
   report      = true
   runinterval = 300
 EOF
-  sudo install -m 0644 -o puppet -g puppet ${config} /etc/puppet/puppet.conf
-fi
+    sudo install -m 0644 -o puppet -g puppet ${config} /etc/puppet/puppet.conf
+  fi
 
-verbose "Installing the puppet agent daemon"
-if [ ! -f "/Library/LaunchDaemons/com.puppetlabs.puppet.plist" ]; then
-  curl --location --show-error --progress-bar --output "$HOME/Downloads/com.puppetlabs.puppet.plist" https://raw.github.com/inin-apac/puppet-me/master/config/osx/com.puppetlabs.puppet.plist
-  sudo install -m 0644 -o root -g wheel $HOME/Downloads/com.puppetlabs.puppet.plist /Library/LaunchDaemons
-  sudo launchctl load -w /Library/LaunchDaemons/com.puppetlabs.puppet.plist
-fi
-verbose "Starting the puppet agent daemon"
-sudo launchctl start com.puppetlabs.puppet
+  verbose "Installing the puppet agent daemon"
+  if [ ! -f "/Library/LaunchDaemons/com.puppetlabs.puppet.plist" ]; then
+    curl --location --show-error --progress-bar --output "$HOME/Downloads/com.puppetlabs.puppet.plist" https://raw.github.com/inin-apac/puppet-me/master/config/osx/com.puppetlabs.puppet.plist
+    sudo install -m 0644 -o root -g wheel $HOME/Downloads/com.puppetlabs.puppet.plist /Library/LaunchDaemons
+    sudo launchctl load -w /Library/LaunchDaemons/com.puppetlabs.puppet.plist
+  fi
+  verbose "Starting the puppet agent daemon"
+  sudo launchctl start com.puppetlabs.puppet
+}
+main $@
+# }}}
