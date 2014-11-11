@@ -8,21 +8,109 @@ export NOOP=
 
 ASSUMEYES=0
 VERBOSE=0
-LOG="log/setup.log"
+LOG="/var/log/puppet-me.log"
 tmp="tmp"
-whoami=$(whoami)
 puppet_master="puppet"
 userid=$(whoami)
+
+trap trace_end EXIT
 
 function trace() # {{{
 {
   local caller_index=1
-  
-  if [[ $1 == "--trace-member" ]]; then
-    caller_index=2
+
+  while :; do
+    case $1 in
+      --trace-member)
+      caller_index=2
+      ;;
+      --noop|-n)
+        return
+      ;;
+     *)  # End of options
+       break
+       ;;
+    esac
     shift
-  fi
+  done
+
   echo "[$(date +'%Y%m%dT%H%M%S')]${BASH_SOURCE[$caller_index]}::${FUNCNAME[$caller_index]}@${BASH_LINENO[(($caller_index - 1))]}: $@" >> $LOG
+} # }}}
+
+function trace_init() # {{{
+{
+  local log_file=$(basename $LOG)
+  local log_group="wheel"
+  local result
+
+  while :; do # {{{2
+    case $1 in
+      --logdest)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die -n "Argument for option $1 is missing"
+        LOG="$2/$log_file"
+        shift 2
+        continue
+      ;;
+      --logdest=*?)
+        LOG="${1#*=}/$log_file"
+      ;;
+      --logdest=)
+        die -n "Argument for option $1 is missing"
+      ;;
+      --loggroup)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die -n "Argument for option $1 is missing"
+        log_group="$2/$log_file"
+        shift 2
+        continue
+      ;;
+      --loggroup=*?)
+        log_group=${1#*=}
+      ;;
+      --loggroup=)
+        die -n "Argument for option $1 is missing"
+      ;;
+     -?*) # Invalid options
+       ;;
+     --) # Force end of options
+       shift
+       break
+       ;;
+     *)  # End of options
+       break
+       ;;
+    esac
+    shift
+  done # 2}}}
+
+  if [[ ! -w $LOG ]]; then
+    if [[ ! -w $(dirname $LOG) ]]; then
+      echo "NOTE: You might have to enter your password to allow the script to modify your system!"
+      if [[ ! -d $(dirname $LOG) ]]; then
+        sudo mkdir -p $(dirname $LOG) 2>&1 | tee /dev/null > /dev/null
+        result=$?
+        [[ $result ]] && die -n "Could not create folder $(dirname $LOG)" $result
+      fi
+      sudo touch $LOG 2>&1 | tee /dev/null > /dev/null
+      [[ $result ]] && die -n "Could not create $LOG" $result
+      sudo chown $(whoami):${log_group} $LOG
+      [[ $result ]] && die -n "Could not change owner for $LOG" $result
+      sudo chmod 640 $LOG 2>&1 | tee /dev/null > /dev/null
+      [[ $result ]] && die -n "Could not change permissions for $LOG" $result
+    else
+      touch $LOG 2>&1 | tee /dev/null > /dev/null
+      [[ $result ]] && die -n "Could not create $LOG" $result
+      chgrp ${log_group} $LOG 2>&1 | tee /dev/null > /dev/null
+      [[ $result ]] && die -n "Could not change group for $LOG" $result
+      chmod 640 $LOG 2>&1 | tee /dev/null > /dev/null
+      [[ $result ]] && die -n "Could not change permissions for $LOG" $result
+    fi
+  fi
+  trace --trace-member "[BEGIN] -------"
+} # }}}
+
+function trace_end() # {{{
+{
+  trace --trace-member "[END] -------"
 } # }}}
 
 function verbose() ## {{{
@@ -45,51 +133,74 @@ function error() # {{{
 
 function die() # {{{
 {
+  local trace_noop=
+  if [[ $1 == '-n' ]]; then
+   trace_noop=:
+   shift
+  fi
   local message=$1
   local errorlevel=$2
 
   [[ -z $message    ]] && message='Died'
   [[ -z $errorlevel ]] && errorlevel=1
-  echo "[$(date +'%Y%m%dT%H%M%S')]${BASH_SOURCE[1]}::${FUNCNAME[1]}@${BASH_LINENO[0]}: [FATALERROR] $errorlevel $message" >> $LOG
-  echo "---- Finished: $(date +'%Y%m%dT%H%M%S')" >> $LOG
+  $trace_noop trace --trace-member "[FATALERROR] $errorlevel $message"
+  $trace_noop trace_end
   echo $message >&2
   exit $errorlevel
 } # }}}
 
+function usage() # {{{
+{
+  echo "$(basename $0) [options]"
+} # }}}
+
 function parse_args() # {{{
 {
-  flags=()
-
-  while (( $# > 0 ))
-  do
-    arg="$1"
-    shift
-    case "$arg" in
-      (--userid)
-	shift
-	userid=$arg
-	flags+=( "$arg" )
+  while :; do
+    trace "Analyzing option \"$1\""
+    case $1 in
+      --userid|--user|-u)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing"
+        userid=$2
+        shift 2
+        continue
+      ;;
+      --userid=*?|--user=*?)
+        userid=${1#*=} # delete everything up to =
+      ;;
+      --userid=|--user=)
+        die "Argument for option $1 is missing"
+        ;;
+      --noop)
+        warn "This program will execute in dry mode, your system will not be modified"
+        NOOP=:
 	;;
-      (--trace)
-        set -o trace
-	TRACE=1
-	flags+=( "$arg" )
-	;;
-      (--debug)
-        export DEBUG=1
-        flags+=( "$arg" )
-        ;;
-      (--quiet)
-        export VERBOSE=0
-        flags+=( "$arg" )
-        ;;
-      (--verbose)
-        export VERBOSE=1
-        flags+=( "$arg" )
-        ;;
+      -h|-\?|--help)
+       trace "Showing usage"
+       usage
+       return 1
+       ;;
+     -v|--verbose)
+       VERBOSE=$((VERBOSE + 1))
+       trace "Verbose level: $VERBOSE"
+       ;;
+     -y|--yes|--assumeyes|--assume-yes) # All questions will get a "yes"  answer automatically
+       ASSUMEYES=1
+       trace "All prompts will be answered \"yes\" automatically"
+       ;;
+     -?*) # Invalid options
+       warn "Unknown option $1 will be ignored"
+       ;;
+     --) # Force end of options
+       shift
+       break
+       ;;
+     *)  # End of options
+       break
+       ;;
     esac
+    shift
   done
-
 } # }}}
 
 function install_dmg() # {{{
@@ -116,32 +227,32 @@ function install_dmg() # {{{
     target="$HOME/Downloads/${archive}"
     [ -f "${target}" ] && verbose "Deleting existing archive" && rm -f "$target"
     verbose "    Downloading ${source} into ${target}"
-    curl --location --show-error --progress-bar --output "${target}" "${source}"
+    $NOOP curl --location --show-error --progress-bar --output "${target}" "${source}"
 
     verbose "    Mounting ${target}"
-    local plist_path=$(mktemp -t $module)
-    hdiutil attach -plist ${target} > ${plist_path}
+    $NOOP local plist_path=$(mktemp -t $module)
+    $NOOP hdiutil attach -plist ${target} > ${plist_path}
     verbose "      plist_path: ${plist_path}"
-    mount=$(grep -E -o '/Volumes/[-.a-zA-Z0-9]+' ${plist_path})
+    $NOOP mount=$(grep -E -o '/Volumes/[-.a-zA-Z0-9]+' ${plist_path})
     verbose "      mounted on ${mount}"
 
   #  #TODO: ERROR
 
     verbose "    Installing ${target}"
-    package=$(find ${mount} -name '*.pkg' -mindepth 1 -maxdepth 1)
+    $NOOP package=$(find ${mount} -name '*.pkg' -mindepth 1 -maxdepth 1)
     verbose "      Package: ${package}"
-    sudo installer -pkg ${package} -target /
+    $NOOP sudo installer -pkg ${package} -target /
 
     verbose "    Unmounting ${target}"
-    hdiutil eject ${mount} > /dev/null
+    $NOOP hdiutil eject ${mount} > /dev/null
   fi
 } # }}}
 
 # Main
 function main() # {{{
 {
+  trace_init "$@"
   parse_args "$@"
-  verbose "NOTE: You might have to enter your password to allow the script to modify your system!"
   install_dmg facter "*" http://downloads.puppetlabs.com/mac/
   install_dmg hiera  "*" http://downloads.puppetlabs.com/mac/
   install_dmg puppet "*" http://downloads.puppetlabs.com/mac/
@@ -150,14 +261,14 @@ function main() # {{{
   dseditgroup -o read puppet &> /dev/null
   if [ ! $? -eq 0 ]; then
     verbose "  Creating group 'puppet'"
-    sudo puppet resource group puppet ensure=present
+    $NOOP sudo puppet resource group puppet ensure=present
   else
     verbose "  Group 'puppet' is already created"
   fi
   dseditgroup -o checkmember -m puppet puppet &> /dev/null
   if [ ! $? -eq 0 ]; then
     verbose "  Adding puppet to group 'puppet'"
-    sudo puppet resource user  puppet ensure=present gid=puppet shell="/sbin/nologin"
+    $NOOP sudo puppet resource user  puppet ensure=present gid=puppet shell="/sbin/nologin"
   else
     verbose "  User 'puppet' is already a member of group 'puppet"
   fi
@@ -166,26 +277,26 @@ function main() # {{{
   hidden_users=$(/usr/libexec/PlistBuddy -c "Print :HiddenUsersList" /Library/Preferences/com.apple.loginwindow.plist)
   if [ ! $? -eq 0 ]; then
     verbose "  Adding the HiddenUsersList entry"
-    sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList array" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
+    $NOOP sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList array" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
   fi
   if [[ ! ${hidden_users} =~ "puppet" ]]; then
     verbose "  Adding puppet to the hidden user list"
-    sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList: string puppet" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
+    $NOOP sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList: string puppet" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
   else
     verbose "  User puppet is already hidden from the Login window"
   fi
 
   verbose "Creating folders"
-  [[ ! -d /var/log/puppet ]]       && sudo mkdir -p /var/log/puppet
-  [[ ! -d /var/lib/puppet ]]       && sudo mkdir -p /var/lib/puppet
-  [[ ! -d /var/lib/puppet/cache ]] && sudo mkdir -p /var/lib/puppet/cache
-  [[ ! -d /etc/puppet/ssl ]]       && sudo mkdir -p /etc/puppet/ssl
-  sudo chown -R puppet:puppet /var/lib/puppet
-  sudo chmod 750 /var/lib/puppet
-  sudo chown -R puppet:puppet /var/log/puppet
-  sudo chmod 750 /var/log/puppet
-  sudo chown -R puppet:puppet /etc/puppet
-  sudo chmod 750 /etc/puppet
+  [[ ! -d /var/log/puppet ]]       && $NOOP sudo mkdir -p /var/log/puppet
+  [[ ! -d /var/lib/puppet ]]       && $NOOP sudo mkdir -p /var/lib/puppet
+  [[ ! -d /var/lib/puppet/cache ]] && $NOOP sudo mkdir -p /var/lib/puppet/cache
+  [[ ! -d /etc/puppet/ssl ]]       && $NOOP sudo mkdir -p /etc/puppet/ssl
+  $NOOP sudo chown -R puppet:puppet /var/lib/puppet
+  $NOOP sudo chmod 750 /var/lib/puppet
+  $NOOP sudo chown -R puppet:puppet /var/log/puppet
+  $NOOP sudo chmod 750 /var/log/puppet
+  $NOOP sudo chown -R puppet:puppet /etc/puppet
+  $NOOP sudo chmod 750 /etc/puppet
 
   verbose "Configuring Puppet"
   if [ ! -f "/etc/puppet/puppet.conf" ]; then
@@ -208,17 +319,17 @@ function main() # {{{
   report      = true
   runinterval = 300
 EOF
-    sudo install -m 0644 -o puppet -g puppet ${config} /etc/puppet/puppet.conf
+    $NOOP sudo install -m 0644 -o puppet -g puppet ${config} /etc/puppet/puppet.conf
   fi
 
   verbose "Installing the puppet agent daemon"
   if [ ! -f "/Library/LaunchDaemons/com.puppetlabs.puppet.plist" ]; then
-    curl --location --show-error --progress-bar --output "$HOME/Downloads/com.puppetlabs.puppet.plist" https://raw.github.com/inin-apac/puppet-me/master/config/osx/com.puppetlabs.puppet.plist
-    sudo install -m 0644 -o root -g wheel $HOME/Downloads/com.puppetlabs.puppet.plist /Library/LaunchDaemons
-    sudo launchctl load -w /Library/LaunchDaemons/com.puppetlabs.puppet.plist
+    $NOOP curl --location --show-error --progress-bar --output "$HOME/Downloads/com.puppetlabs.puppet.plist" https://raw.github.com/inin-apac/puppet-me/master/config/osx/com.puppetlabs.puppet.plist
+    $NOOP sudo install -m 0644 -o root -g wheel $HOME/Downloads/com.puppetlabs.puppet.plist /Library/LaunchDaemons
+    $NOOP sudo launchctl load -w /Library/LaunchDaemons/com.puppetlabs.puppet.plist
   fi
   verbose "Starting the puppet agent daemon"
-  sudo launchctl start com.puppetlabs.puppet
+  $NOOP sudo launchctl start com.puppetlabs.puppet
 }
 main $@
 # }}}
