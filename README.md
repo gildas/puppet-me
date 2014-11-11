@@ -11,3 +11,6 @@ On Windows, run in a command:
 @powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('http://tinyurl.com/kfrj7tn'))"
 ```
 
+AUTHORS
+=======
+[![endorse](https://api.coderwall.com/gildas/endorsecount.png)](https://coderwall.com/gildas)
