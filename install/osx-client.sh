@@ -179,9 +179,10 @@ function parse_args() # {{{2
         ;;
       --macmini)
       	verbose "About to install a Mac Mini"
-	MODULES=(homebrew git puppet vagrant packer ISO_cache)
+	#MODULES=(homebrew git puppet vagrant packer ISO_cache)
+	MODULES=(homebrew git vagrant packer ISO_cache)
 	;;
-      --noop)
+      --noop|--dry-run)
         warn "This program will execute in dry mode, your system will not be modified"
         NOOP=:
 	;;
@@ -342,8 +343,20 @@ EOF
 
 function install_homebrew() # {{{2
 {
-  # homebrew + cask
+  # Installing homebrew from http://brew.sh
   verbose "Installing Homebrew"
+  if which brew > /dev/null 2>&1; then
+    verbose "  Brew is already installed, updating formulas..."
+    $NOOP brew update
+  else
+    $NOOP ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+  fi
+
+  # Installing Cask from http://caskroom.io
+  if [[ ! -z $(brew info cask | grep -v '^Not installed$') ]]; then
+    verbose "Installing Homebrew Cask"
+    $NOOP brew install caskroom/cask/brew-cask
+  fi
 } # 2}}}
 
 function install_git() # {{{2
