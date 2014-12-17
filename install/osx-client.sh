@@ -13,9 +13,13 @@ tmp="tmp"
 puppet_master="puppet"
 userid=$(whoami)
 
+MODULES=(homebrew puppet)
+
 trap trace_end EXIT
 
-function trace() # {{{
+# Module: tracing # {{{
+
+function trace() # {{{2
 {
   local caller_index=1
 
@@ -35,15 +39,15 @@ function trace() # {{{
   done
 
   echo "[$(date +'%Y%m%dT%H%M%S')]${BASH_SOURCE[$caller_index]}::${FUNCNAME[$caller_index]}@${BASH_LINENO[(($caller_index - 1))]}: $@" >> $LOG
-} # }}}
+} # 2}}}
 
-function trace_init() # {{{
+function trace_init() # {{{2
 {
   local log_file=$(basename $LOG)
   local log_group="wheel"
   local result
 
-  while :; do # {{{2
+  while :; do # {{{3
     case $1 in
       --logdest)
         [[ -z $2 || ${2:0:1} == '-' ]] && die -n "Argument for option $1 is missing"
@@ -80,7 +84,7 @@ function trace_init() # {{{
        ;;
     esac
     shift
-  done # 2}}}
+  done # 3}}}
 
   if [[ ! -w $LOG ]]; then
     if [[ ! -w $(dirname $LOG) ]]; then
@@ -108,30 +112,30 @@ function trace_init() # {{{
   trace --trace-member "[BEGIN] -------"
 } # }}}
 
-function trace_end() # {{{
+function trace_end() # {{{2
 {
   trace --trace-member "[END] -------"
-} # }}}
+} # 2}}}
 
-function verbose() ## {{{
+function verbose() ## {{{2
 {
   trace --trace-member $@
   [[ $VERBOSE > 0 ]] && echo $@
-} # }}}
+} # 2}}}
 
-function warn() # {{{
+function warn() # {{{2
 {
   trace --trace-member "[WARNING] $@"
   echo "Warning: " $@
-} # }}}
+} # 2}}}
 
-function error() # {{{
+function error() # {{{2
 {
   trace --trace-member "[ERROR] $@"
   echo "Error:" $@ >&2
-} # }}}
+} # 2}}}
 
-function die() # {{{
+function die() # {{{2
 {
   local trace_noop=
   if [[ $1 == '-n' ]]; then
@@ -147,14 +151,16 @@ function die() # {{{
   $trace_noop trace_end
   echo $message >&2
   exit $errorlevel
-} # }}}
+} # 2}}}
 
-function usage() # {{{
+# Module: tracing # }}}
+
+function usage() # {{{2
 {
   echo "$(basename $0) [options]"
-} # }}}
+} # 2}}}
 
-function parse_args() # {{{
+function parse_args() # {{{2
 {
   while :; do
     trace "Analyzing option \"$1\""
@@ -171,6 +177,10 @@ function parse_args() # {{{
       --userid=|--user=)
         die "Argument for option $1 is missing"
         ;;
+      --macmini)
+      	verbose "About to install a Mac Mini"
+	MODULES=(homebrew git puppet vagrant packer ISO_cache)
+	;;
       --noop)
         warn "This program will execute in dry mode, your system will not be modified"
         NOOP=:
@@ -178,7 +188,7 @@ function parse_args() # {{{
       -h|-\?|--help)
        trace "Showing usage"
        usage
-       return 1
+       exit 1
        ;;
      -v|--verbose)
        VERBOSE=$((VERBOSE + 1))
@@ -201,9 +211,9 @@ function parse_args() # {{{
     esac
     shift
   done
-} # }}}
+} # 2}}}
 
-function install_dmg() # {{{
+function install_dmg() # {{{2
 {
   local module="$1"
   local version="$2"
@@ -246,13 +256,11 @@ function install_dmg() # {{{
     verbose "    Unmounting ${target}"
     $NOOP hdiutil eject ${mount} > /dev/null
   fi
-} # }}}
+} # 2}}}
 
-# Main
-function main() # {{{
+function install_puppet() # {{{2
 {
-  trace_init "$@"
-  parse_args "$@"
+  verbose "installing facter, hiera, and puppet"
   install_dmg facter "*" http://downloads.puppetlabs.com/mac/
   install_dmg hiera  "*" http://downloads.puppetlabs.com/mac/
   install_dmg puppet "*" http://downloads.puppetlabs.com/mac/
@@ -330,6 +338,68 @@ EOF
   fi
   verbose "Starting the puppet agent daemon"
   $NOOP sudo launchctl start com.puppetlabs.puppet
+} # 2}}}
+
+function install_homebrew() # {{{2
+{
+  # homebrew + cask
+  verbose "Installing Homebrew"
+} # 2}}}
+
+function install_git() # {{{2
+{
+  verbose "Installing git"
+} # 2}}}
+
+function install_vagrant() # {{{2
+{
+  # vagrant + vagrant_host_shell
+  verbose "Installing Vagrant"
+} # 2}}}
+
+function install_packer() # {{{2
+{
+  # packer + packer_windows
+  verbose "Installing Packer"
+} # 2}}}
+
+function cache_ISO() # {{{2
+{
+  verbose "Caching ISO files"
+} # 2}}}
+
+# Main
+function main() # {{{
+{
+  trace_init "$@"
+  parse_args "$@"
+
+  for module in ${MODULES[*]} ; do
+    verbose "Installing Module ${module}"
+    case $module in
+      git)
+        install_git
+        ;;
+      homebrew)
+        install_homebrew
+        ;;
+      ISO_cache)
+        cache_ISO
+        ;;
+      packer)
+        install_packer
+        ;;
+      puppet)
+        install_puppet
+        ;;
+      vagrant)
+        install_vagrant
+        ;;
+      *)
+        die "Unsupported Module: ${module}"
+        ;;
+    esac
+  done
 }
 main $@
 # }}}
