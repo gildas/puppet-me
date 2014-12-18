@@ -179,7 +179,6 @@ function parse_args() # {{{2
         die "Argument for option $1 is missing"
         ;;
       --macmini)
-      	verbose "About to install a Mac Mini"
 	#MODULES=(homebrew git puppet vagrant packer ISO_cache)
 	MODULES=(homebrew git vagrant packer ISO_cache)
 	;;
@@ -355,20 +354,32 @@ EOF
   $NOOP sudo launchctl start com.puppetlabs.puppet
 } # 2}}}
 
+function install_xcode_tools() # {{{2
+{
+  if xcode-select -p > /dev/null 2>&1; then
+    echo "XCode tools are already installed"
+  else
+    verbose "Installing XCode tools"
+  fi
+} # 2}}}
+
 function install_homebrew() # {{{2
 {
   # Installing homebrew from http://brew.sh
-  verbose "Installing Homebrew"
+  # prerequisites:
+  install_xcode_tools
+
   if which brew > /dev/null 2>&1; then
-    verbose "  Brew is already installed, updating formulas..."
+    verbose "Homebrew is already installed, updating formulas..."
     $NOOP brew update
   else
+    verbose "Installing Homebrew..."
     $NOOP ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
   fi
 
   # Installing Cask from http://caskroom.io
   if [[ ! -z $(brew info cask | grep -v '^Not installed$') ]]; then
-    verbose "Installing Homebrew Cask"
+    verbose "Installing Homebrew Cask..."
     $NOOP brew install caskroom/cask/brew-cask
   fi
 } # 2}}}
@@ -402,7 +413,7 @@ function main() # {{{
   parse_args "$@"
 
   for module in ${MODULES[*]} ; do
-    verbose "Installing Module ${module}"
+    trace "Installing Module ${module}"
     case $module in
       git)
         install_git
