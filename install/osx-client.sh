@@ -420,6 +420,12 @@ function install_xcode_tools() # {{{2
         break
       fi
     done
+
+    if [[ $(ping -t 1 tyofiles) ]]; then
+      install_dmg http://tyofiles/AppShare/Development/XCode/commandlinetoolsosx10.10forxcode6.1.1.dmg
+      return
+    fi
+
     die "Unable to install XCode Command Line Tools"
   fi
 } # 2}}}
