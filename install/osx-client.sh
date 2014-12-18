@@ -2,6 +2,7 @@
 
 shopt -s extglob
 set -o errtrace
+#set -o errexit
 set +o noclobber
 
 export NOOP=
@@ -414,5 +415,5 @@ function main() # {{{
     esac
   done
 }
-main $@
+main "$@"
 # }}}
