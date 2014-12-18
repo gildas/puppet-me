@@ -227,7 +227,55 @@ function parse_args() # {{{2
   done
 } # 2}}}
 
+function download() # {{{2
+{ 
+  # download "http://login:password@hostname/path/file?k1=v1&k2=v2" "local_folder"
+  local source=$1
+  local target=$2
+  local filename
+
+  filename=${source##*/}        # Remove everything up to the last /
+  filename=${filename%%\?*}     # emove everything after the ? (including)
+  verbose "  Downloading ${filename}..."
+
+  $NOOP curl --location --show-error --progress-bar --output "${target}/${filename}" "${source}"
+} # 2}}}
+
 function install_dmg() # {{{2
+{
+  local source="$1"
+  local target_dir="$HOME/Downloads"
+  local filename
+  local target
+  local mount
+  local package
+  local plist_path
+
+  filename=${source##*/}        # Remove everything up to the last /
+  filename=${filename%%\?*}     # emove everything after the ? (including)
+  target="${target_dir}/${filename}"
+
+  download "$source" "$target_dir"
+
+  verbose "    Mounting ${target}"
+  $NOOP plist_path=$(mktemp -t $module)
+  $NOOP hdiutil attach -plist ${target} > ${plist_path}
+  verbose "      plist_path: ${plist_path}"
+  $NOOP mount=$(grep -E -o '/Volumes/[-.a-zA-Z0-9]+' ${plist_path})
+  verbose "      mounted on ${mount}"
+
+  #  #TODO: ERROR
+
+  verbose "    Installing ${target}"
+  $NOOP package=$(find ${mount} -name '*.pkg' -mindepth 1 -maxdepth 1)
+  verbose "      Package: ${package}"
+  $NOOP sudo installer -pkg ${package} -target /
+
+  verbose "    Unmounting ${target}"
+  $NOOP hdiutil eject ${mount} > /dev/null
+} # 2}}}
+
+function install_puppet_dmg() # {{{2
 {
   local module="$1"
   local version="$2"
@@ -275,9 +323,9 @@ function install_dmg() # {{{2
 function install_puppet() # {{{2
 {
   verbose "installing facter, hiera, and puppet"
-  install_dmg facter "*" http://downloads.puppetlabs.com/mac/
-  install_dmg hiera  "*" http://downloads.puppetlabs.com/mac/
-  install_dmg puppet "*" http://downloads.puppetlabs.com/mac/
+  install_puppet_dmg facter "*" http://downloads.puppetlabs.com/mac/
+  install_puppet_dmg hiera  "*" http://downloads.puppetlabs.com/mac/
+  install_puppet_dmg puppet "*" http://downloads.puppetlabs.com/mac/
 
   verbose "Creating user/group resources"
   dseditgroup -o read puppet &> /dev/null
@@ -356,10 +404,23 @@ EOF
 
 function install_xcode_tools() # {{{2
 {
-  if xcode-select -p > /dev/null 2>&1; then
+  local downloaded=0
+
+  #if xcode-select -p > /dev/null 2>&1; then
+  if [[ '1' == '2' ]]; then
     echo "XCode tools are already installed"
   else
     verbose "Installing XCode tools"
+    myips=($(ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p'))
+    for ip in ${myips[*]} ; do
+      verbose "Checking IP: $ip"
+      if [[ $ip =~ 172\.22\.16\.[0-9]+ ]]; then
+	install_dmg http://tyofiles/AppShare/Development/XCode/commandlinetoolsosx10.10forxcode6.1.1.dmg
+        return
+        break
+      fi
+    done
+    die "Unable to install XCode Command Line Tools"
   fi
 } # 2}}}
 
