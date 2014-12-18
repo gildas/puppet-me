@@ -258,16 +258,16 @@ function install_dmg() # {{{2
   download "$source" "$target_dir"
 
   verbose "    Mounting ${target}"
-  $NOOP plist_path=$(mktemp -t dmg)
+  local plist_path=$(mktemp -t dmg)
   $NOOP hdiutil attach -plist ${target} > ${plist_path}
   verbose "      plist_path: ${plist_path}"
-  $NOOP mount=$(grep -E -o '/Volumes/[-.a-zA-Z0-9]+' ${plist_path})
+  local mount=$(grep -E -o '/Volumes/[-.a-zA-Z0-9]+' ${plist_path})
   verbose "      mounted on ${mount}"
 
   #  #TODO: ERROR
 
   verbose "    Installing ${target}"
-  $NOOP package=$(find ${mount} -name '*.pkg' -mindepth 1 -maxdepth 1)
+  $NOOP local package=$(find ${mount} -name '*.pkg' -mindepth 1 -maxdepth 1)
   verbose "      Package: ${package}"
   $NOOP sudo installer -pkg ${package} -target /
 
