@@ -183,6 +183,19 @@ function parse_args() # {{{2
 	#MODULES=(homebrew git puppet vagrant packer ISO_cache)
 	MODULES=(homebrew git vagrant packer ISO_cache)
 	;;
+      --modules)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing"
+	MODULES=(${2//,/ })
+        shift 2
+        continue
+	;;
+      --modules=*?)
+        MODULES=${1#*=} # delete everything up to =
+	MODULES=(${MODULES//,/ })
+	;;
+      --modules=)
+        die "Argument for option $1 is missing"
+        ;;
       --noop|--dry-run)
         warn "This program will execute in dry mode, your system will not be modified"
         NOOP=:
