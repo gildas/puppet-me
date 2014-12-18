@@ -258,7 +258,7 @@ function install_dmg() # {{{2
   download "$source" "$target_dir"
 
   verbose "    Mounting ${target}"
-  $NOOP plist_path=$(mktemp -t $module)
+  $NOOP plist_path=$(mktemp -t dmg)
   $NOOP hdiutil attach -plist ${target} > ${plist_path}
   verbose "      plist_path: ${plist_path}"
   $NOOP mount=$(grep -E -o '/Volumes/[-.a-zA-Z0-9]+' ${plist_path})
