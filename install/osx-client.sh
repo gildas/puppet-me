@@ -258,7 +258,7 @@ function install_dmg() # {{{2
   download "$source" "$target_dir"
 
   verbose "    Mounting ${target}"
-  $NOOP mount=$(hdiutil attach -plist ${target} | sed -e 's/^\/.* \//\//')
+  $NOOP mount=$(hdiutil attach ${target} | sed -e 's/^\/.* \//\//')
   verbose "      mounted on ${mount}"
 
   #  #TODO: ERROR
