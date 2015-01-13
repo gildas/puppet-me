@@ -445,7 +445,7 @@ function install_puppet() # {{{2
     verbose "  Adding puppet to group 'puppet'"
     $NOOP sudo puppet resource user puppet ensure=present gid=puppet shell="/sbin/nologin"
   else
-    verbose "  User 'puppet' is already a member of group 'puppet"
+    verbose "  User 'puppet' is already a member of group 'puppet'"
   fi
 
   verbose "Hiding the puppet user from the Login window"
