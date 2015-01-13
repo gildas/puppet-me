@@ -40,7 +40,7 @@ function trace() # {{{2
     shift
   done
 
-  echo "[$(date +'%Y%m%dT%H%M%S')]${BASH_SOURCE[$caller_index]}::${FUNCNAME[$caller_index]}@${BASH_LINENO[(($caller_index - 1))]}: $@" >> $LOG
+  echo -e "[$(date +'%Y%m%dT%H%M%S')]${BASH_SOURCE[$caller_index]}::${FUNCNAME[$caller_index]}@${BASH_LINENO[(($caller_index - 1))]}: $@" >> $LOG
 } # 2}}}
 
 function trace_init() # {{{2
@@ -122,19 +122,19 @@ function trace_end() # {{{2
 function verbose() ## {{{2
 {
   trace --trace-member "$@"
-  [[ $VERBOSE > 0 ]] && echo "$@"
+  [[ $VERBOSE > 0 ]] && echo -e "$@"
 } # 2}}}
 
 function warn() # {{{2
 {
   trace --trace-member "[WARNING] $@"
-  echo "Warning: $@"
+  echo -e "Warning: $@"
 } # 2}}}
 
 function error() # {{{2
 {
   trace --trace-member "[ERROR] $@"
-  echo "Error: $@" >&2
+  echo -e "Error: $@" >&2
 } # 2}}}
 
 function die() # {{{2
@@ -151,7 +151,7 @@ function die() # {{{2
   [[ -z $errorlevel ]] && errorlevel=1
   $trace_noop trace --trace-member "[FATALERROR] $errorlevel $message"
   $trace_noop trace_end
-  echo $message >&2
+  echo -e $message >&2
   exit $errorlevel
 } # 2}}}
 
@@ -185,6 +185,7 @@ function usage() # {{{2
 {
   echo "$(basename $0) [options]"
 } # 2}}}
+
 function parse_args() # {{{2
 {
   while :; do
