@@ -9,7 +9,7 @@ export NOOP=
 
 ASSUMEYES=0
 VERBOSE=0
-LOG="/var/log/puppet-me.log"
+LOG="$HOME/Downloads/puppet-me.log"
 tmp="tmp"
 puppet_master="puppet"
 userid=$(whoami)
