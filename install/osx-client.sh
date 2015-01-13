@@ -156,6 +156,30 @@ function die() # {{{2
 
 # Module: tracing # }}}
 
+function capitalize() # {{{2
+{
+  local value=$1
+
+  echo "$(tr '[:lower:]' '[:upper:]' <<< ${value:0:1})${value:1}"
+} # 2}}}
+
+function version() # {{{2
+{
+  #GNU style
+  if $1 --version 2>&1; then
+    version=$($1 --version)
+  elif $1 -version 2>&1; then
+    version=$($1 -version)
+  elif $1 -V 2>&1; then
+    version=$($1 -V)
+  elif $1 version 2>&1; then
+    version=$($1 version)
+  else
+    version='unknown'
+  fi
+  echo -n $version | tr -d '\n'
+} # 2}}}
+
 function usage() # {{{2
 {
   echo "$(basename $0) [options]"
@@ -237,6 +261,7 @@ function download() # {{{2
   filename=${filename%%\?*}     # emove everything after the ? (including)
   verbose "  Downloading ${filename}..."
 
+  $NOOP mkdir -p $target
   $NOOP curl --location --show-error --progress-bar --output "${target}/${filename}" "${source}"
 } # 2}}}
 
@@ -257,71 +282,128 @@ function install_dmg() # {{{2
   download "$source" "$target_dir"
 
   verbose "    Mounting ${target}"
-  $NOOP mount=$(hdiutil attach ${target} | sed -e 's/^\/.* \//\//')
+  mount=$(hdiutil attach ${target} | sed -e 's/^\/.* \//\//')
   verbose "      mounted on ${mount}"
 
   #  #TODO: ERROR
 
   verbose "    Installing ${target}"
-  $NOOP local package=$(find ${mount} -name '*.pkg' -mindepth 1 -maxdepth 1)
+  local package=$(find ${mount} -name '*.pkg' -mindepth 1 -maxdepth 1)
   verbose "      Package: ${package}"
   $NOOP sudo installer -pkg ${package} -target /
 
   verbose "    Unmounting ${target}"
-  $NOOP hdiutil eject ${mount} > /dev/null
+  hdiutil eject ${mount} > /dev/null
 } # 2}}}
 
-function install_puppet_dmg() # {{{2
+function brew_install() # {{{2
 {
-  local module="$1"
-  local version="$2"
-  local basename="${module}-${version}"
-  local archive="${basename}.dmg"
-  local url="$3"
+  local app_binary=$1
+  local app_name=$(capitalize $1)
 
-  verbose "Installing module ${module}"
-  if [ "$version" = "*" ]; then
-    verbose "  Checking version numbers for ${module}"
-    archive=$(curl --silent --list-only "${url}/" | grep --ignore-case "${module}-\d" | grep --invert-match --regexp="rc\d*\.dmg" | tail -1 | sed -e 's/.*href="\([^"]*\)".*/\1/')
-    basename=${archive%.*}
-    version=${basename#*-}
-  fi
-  verbose "  Targetting version ${version} for module ${module}"
-  if [[ -x $(which $module) && "$($(which $module) --version)" == "${version}" ]]; then
-    verbose "    ${module} is already installed properly"
+  if which $app_binary > /dev/null 2>&1; then
+    if [[ ! -z $(brew info $app_binary | grep '^Not installed$') ]]; then
+      verbose "$app_name was manually installed (no automatic updates possible)"
+    else
+      verbose "$app_name is already installed via Homebrew"
+    fi
   else
-    verbose "    Downloading $archive"
-    source="${url}/${archive}"
-    target="$HOME/Downloads/${archive}"
-    [ -f "${target}" ] && verbose "Deleting existing archive" && rm -f "$target"
-    verbose "    Downloading ${source} into ${target}"
-    $NOOP curl --location --show-error --progress-bar --output "${target}" "${source}"
+    verbose "Installing $app_name"
+    $NOOP brew install $app_binary
+  fi
+} # 2}}}
 
-    verbose "    Mounting ${target}"
-    $NOOP local plist_path=$(mktemp -t $module)
-    $NOOP hdiutil attach -plist ${target} > ${plist_path}
-    verbose "      plist_path: ${plist_path}"
-    $NOOP mount=$(grep -E -o '/Volumes/[-.a-zA-Z0-9]+' ${plist_path})
-    verbose "      mounted on ${mount}"
+function cask_install() # {{{2
+{
+  local app_binary=$1
+  local app_name=$(capitalize $1)
 
-  #  #TODO: ERROR
+  if which $app_binary > /dev/null 2>&1; then
+    if [[ ! -z $(brew cask info $app_binary | grep '^Not installed$') ]]; then
+      verbose "$app_name was manually installed (no automatic updates possible)"
+    else
+      verbose "$app_name is already installed via Homebrew"
+    fi
+  else
+    verbose "Installing $app_name"
+    $NOOP brew install Caskroom/cask/$app_binary
+  fi
+} # 2}}}
 
-    verbose "    Installing ${target}"
-    $NOOP package=$(find ${mount} -name '*.pkg' -mindepth 1 -maxdepth 1)
-    verbose "      Package: ${package}"
-    $NOOP sudo installer -pkg ${package} -target /
+function install_xcode_tools() # {{{2
+{
+  local downloaded=0
+  local os_maj=$(sw_vers -productVersion | cut -d. -f1)
+  local os_min=$(sw_vers -productVersion | cut -d. -f2)
+  local product
+  local url
+  local mount
 
-    verbose "    Unmounting ${target}"
-    $NOOP hdiutil eject ${mount} > /dev/null
+  if xcode-select -p > /dev/null 2>&1; then
+    echo "XCode tools are already installed"
+  elif [[ $os_min -ge 9 ]]; then # Mavericks or later
+    verbose "Installing CLI tools via Software Update"
+    verbose "  Finding proper version"
+    touch /tmp/.com.apple.dt.CommandLinetools.installondemand.in-progress
+    product=$(softwareupdate -l 2>&1 | grep "\*.*Command Line" | tail -1 | sed -e 's/^   \* //' | tr -d '\n')
+    verbose "  Downloading and Installing $product"
+    $NOOP softwareupdate --install "$product"
+  else # Older versions like Mountain Lion, Lion
+    verbose "Installing XCode tools from Website"
+    [[ $os_min == 7 ]] && url=http://devimages.apple.com/downloads/xcode/command_line_tools_for_xcode_os_x_lion_april_2013.dmg
+    [[ $os_min == 8 ]] && url=http://devimages.apple.com/downloads/xcode/command_line_tools_for_osx_mountain_lion_april_2014.dmg
+    $NOOP install_dmg $url
+  fi
+} # 2}}}
+
+function install_homebrew() # {{{2
+{
+  # Installing homebrew from http://brew.sh
+  # prerequisites:
+  install_xcode_tools
+
+  if which brew > /dev/null 2>&1; then
+    verbose "Homebrew is already installed, upgrading..."
+    $NOOP brew update && brew upgrade && brew cleanup
+  else
+    verbose "Installing Homebrew..."
+    $NOOP ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+    # Preparing brew for first time or sanitizing it if already installed
+    $NOOP brew doctor
+  fi
+
+  # Installing bash completion
+  if [[ ! -z $(brew info bash-completion | grep '^Not installed$') ]]; then
+    verbose "Installing bash completion..."
+    $NOOP brew install bash-completion
+  else
+    verbose "Homebrew bash completion is already installed"
+  fi
+
+  if [[ -z $(brew tap | grep 'homebrew/completions') ]]; then
+    brew tap homebrew/completions
+  fi
+
+  if [[ -z $(brew tap | grep 'homebrew/binary') ]]; then
+    brew tap homebrew/binary
+  fi
+
+  # Installing Cask from http://caskroom.io
+  if [[ ! -z $(brew info brew-cask | grep '^Not installed$') ]]; then
+    verbose "Installing Homebrew Cask..."
+    $NOOP brew install caskroom/cask/brew-cask
+  else
+    verbose "Homebrew Cask is already installed"
   fi
 } # 2}}}
 
 function install_puppet() # {{{2
 {
   verbose "installing facter, hiera, and puppet"
-  install_puppet_dmg facter "*" http://downloads.puppetlabs.com/mac/
-  install_puppet_dmg hiera  "*" http://downloads.puppetlabs.com/mac/
-  install_puppet_dmg puppet "*" http://downloads.puppetlabs.com/mac/
+  cask_install puppet
+  cask_install hiera
+  cask_install facter
 
   verbose "Creating user/group resources"
   dseditgroup -o read puppet &> /dev/null
@@ -334,7 +416,7 @@ function install_puppet() # {{{2
   dseditgroup -o checkmember -m puppet puppet &> /dev/null
   if [ ! $? -eq 0 ]; then
     verbose "  Adding puppet to group 'puppet'"
-    $NOOP sudo puppet resource user  puppet ensure=present gid=puppet shell="/sbin/nologin"
+    $NOOP sudo puppet resource user puppet ensure=present gid=puppet shell="/sbin/nologin"
   else
     verbose "  User 'puppet' is already a member of group 'puppet"
   fi
@@ -367,11 +449,13 @@ function install_puppet() # {{{2
   verbose "Configuring Puppet"
   if [ ! -f "/etc/puppet/puppet.conf" ]; then
     config=$(mktemp -t puppet)
-    read -p "  Please enter the hostname or ip address of the puppet server [${puppet_master}]: " input_puppet_master
-    [[ ! -z "${input_puppet_master}" ]] && puppet_master=$input_puppet_master
-    read -p "  Please enter your userid [${userid}]: " input_userid
-    [[ ! -z "${input_userid}" ]] && userid=$input_userid
-    certname="osx-sandbox-${userid}"
+    puppet_master='puppet'
+    #read -p "  Please enter the hostname or ip address of the puppet server [${puppet_master}]: " input_puppet_master
+    #[[ ! -z "${input_puppet_master}" ]] && puppet_master=$input_puppet_master
+    #read -p "  Please enter your userid [${userid}]: " input_userid
+    #[[ ! -z "${input_userid}" ]] && userid=$input_userid
+    #certname="osx-sandbox-${userid}"
+    certname=$(basename $(uname -n) .local)
     verbose "  Configuring Puppet to connect to ${puppet_master} with certificate name: ${certname}"
     cat > ${config} << EOF
 [main]
@@ -398,65 +482,49 @@ EOF
   $NOOP sudo launchctl start com.puppetlabs.puppet
 } # 2}}}
 
-function install_xcode_tools() # {{{2
-{
-  local downloaded=0
-
-  #if xcode-select -p > /dev/null 2>&1; then
-  if [[ '1' == '2' ]]; then
-    echo "XCode tools are already installed"
-  else
-    verbose "Installing XCode tools"
-    myips=($(ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p'))
-    for ip in ${myips[*]} ; do
-      verbose "Checking IP: $ip"
-      if [[ $ip =~ 172\.22\.16\.[0-9]+ ]]; then
-	install_dmg http://tyofiles/AppShare/Development/XCode/commandlinetoolsosx10.10forxcode6.1.1.dmg
-        return
-        break
-      fi
-    done
-
-    if [[ $(ping -t 1 tyofiles) ]]; then
-      install_dmg http://tyofiles/AppShare/Development/XCode/commandlinetoolsosx10.10forxcode6.1.1.dmg
-      return
-    fi
-
-    die "Unable to install XCode Command Line Tools"
-  fi
-} # 2}}}
-
-function install_homebrew() # {{{2
-{
-  # Installing homebrew from http://brew.sh
-  # prerequisites:
-  install_xcode_tools
-
-  if which brew > /dev/null 2>&1; then
-    verbose "Homebrew is already installed, updating formulas..."
-    $NOOP brew update
-  else
-    verbose "Installing Homebrew..."
-    $NOOP ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-  fi
-
-  # Installing Cask from http://caskroom.io
-  if [[ ! -z $(brew info cask | grep -v '^Not installed$') ]]; then
-    verbose "Installing Homebrew Cask..."
-    $NOOP brew install caskroom/cask/brew-cask
-  fi
-} # 2}}}
-
 function install_vagrant() # {{{2
 {
-  # vagrant + vagrant_host_shell
-  verbose "Installing Vagrant"
+  cask_install vagrant
+  $NOOP vagrant plugin update
+
+  # Installing bash completion
+  if [[ ! -z $(brew info homebrew/completions/vagrant-completion | grep '^Not installed$') ]]; then
+    verbose "Installing bash completion for Vagrant..."
+    $NOOP brew install homebrew/completions/vagrant-completion
+  fi
+
+  if [[ -z $(vagrant plugin list | grep 'vagrant-vmware-fusion') ]]; then
+    verbose "  Installing Vagrant Plugin for VMWare"
+    $NOOP vagrant plugin install vagrant-vmware-fusion
+    warn "  TODO: install your Vagrant for VMWare license!"
+  fi
 } # 2}}}
 
 function install_packer() # {{{2
 {
-  # packer + packer_windows
-  verbose "Installing Packer"
+  brew_install packer
+
+  # Installing bash completion
+  if [[ ! -z $(brew info homebrew/completions/packer-completion | grep '^Not installed$') ]]; then
+    verbose "Installing bash completion for Packer..."
+    $NOOP brew install homebrew/completions/packer-completion
+  fi
+
+  packer_bindir=$(dirname $(which packer))
+  if [[ ! -x $packer_bindir/packer-provisioner-wait ]]; then
+    verbose "  Install Packer plugin: provisioner-wait"
+    $NOOP curl -sSL https://github.com/gildas/packer-provisioner-wait/raw/master/bin/0.1.0/darwin/packer-provisioner-wait --output $packer_bindir/packer-provisioner-wait
+  fi
+
+  packer_windows=$HOME/Documents/packer/packer-windows
+  if [[ ! -d "$packer_windows" ]]; then
+    echo "  Installing Packer framework for building Windows machines"
+    $NOOP mkdir -p $(dirname $packer_windows)
+    $NOOP git clone https://github.com/gildas/packer-windows $packer_windows
+  else
+    echo "  Upgrading Packer framework for building Windows machines"
+    $NOOP git --git-dir "${packer_windows}/.git" pull
+  fi
 } # 2}}}
 
 function cache_ISO() # {{{2
@@ -469,6 +537,13 @@ function main() # {{{
 {
   trace_init "$@"
   parse_args "$@"
+
+  dseditgroup -o checkmember -m $userid wheel &> /dev/null
+  if [[ $? != 0 ]]; then
+    die "You must be a member of the sudoer group as this script will need to install software"
+  else
+    warn "You might have to enter your password to verify you can install software"
+  fi
 
   for module in ${MODULES[*]} ; do
     trace "Installing Module ${module}"
