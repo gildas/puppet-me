@@ -179,8 +179,7 @@ function parse_args() # {{{2
         die "Argument for option $1 is missing"
         ;;
       --macmini)
-	#MODULES=(homebrew git puppet vagrant packer ISO_cache)
-	MODULES=(homebrew git vagrant packer ISO_cache)
+	MODULES=(homebrew puppet vagrant packer ISO_cache)
 	;;
       --modules)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing"
