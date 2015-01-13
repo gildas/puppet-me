@@ -214,24 +214,24 @@ function parse_args() # {{{2
         ;;
       --macmini)
         MODULES=(homebrew rubytools puppet vmware vagrant packer ISO_cache)
-	;;
+        ;;
       --modules)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing.\nIt is a comma-separated list of the possible values are: ${ALL_MODULES[*]}"
-	MODULES=(${2//,/ })
+        MODULES=(${2//,/ })
         shift 2
         continue
-	;;
+        ;;
       --modules=*?)
         MODULES=${1#*=} # delete everything up to =
-	MODULES=(${MODULES//,/ })
-	;;
+        MODULES=(${MODULES//,/ })
+        ;;
       --modules=)
         die "Argument for option $1 is missing.\nIt is a comma-separated list of the possible values are: ${ALL_MODULES[*]}"
         ;;
       --noop|--dry-run)
         warn "This program will execute in dry mode, your system will not be modified"
         NOOP=:
-	;;
+        ;;
       -h|-\?|--help)
        trace "Showing usage"
        usage
