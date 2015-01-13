@@ -15,6 +15,7 @@ puppet_master="puppet"
 userid=$(whoami)
 
 MODULES=(homebrew puppet)
+ALL_MODULES=(homebrew ISO_cache packer puppet rubytools vagrant virtualbox vmware)
 
 trap trace_end EXIT
 
@@ -184,7 +185,6 @@ function usage() # {{{2
 {
   echo "$(basename $0) [options]"
 } # 2}}}
-
 function parse_args() # {{{2
 {
   while :; do
@@ -206,7 +206,7 @@ function parse_args() # {{{2
 	MODULES=(homebrew puppet vmware vagrant packer rubytools ISO_cache)
 	;;
       --modules)
-        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing"
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing.\nIt is a comma-separated list of the possible values are: ${ALL_MODULES[*]}"
 	MODULES=(${2//,/ })
         shift 2
         continue
@@ -216,7 +216,7 @@ function parse_args() # {{{2
 	MODULES=(${MODULES//,/ })
 	;;
       --modules=)
-        die "Argument for option $1 is missing"
+        die "Argument for option $1 is missing.\nIt is a comma-separated list of the possible values are: ${ALL_MODULES[*]}"
         ;;
       --noop|--dry-run)
         warn "This program will execute in dry mode, your system will not be modified"
