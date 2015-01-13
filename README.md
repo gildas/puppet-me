@@ -3,7 +3,27 @@ puppet-me
 On OS/X, run in a shell:
 
 ```sh
-curl -sSL http://tinyurl.com/l7nlr27 | bash
+curl -sSL http://tinyurl.com/puppet-me-osx | bash
+```
+
+By default only Homebrew and puppet are installed and configured.
+
+It is possible to install more modules with:
+
+```sh
+curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- --modules=homebrew,vagrant,packer
+```
+
+As of today, the following modules can be installed:
+
+```sh
+homebrew ISO_cache packer puppet rubytools vagrant virtualbox vmware
+```
+
+Note: use the special argument "--macmini" to install the following modules: homebrew, puppet, vmware, vagrant, packer, rubytools, and ISO_cache, in the given order.
+
+```sh
+curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- --macmini
 ```
 
 On Windows, run in a command:
