@@ -203,7 +203,7 @@ function parse_args() # {{{2
         die "Argument for option $1 is missing"
         ;;
       --macmini)
-	MODULES=(homebrew puppet vagrant packer ISO_cache)
+	MODULES=(homebrew puppet vmware vagrant packer rubytools ISO_cache)
 	;;
       --modules)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing"
@@ -398,6 +398,33 @@ function install_homebrew() # {{{2
   fi
 } # 2}}}
 
+function install_packer() # {{{2
+{
+  brew_install packer
+
+  # Installing bash completion
+  if [[ ! -z $(brew info homebrew/completions/packer-completion | grep '^Not installed$') ]]; then
+    verbose "Installing bash completion for Packer..."
+    $NOOP brew install homebrew/completions/packer-completion
+  fi
+
+  packer_bindir=$(dirname $(which packer))
+  if [[ ! -x $packer_bindir/packer-provisioner-wait ]]; then
+    verbose "  Install Packer plugin: provisioner-wait"
+    $NOOP curl -sSL https://github.com/gildas/packer-provisioner-wait/raw/master/bin/0.1.0/darwin/packer-provisioner-wait --output $packer_bindir/packer-provisioner-wait
+  fi
+
+  packer_windows=$HOME/Documents/packer/packer-windows
+  if [[ ! -d "$packer_windows" ]]; then
+    echo "  Installing Packer framework for building Windows machines"
+    $NOOP mkdir -p $(dirname $packer_windows)
+    $NOOP git clone https://github.com/gildas/packer-windows $packer_windows
+  else
+    echo "  Upgrading Packer framework for building Windows machines"
+    $NOOP git --git-dir "${packer_windows}/.git" pull
+  fi
+} # 2}}}
+
 function install_puppet() # {{{2
 {
   verbose "installing facter, hiera, and puppet"
@@ -482,6 +509,21 @@ EOF
   $NOOP sudo launchctl start com.puppetlabs.puppet
 } # 2}}}
 
+function install_rubytools() # {{{2
+{
+  # On Mac OS/X, ruby is always installed. And since Mavericks, we get 2.0.0
+  # Gem and Rake are also installed.
+  if [[ ! -z $(gem list --local | grep bundler) ]]; then
+    verbose "Bundler is already installed"
+  else
+    $NOOP sudo gem install bundler
+  fi
+
+  if [[ -f "$HOME/Documents/packer/packer-windows/Gemfile" ]]; then
+    $NOOP (cd $HOME/Documents/packer/packer-windows ; bundle install)
+  fi
+} # 2}}}
+
 function install_vagrant() # {{{2
 {
   cask_install vagrant
@@ -500,30 +542,17 @@ function install_vagrant() # {{{2
   fi
 } # 2}}}
 
-function install_packer() # {{{2
+function install_virtualbox() # {{{2
 {
-  brew_install packer
+  cask_install virtualbox
+} # 2}}}
 
-  # Installing bash completion
-  if [[ ! -z $(brew info homebrew/completions/packer-completion | grep '^Not installed$') ]]; then
-    verbose "Installing bash completion for Packer..."
-    $NOOP brew install homebrew/completions/packer-completion
-  fi
-
-  packer_bindir=$(dirname $(which packer))
-  if [[ ! -x $packer_bindir/packer-provisioner-wait ]]; then
-    verbose "  Install Packer plugin: provisioner-wait"
-    $NOOP curl -sSL https://github.com/gildas/packer-provisioner-wait/raw/master/bin/0.1.0/darwin/packer-provisioner-wait --output $packer_bindir/packer-provisioner-wait
-  fi
-
-  packer_windows=$HOME/Documents/packer/packer-windows
-  if [[ ! -d "$packer_windows" ]]; then
-    echo "  Installing Packer framework for building Windows machines"
-    $NOOP mkdir -p $(dirname $packer_windows)
-    $NOOP git clone https://github.com/gildas/packer-windows $packer_windows
+function install_vmware() # {{{2
+{
+  if [[ -d '/Applications/VMware Fusion.app' ]]; then
+    verbose "VMWare Fusion is installed"
   else
-    echo "  Upgrading Packer framework for building Windows machines"
-    $NOOP git --git-dir "${packer_windows}/.git" pull
+    warn "Please install VMWare Fusion before building virtual machines"
   fi
 } # 2}}}
 
@@ -560,8 +589,17 @@ function main() # {{{
       puppet)
         install_puppet
         ;;
+      rubytools)
+        install_rubytools
+        ;;
       vagrant)
         install_vagrant
+        ;;
+      virtualbox)
+        install_virtualbox
+        ;;
+      vmware)
+        install_vmware
         ;;
       *)
         die "Unsupported Module: ${module}"
