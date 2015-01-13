@@ -8,7 +8,7 @@ set +o noclobber
 export NOOP=
 
 ASSUMEYES=0
-VERBOSE=0
+VERBOSE=1
 LOG="$HOME/Downloads/puppet-me.log"
 tmp="tmp"
 puppet_master="puppet"
@@ -227,6 +227,10 @@ function parse_args() # {{{2
        trace "Showing usage"
        usage
        exit 1
+       ;;
+     --quiet)
+       VERBOSE=0
+       trace "Verbose level: $VERBOSE"
        ;;
      -v|--verbose)
        VERBOSE=$((VERBOSE + 1))
