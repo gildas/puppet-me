@@ -448,11 +448,6 @@ function install_homebrew() # {{{2
   fi
 } # 2}}}
 
-function install_git() # {{{2
-{
-  verbose "Installing git"
-} # 2}}}
-
 function install_vagrant() # {{{2
 {
   # vagrant + vagrant_host_shell
@@ -479,9 +474,6 @@ function main() # {{{
   for module in ${MODULES[*]} ; do
     trace "Installing Module ${module}"
     case $module in
-      git)
-        install_git
-        ;;
       homebrew)
         install_homebrew
         ;;
