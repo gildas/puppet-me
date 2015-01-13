@@ -520,7 +520,7 @@ function install_rubytools() # {{{2
   fi
 
   if [[ -f "$HOME/Documents/packer/packer-windows/Gemfile" ]]; then
-    $NOOP (cd $HOME/Documents/packer/packer-windows ; bundle install)
+    [[ -z "$NOOP" ]] && (cd $HOME/Documents/packer/packer-windows ; bundle install)
   fi
 } # 2}}}
 
