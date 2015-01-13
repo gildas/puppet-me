@@ -427,6 +427,9 @@ function install_packer() # {{{2
 
 function install_puppet() # {{{2
 {
+  local os_maj=$(sw_vers -productVersion | cut -d. -f1)
+  local os_min=$(sw_vers -productVersion | cut -d. -f2)
+
   verbose "installing facter, hiera, and puppet"
   cask_install puppet
   cask_install hiera
@@ -449,16 +452,26 @@ function install_puppet() # {{{2
   fi
 
   verbose "Hiding the puppet user from the Login window"
-  hidden_users=$(/usr/libexec/PlistBuddy -c "Print :HiddenUsersList" /Library/Preferences/com.apple.loginwindow.plist)
-  if [ ! $? -eq 0 ]; then
-    verbose "  Adding the HiddenUsersList entry"
-    $NOOP sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList array" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
-  fi
-  if [[ ! ${hidden_users} =~ "puppet" ]]; then
-    verbose "  Adding puppet to the hidden user list"
-    $NOOP sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList: string puppet" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
+  if [[ $os_min -ge 10 ]]; then # Yosemite or later
+    if [[ -z $(dscl . read /Users/puppet | grep IsHidden) ]]; then
+      sudo dscl . create /Users/puppet IsHidden 1
+    elif [[ -z $(dscl . read /Users/puppet IsHidden | grep 1) ]]; then
+      sudo dscl . create /Users/puppet IsHidden 1
+    else
+      verbose "  User puppet is already hidden from the Login window"
+    fi
   else
-    verbose "  User puppet is already hidden from the Login window"
+    hidden_users=$(/usr/libexec/PlistBuddy -c "Print :HiddenUsersList" /Library/Preferences/com.apple.loginwindow.plist 2>&1)
+    if [ ! $? -eq 0 ]; then
+      verbose "  Adding the HiddenUsersList entry"
+      $NOOP sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList array" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
+    fi
+    if [[ ! ${hidden_users} =~ "puppet" ]]; then
+      verbose "  Adding puppet to the hidden user list"
+      $NOOP sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList: string puppet" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
+    else
+      verbose "  User puppet is already hidden from the Login window"
+    fi
   fi
 
   verbose "Creating folders"
