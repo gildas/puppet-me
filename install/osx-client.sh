@@ -14,6 +14,15 @@ tmp="tmp"
 puppet_master="puppet"
 userid=$(whoami)
 
+MODULE_homebrew_done=0
+MODULE_cache_done=0
+MODULE_packer_done=0
+MODULE_puppet_done=0
+MODULE_rubytools_done=0
+MODULE_vagrant_done=0
+MODULE_virtualbox_done=0
+MODULE_vmware_done=0
+
 MODULES=(homebrew puppet)
 ALL_MODULES=(homebrew ISO_cache packer puppet rubytools vagrant virtualbox vmware)
 
@@ -204,7 +213,7 @@ function parse_args() # {{{2
         die "Argument for option $1 is missing"
         ;;
       --macmini)
-	MODULES=(homebrew puppet vmware vagrant packer rubytools ISO_cache)
+        MODULES=(homebrew rubytools puppet vmware vagrant packer ISO_cache)
 	;;
       --modules)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing.\nIt is a comma-separated list of the possible values are: ${ALL_MODULES[*]}"
@@ -401,10 +410,14 @@ function install_homebrew() # {{{2
   else
     verbose "Homebrew Cask is already installed"
   fi
+  MODULE_homebrew_done=1
 } # 2}}}
 
 function install_packer() # {{{2
 {
+  [[ $MODULE_homebrew_done  == 0 ]] && install_homebrew
+  [[ $MODULE_rubytools_done == 0 ]] && install_rubytools
+
   brew_install packer
 
   # Installing bash completion
@@ -428,12 +441,18 @@ function install_packer() # {{{2
     echo "  Upgrading Packer framework for building Windows machines"
     $NOOP git --git-dir "${packer_windows}/.git" pull
   fi
+
+  if [[ -f "$packer_windows/Gemfile" ]]; then
+    [[ -z "$NOOP" ]] && (cd $packer_windows ; bundle install)
+  fi
 } # 2}}}
 
 function install_puppet() # {{{2
 {
   local os_maj=$(sw_vers -productVersion | cut -d. -f1)
   local os_min=$(sw_vers -productVersion | cut -d. -f2)
+
+  [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
 
   verbose "installing facter, hiera, and puppet"
   cask_install puppet
@@ -529,6 +548,8 @@ EOF
 
 function install_rubytools() # {{{2
 {
+  [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
+
   # On Mac OS/X, ruby is always installed. And since Mavericks, we get 2.0.0
   # Gem and Rake are also installed.
   if [[ ! -z $(gem list --local | grep bundler) ]]; then
@@ -536,14 +557,12 @@ function install_rubytools() # {{{2
   else
     $NOOP sudo gem install bundler
   fi
-
-  if [[ -f "$HOME/Documents/packer/packer-windows/Gemfile" ]]; then
-    [[ -z "$NOOP" ]] && (cd $HOME/Documents/packer/packer-windows ; bundle install)
-  fi
 } # 2}}}
 
 function install_vagrant() # {{{2
 {
+  [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
+
   cask_install vagrant
   $NOOP vagrant plugin update
 
@@ -562,6 +581,8 @@ function install_vagrant() # {{{2
 
 function install_virtualbox() # {{{2
 {
+  [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
+
   cask_install virtualbox
 } # 2}}}
 
