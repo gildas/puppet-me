@@ -120,20 +120,20 @@ function trace_end() # {{{2
 
 function verbose() ## {{{2
 {
-  trace --trace-member $@
-  [[ $VERBOSE > 0 ]] && echo $@
+  trace --trace-member "$@"
+  [[ $VERBOSE > 0 ]] && echo "$@"
 } # 2}}}
 
 function warn() # {{{2
 {
   trace --trace-member "[WARNING] $@"
-  echo "Warning: " $@
+  echo "Warning: $@"
 } # 2}}}
 
 function error() # {{{2
 {
   trace --trace-member "[ERROR] $@"
-  echo "Error:" $@ >&2
+  echo "Error: $@" >&2
 } # 2}}}
 
 function die() # {{{2
