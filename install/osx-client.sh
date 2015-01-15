@@ -26,6 +26,21 @@ MODULE_vmware_done=0
 MODULES=(homebrew puppet)
 ALL_MODULES=(homebrew ISO_cache packer puppet rubytools vagrant virtualbox vmware)
 
+CACHE_ROOT='/var/cache/daas'
+CACHE_SOURCES=(
+  "Windows 2012R2 Evaluation|MD5|458ff91f8abc21b75cb544744bf92e6a|http://download.microsoft.com/download/6/2/A/62A76ABB-9990-4EFC-A4FE-C7D698DAEB96/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
+  "SQL 2014 Express|MD5|3bb7d34aaf063b73ac92d31aad896ba6|http://download.microsoft.com/download/E/A/E/EAE6F7FC-767A-4038-A954-49B8B05D04EB/ExpressAndTools%2064BIT/SQLEXPRWT_x64_ENU.exe"
+  "OpenSSH|SHA1|ca4c70c55103bdf331224354092b0b57eec6b723|http://www.mls-software.com/files/setupssh-6.7p1-1-v1(x64).exe"
+)
+#  "CIC 2015R1||https://my.inin.com/_downloads/File.ashx?path=/Service%20Updates/Interaction%20Center/2015r1/P00/CIC_2015_R1.iso|https://download.inin.com/MOVEitISAPI/MOVEitISAPI.310/action=hu_downld!parm=e18323170401966633642!NoAttach=1/CIC_2015_R1.iso"
+#  "Dialer 2015R1||https://my.inin.com/_downloads/File.ashx?path=/Service%20Updates/Interaction%20Dialer/2015r1/P00/Dialer_2015_R1.iso|https://download.inin.com/MOVEitISAPI/MOVEitISAPI.310/action=hu_downld!parm=e676344980365929911!NoAttach=1/Dialer_2015_R1.iso"
+
+#From CIC, extract icserver & interactionfirmware
+EXTRACT_SOURCES=(
+ "IC Server 2015R1|SHA1|3D5F82A700E441498C12F930DB110865195B4A9B|ICServer_2015_R1.msi"
+ "IC Firmware 2015R1|SHA1|83992CF5E333827E31B05450FBD269E0414D5A6B|InteractionFirmware_2015_R1.msi"
+)
+
 trap trace_end EXIT
 
 # Module: tracing # {{{
@@ -598,6 +613,14 @@ function install_vmware() # {{{2
 function cache_ISO() # {{{2
 {
   verbose "Caching ISO files"
+  [[ -d "$CACHE_ROOT" ]] || mkdir -p "$CACHE_ROOT"
+
+  for cached in "${CACHE_SOURCES[*]}"; do
+    KEY="${cached%%|*}"
+    VALUE="${cached#*:}"
+    verbose "Caching $KEY"
+    verbose "  data: $VALUE"
+  done
 } # 2}}}
 
 # Main
