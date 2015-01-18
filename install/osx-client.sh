@@ -629,12 +629,14 @@ function main() # {{{
   trace_init "$@"
   parse_args "$@"
 
-  dseditgroup -o checkmember -m $userid wheel &> /dev/null
+  dseditgroup -o checkmember -m $userid admin &> /dev/null
   if [[ $? != 0 ]]; then
-    die "You must be a member of the sudoer group as this script will need to install software"
-  else
-    warn "You might have to enter your password to verify you can install software"
+    dseditgroup -o checkmember -m $userid wheel &> /dev/null
+    if [[ $? != 0 ]]; then
+      die "You must be a member of the sudoer group as this script will need to install software"
+    fi
   fi
+  warn "You might have to enter your password to verify you can install software"
 
   for module in ${MODULES[*]} ; do
     trace "Installing Module ${module}"
