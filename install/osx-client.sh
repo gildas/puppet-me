@@ -24,7 +24,7 @@ MODULE_virtualbox_done=0
 MODULE_vmware_done=0
 
 MODULES=(homebrew puppet)
-ALL_MODULES=(homebrew ISO_cache packer puppet rubytools vagrant virtualbox vmware)
+ALL_MODULES=(homebrew cache packer puppet rubytools vagrant virtualbox vmware)
 
 CACHE_ROOT='/var/cache/daas'
 CACHE_SOURCES=(
@@ -228,7 +228,7 @@ function parse_args() # {{{2
         die "Argument for option $1 is missing"
         ;;
       --macmini)
-        MODULES=(homebrew rubytools puppet vmware vagrant packer ISO_cache)
+        MODULES=(homebrew rubytools puppet vmware vagrant packer cache)
         ;;
       --modules)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing.\nIt is a comma-separated list of the possible values are: ${ALL_MODULES[*]}"
@@ -610,7 +610,7 @@ function install_vmware() # {{{2
   fi
 } # 2}}}
 
-function cache_ISO() # {{{2
+function cache_stuff() # {{{2
 {
   verbose "Caching ISO files"
   [[ -d "$CACHE_ROOT" ]] || mkdir -p "$CACHE_ROOT"
@@ -644,8 +644,8 @@ function main() # {{{
       homebrew)
         install_homebrew
         ;;
-      ISO_cache)
-        cache_ISO
+      cache)
+        cache_stuff
         ;;
       packer)
         install_packer
