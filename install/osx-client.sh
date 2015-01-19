@@ -174,6 +174,30 @@ function capitalize() # {{{2
   echo "$(tr '[:lower:]' '[:upper:]' <<< ${value:0:1})${value:1}"
 } # 2}}}
 
+function mask_cidr2dotted () #{{{2
+{
+   # Number of args to shift, 255..255, first non-255 byte, zeroes
+   set -- $(( 5 - ($1 / 8) )) 255 255 255 255 $(( (255 << (8 - ($1 % 8))) & 255 )) 0 0 0
+   [ $1 -gt 1 ] && shift $1 || shift
+   echo ${1-0}.${2-0}.${3-0}.${4-0}
+} # 2}}}
+
+function mask_dotted2cidr () #{{{2
+{
+   # Assumes there's no "255." after a non-255 byte in the mask
+   set -- 0^^^128^192^224^240^248^252^254^ ${#1} ${1##*255.}
+   set -- $(( ($2 - ${#3})*2 )) ${1%%${3%%.*}*}
+   echo $(( $1 + (${#2}/4) ))
+} # 2}}}
+
+function mask_hex2cidr () #{{{2
+{
+   # Assumes there's no "ff" after a non-ff byte in the mask
+   set -- 08ce ${#1} ${1##*f}
+   set -- $(( ($2 - ${#3})*4 )) ${1%%${3%%0*}*}
+   echo $(( $1 + ${#2} ))
+} # 2}}}
+
 function version() # {{{2
 {
   #GNU style
