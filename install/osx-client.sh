@@ -435,6 +435,14 @@ function install_homebrew() # {{{2
   else
     verbose "Homebrew Cask is already installed"
   fi
+
+  # Installing jq for querying json from bash
+  if [[ ! -z $(brew info jq | grep '^Not installed$') ]]; then
+    verbose "Installing ijq..."
+    $NOOP brew install jq
+  else
+    verbose "jq is already installed"
+  fi
   MODULE_homebrew_done=1
 } # 2}}}
 
