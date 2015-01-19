@@ -599,7 +599,7 @@ function install_vmware() # {{{2
 function cache_stuff() # {{{2
 {
   verbose "Caching ISO files"
-  [[ -d "$CACHE_ROOT" ]] || mkdir -p "$CACHE_ROOT"
+  [[ -d "$CACHE_ROOT" ]] || $NOOP sudo mkdir -p "$CACHE_ROOT"
 
   for cached in "${CACHE_SOURCES[*]}"; do
     KEY="${cached%%|*}"
