@@ -630,8 +630,22 @@ function install_vmware() # {{{2
 
 function cache_stuff() # {{{2
 {
+  local nic_names nic_name nic_info nic_ip nic_mask ip_addresses ip_address ip_masks ip_mask
+
   verbose "Caching ISO files"
   [[ -d "$CACHE_ROOT" ]] || $NOOP sudo mkdir -p "$CACHE_ROOT"
+
+  nic_names=( $(/sbin/ifconfig | grep mtu | cut -d: -f1) )
+  ip_addresses=()
+  ip_masks=()
+  for nic_name in ${nic_names[*]}; do
+    nic_info=$( /sbin/ifconfig $nic_name | grep 'inet\s' | grep -v 127.0.0.1 )
+    if [[ ! -z "$nic_info" ]]; then
+      ip_addresses+=( "$(echo $nic_info | cut -d' ' -f2)/$( mask_hex2cidr $(echo $nic_info | cut -d' ' -f4 | cut -dx -f2) )" )
+    fi
+  done
+  verbose "IP Addresses: ${ip_addresses[*]}"
+  return
 
   for cached in "${CACHE_SOURCES[*]}"; do
     KEY="${cached%%|*}"
