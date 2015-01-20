@@ -658,7 +658,8 @@ function cache_stuff() # {{{2
   
   for document_id in ${document_ids[*]}; do
     document=$(jq ".[] | select(.id == $document_id)" "$document_catalog")
-    verbose "Caching $(echo "$document" | jq --raw-output '.name')"
+    document_name=$(echo "$document" | jq --raw-output '.name')
+    verbose "Caching $document_name"
     sources_size=$( echo $document | jq '.sources | length' )
     source_location=''
     source_url=''
@@ -679,7 +680,29 @@ function cache_stuff() # {{{2
     fi
 
     if [[ ! -z "$source_location" ]]; then
-      $NOOP curl -SL $source_url -o $(echo "$document" | jq '.destination')
+      document_destination=$(echo "$document" | jq --raw-output '.destination')
+      document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
+      document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
+      calc_checksum=''
+      case $document_checksum_type in
+        MD5|md5)   calc_checksum='md5';;
+        SHA1|sha1) calc_checksum='shasum';;
+        *)
+         error "Unsupported checksum type ($document_checksum_type) while caching $document_name"
+      esac
+      #if [[ ! -z $calc_checksum ]]; then
+      #  $NOOP curl -sSL ${source_url}.${document_checksum_type} "${document_destination}.${document_checksum_type}" 2>&1 > /dev/null
+      #  if [[ $? == 0 ]]; then
+      #  fi
+      #fi
+      $NOOP curl -SL $source_url -o "$document_destination"
+      if [ ! -z $calc_checksum ] && [ -r "$document_destination" ] ; then
+        destination_checksum=$($calc_checksum $document_destination)
+        if [[ ! $destination_checksum =~ \s*$document_checksum\s* ]]; then
+          error "Invalid ${document_checksum_type} checksum for the downloaded document"
+          $NOOP rm -f "$document_destination"
+        fi
+      fi
     else
       warn "Cannot cache $( echo "$document" | jq --raw-output '.name' ), no source available"
     fi
