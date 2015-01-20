@@ -1,104 +1,95 @@
-{
-  "sources":
-  [
-    {
-      "name": "Windows 2012R2 Evaluation",
-      "checksum": { "type": "MD5", "value": "458ff91f8abc21b75cb544744bf92e6a" },
-      "destination": "${CACHE_ROOT}/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO",
-      "sources":
-      [
-        {
-          "location": "Japan DEMO",
-          "network":  "172\\.22\\.19\\.\\d+/24",
-          "url": "http://tyofiles.demo.apac.inin.com/AppShare/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
-        },
-        {
-          "location": "Japan LAB",
-          "network":  "172\\.22\\.20\\.\\d+/23",
-          "url": "http://labfiles.lab.apac.inin.com/AppShare/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
-        },
-        {
-          "location": "Japan",
-          "network":  "172\\.22\\.16\\.\\d+/21",
-          "url": "http://tyofiles.apac.inin.com/AppShare/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
-        },
-        {
-          "location": "default",
-          "url": "http://download.microsoft.com/download/6/2/A/62A76ABB-9990-4EFC-A4FE-C7D698DAEB96/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
-        }
-      ]
-    },
-    {
-      "name": "SQL 2014 Express",
-      "checksum": { "type": "MD5", "value": "3bb7d34aaf063b73ac92d31aad896ba6" },
-      "destination": "${CACHE_ROOT}/SQLEXPRWT_x64_ENU.exe",
-      "sources":
-      [
-        {
-          "location": "default",
-          "url": "http://download.microsoft.com/download/E/A/E/EAE6F7FC-767A-4038-A954-49B8B05D04EB/ExpressAndTools%2064BIT/SQLEXPRWT_x64_ENU.exe"
-        }
-      ]
-    },
-    {
-      "name": "OpenSSH",
-      "checksum": { "type": "SHA1", "value": "ca4c70c55103bdf331224354092b0b57eec6b723" },
-      "destination": "${CACHE_ROOT}/setupssh-6.7p1-1-v1(x64).exe",
-      "sources":
-      [
-        {
-          "location": "default",
-          "url": "http://www.mls-software.com/files/setupssh-6.7p1-1-v1(x64).exe"
-        }
-      ]
-    },
-    {
-      "name": "CIC 2015R1",
-      "checksum": { "type": "MD5", "value": "f191af91a8fd38043c1f15028e0cfcf6" },
-      "destination": "${CACHE_ROOT}/CIC_2015_R1.iso",
-      "sources":
-      [
-        {
-          "location": "default",
-          "url": ""
-        }
-      ]
-    },
-    {
-      "name": "Dialer 2015R1",
-      "checksum": { "type": "MD5", "value": "" },
-      "destination": "${CACHE_ROOT}/Dialer_2015_R1.iso",
-      "sources":
-      [
-        {
-          "location": "default",
-          "url": ""
-        }
-      ]
-    },
-    {
-      "name": "IC Server 2015R1",
-      "checksum": { "type": "MD5", "value": "97f61b7d6de2c602da9ac6234dde8cbf" },
-      "destination": "${CACHE_ROOT}/ICServer_2015_R1.msi",
-      "sources":
-      [
-        {
-          "location": "default",
-          "url": ""
-        }
-      ]
-    },
-    {
-      "name": "IC Firmware 2015R1",
-      "checksum": { "type": "MD5", "value": "36092e8ef7dc749e7a06aa3a914531f3" },
-      "destination": "${CACHE_ROOT}/InteractionFirmware_2015_R1.msi",
-      "sources":
-      [
-        {
-          "location": "default",
-          "url": ""
-        }
-      ]
-    }
-  ]
-}
+[
+  {
+    "name": "Windows 2012R2 Evaluation",
+    "id": "Windows_2012R2",
+    "checksum": { "type": "MD5", "value": "458ff91f8abc21b75cb544744bf92e6a" },
+    "destination": "${CACHE_ROOT}/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO",
+    "sources":
+    [
+      {
+        "location": "Japan DEMO",
+        "network":  "172.22.19.[0-9]+/24",
+        "url": "http://tyofiles.demo.apac.inin.com/AppShare/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
+      },
+      {
+        "location": "Japan LAB",
+        "network":  "172.22.20.[0-9]+/23",
+        "url": "http://labfiles.lab.apac.inin.com/AppShare/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
+      },
+      {
+        "location": "Japan",
+        "network":  "172.22.16.[0-9]+/23",
+        "url": "http://tyofiles.apac.inin.com/AppShare/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
+      },
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "url": "http://download.microsoft.com/download/6/2/A/62A76ABB-9990-4EFC-A4FE-C7D698DAEB96/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
+      }
+    ]
+  },
+  {
+    "name": "SQL 2014 Express",
+    "id": "SQL_2014",
+    "checksum": { "type": "MD5", "value": "3bb7d34aaf063b73ac92d31aad896ba6" },
+    "destination": "${CACHE_ROOT}/SQLEXPRWT_x64_ENU.exe",
+    "sources":
+    [
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "url": "http://download.microsoft.com/download/E/A/E/EAE6F7FC-767A-4038-A954-49B8B05D04EB/ExpressAndTools%2064BIT/SQLEXPRWT_x64_ENU.exe"
+      }
+    ]
+  },
+  {
+    "name": "OpenSSH",
+    "id": "SSH",
+    "checksum": { "type": "SHA1", "value": "ca4c70c55103bdf331224354092b0b57eec6b723" },
+    "destination": "${CACHE_ROOT}/setupssh-6.7p1-1-v1(x64).exe",
+    "sources":
+    [
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "url": "http://www.mls-software.com/files/setupssh-6.7p1-1-v1(x64).exe"
+      }
+    ]
+  },
+  {
+    "name": "CIC 2015R1",
+    "id": "CIC_2015R1",
+    "checksum": { "type": "MD5", "value": "f191af91a8fd38043c1f15028e0cfcf6" },
+    "destination": "${CACHE_ROOT}/CIC_2015_R1.iso",
+    "sources":
+    [
+    ]
+  },
+  {
+    "name": "Dialer 2015R1",
+    "id": "Dialer_2015R1",
+    "checksum": { "type": "MD5", "value": "" },
+    "destination": "${CACHE_ROOT}/Dialer_2015_R1.iso",
+    "sources":
+    [
+    ]
+  },
+  {
+    "name": "IC Server 2015R1",
+    "id": "ICServer_2015R1",
+    "checksum": { "type": "MD5", "value": "97f61b7d6de2c602da9ac6234dde8cbf" },
+    "destination": "${CACHE_ROOT}/ICServer_2015_R1.msi",
+    "sources":
+    [
+    ]
+  },
+  {
+    "name": "IC Firmware 2015R1",
+    "id": "ICFirmware_2015R1",
+    "checksum": { "type": "MD5", "value": "36092e8ef7dc749e7a06aa3a914531f3" },
+    "destination": "${CACHE_ROOT}/InteractionFirmware_2015_R1.msi",
+    "sources":
+    [
+    ]
+  }
+]
