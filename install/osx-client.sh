@@ -635,9 +635,16 @@ function cache_stuff() # {{{2
   verbose "Caching ISO files"
   [[ -d "$CACHE_ROOT" ]] || $NOOP sudo mkdir -p "$CACHE_ROOT"
 
-  nic_names=( $(/sbin/ifconfig | grep mtu | cut -d: -f1) )
   ip_addresses=()
   ip_masks=()
+  nic_names=(  $(/sbin/ifconfig | grep mtu | grep 'utun\d:' | cut -d: -f1) )
+  for nic_name in ${nic_names[*]}; do
+    nic_info=$( /sbin/ifconfig $nic_name | grep 'inet\s' | grep -v 127.0.0.1 )
+    if [[ ! -z "$nic_info" ]]; then
+      ip_addresses+=( "$(echo $nic_info | cut -d' ' -f2)/$( mask_hex2cidr $(echo $nic_info | cut -d' ' -f6 | cut -dx -f2) )" )
+    fi
+  done
+  nic_names=( $(/sbin/ifconfig | grep mtu | grep 'en\d:'   | cut -d: -f1) )
   for nic_name in ${nic_names[*]}; do
     nic_info=$( /sbin/ifconfig $nic_name | grep 'inet\s' | grep -v 127.0.0.1 )
     if [[ ! -z "$nic_info" ]]; then
@@ -645,13 +652,37 @@ function cache_stuff() # {{{2
     fi
   done
   verbose "IP Addresses: ${ip_addresses[*]}"
-  return
 
-  for cached in "${CACHE_SOURCES[*]}"; do
-    KEY="${cached%%|*}"
-    VALUE="${cached#*:}"
-    verbose "Caching $KEY"
-    verbose "  data: $VALUE"
+  document_catalog='./install/sources.json'
+  document_ids=( $(jq '.[] | .id' "$document_catalog") )
+  
+  for document_id in ${document_ids[*]}; do
+    document=$(jq ".[] | select(.id == $document_id)" "$document_catalog")
+    verbose "Caching $(echo "$document" | jq --raw-output '.name')"
+    sources_size=$( echo $document | jq '.sources | length' )
+    source_location=''
+    source_url=''
+    if [[ $sources_size > 0 ]]; then
+      for ip_address in ${ip_addresses[*]}; do
+        for (( i=0; i < $sources_size; i++ )); do
+          source=$( echo "$document" | jq ".sources[$i]" )
+          source_network=$( echo "$source" | jq '.network' )
+          if [[ \"$ip_address\" =~ $source_network  ]]; then
+            source_location=$(echo "$source" | jq --raw-output '.location')
+            source_url=$(echo "$source" | jq --raw-output '.url')
+            verbose "Matched $source_network from $ip_address at $source_location"
+            break
+          fi
+        done
+        [[ ! -z "$source_location" ]] && break
+      done
+    fi
+
+    if [[ ! -z "$source_location" ]]; then
+      $NOOP curl -SL $source_url -o $(echo "$document" | jq '.destination')
+    else
+      warn "Cannot cache $( echo "$document" | jq --raw-output '.name' ), no source available"
+    fi
   done
 } # 2}}}
 
