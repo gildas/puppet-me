@@ -634,6 +634,7 @@ function cache_stuff() # {{{2
 
   verbose "Caching ISO files"
   [[ -d "$CACHE_ROOT" ]] || $NOOP sudo mkdir -p "$CACHE_ROOT"
+  download https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/sources.json "${CACHE_ROOT}"
 
   ip_addresses=()
   ip_masks=()
