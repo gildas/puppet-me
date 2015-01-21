@@ -696,7 +696,7 @@ function cache_stuff() # {{{2
       #  if [[ $? == 0 ]]; then
       #  fi
       #fi
-      $NOOP curl -SL $source_url -o "$document_destination"
+      download $source_url "$document_destination"
       if [ ! -z $calc_checksum ] && [ -r "$document_destination" ] ; then
         destination_checksum=$($calc_checksum $document_destination)
         if [[ ! $destination_checksum =~ \s*$document_checksum\s* ]]; then
