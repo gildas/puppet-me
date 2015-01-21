@@ -682,6 +682,7 @@ function cache_stuff() # {{{2
 
     if [[ ! -z "$source_location" ]]; then
       document_destination=$(echo "$document" | jq --raw-output '.destination')
+      [[ -z "$document_destination" ]] && document_destination=$CACHE_ROOT
       document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
       document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
       calc_checksum=''
