@@ -300,8 +300,10 @@ function download() # {{{2
   filename=${filename%%\?*}     # emove everything after the ? (including)
   verbose "  Downloading ${filename}..."
 
-  $NOOP mkdir -p $target
-  $NOOP curl --location --show-error --progress-bar --output "${target}/${filename}" "${source}"
+  [[ -w "$(dirname $target)" ]] || sudo='sudo'
+  $NOOP $sudo mkdir -p $target
+  [[ -w $target ]] || sudo='sudo'
+  $NOOP $sudo curl --location --show-error --progress-bar --output "${target}/${filename}" "${source}"
 } # 2}}}
 
 function install_dmg() # {{{2
