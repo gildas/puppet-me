@@ -635,6 +635,7 @@ function cache_stuff() # {{{2
   verbose "Caching ISO files"
   [[ -d "$CACHE_ROOT" ]] || $NOOP sudo mkdir -p "$CACHE_ROOT"
   download https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/sources.json "${CACHE_ROOT}"
+  document_catalog="${CACHE_ROOT}/sources.json"
 
   ip_addresses=()
   ip_masks=()
@@ -654,7 +655,6 @@ function cache_stuff() # {{{2
   done
   verbose "IP Addresses: ${ip_addresses[*]}"
 
-  document_catalog='./install/sources.json'
   document_ids=( $(jq '.[] | .id' "$document_catalog") )
   
   for document_id in ${document_ids[*]}; do
