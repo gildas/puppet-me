@@ -607,6 +607,11 @@ function install_vagrant() # {{{2
     $NOOP brew install homebrew/completions/vagrant-completion
   fi
 
+  if [[ -z $(vagrant plugin list | grep 'vagrant-host-shell') ]]; then
+    verbose "  Installing Vagrant Plugin for Host Shell"
+    $NOOP vagrant plugin install vagrant-host-shell
+  fi
+
   if [[ -z $(vagrant plugin list | grep 'vagrant-vmware-fusion') ]]; then
     verbose "  Installing Vagrant Plugin for VMWare"
     $NOOP vagrant plugin install vagrant-vmware-fusion
