@@ -27,6 +27,7 @@ MODULES=(homebrew puppet)
 ALL_MODULES=(homebrew cache packer puppet rubytools vagrant virtualbox vmware)
 
 CACHE_ROOT='/var/cache/daas'
+CACHE_SOURCE='https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/sources.json'
 trap trace_end EXIT
 
 # Module: tracing # {{{
@@ -263,6 +264,18 @@ function parse_args() # {{{2
         NETWORK=${1#*=} # delete everything up to =
         ;;
       --network=)
+        die "Argument for option $1 is missing."
+        ;;
+      --cache-source)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        CACHE_SOURCE=$2
+        shift 2
+        continue
+        ;;
+      --cache-source=*?)
+        CACHE_SOURCE=${1#*=} # delete everything up to =
+        ;;
+      --cache-source=)
         die "Argument for option $1 is missing."
         ;;
       --noop|--dry-run)
@@ -653,7 +666,7 @@ function cache_stuff() # {{{2
 
   verbose "Caching ISO files"
   [[ -d "$CACHE_ROOT" ]] || $NOOP sudo mkdir -p "$CACHE_ROOT"
-  download https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/sources.json "${CACHE_ROOT}"
+  download "$CACHE_SOURCE" "${CACHE_ROOT}"
   document_catalog="${CACHE_ROOT}/sources.json"
 
   ip_addresses=( $NETWORK )
