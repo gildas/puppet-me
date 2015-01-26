@@ -253,6 +253,18 @@ function parse_args() # {{{2
       --modules=)
         die "Argument for option $1 is missing.\nIt is a comma-separated list of the possible values are: ${ALL_MODULES[*]}"
         ;;
+      --network)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        NETWORK=$2
+        shift 2
+        continue
+        ;;
+      --network=*?)
+        NETWORK=${1#*=} # delete everything up to =
+        ;;
+      --network=)
+        die "Argument for option $1 is missing."
+        ;;
       --noop|--dry-run)
         warn "This program will execute in dry mode, your system will not be modified"
         NOOP=:
@@ -644,7 +656,7 @@ function cache_stuff() # {{{2
   download https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/sources.json "${CACHE_ROOT}"
   document_catalog="${CACHE_ROOT}/sources.json"
 
-  ip_addresses=()
+  ip_addresses=( $NETWORK )
   ip_masks=()
   nic_names=(  $(/sbin/ifconfig | grep mtu | grep 'utun\d:' | cut -d: -f1) )
   for nic_name in ${nic_names[*]}; do
