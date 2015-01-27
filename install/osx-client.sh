@@ -315,7 +315,7 @@ function parse_args() # {{{2
 } # 2}}}
 
 function download() # {{{2
-{ 
+{
   # download "http://login:password@hostname/path/file?k1=v1&k2=v2" "local_folder"
   local source=$1
   local target=$2
@@ -328,6 +328,7 @@ function download() # {{{2
   [[ -w "$(dirname $target)" ]] || sudo='sudo'
   $NOOP $sudo mkdir -p $target
   [[ -w $target ]] || sudo='sudo'
+  trace $sudo curl --location --show-error --progress-bar --output "${target}/${filename}" "${source}"
   $NOOP $sudo curl --location --show-error --progress-bar --output "${target}/${filename}" "${source}"
 } # 2}}}
 
@@ -704,7 +705,8 @@ function cache_stuff() # {{{2
           if [[ \"$ip_address\" =~ $source_network  ]]; then
             source_location=$(echo "$source" | jq --raw-output '.location')
             source_url=$(echo "$source" | jq --raw-output '.url')
-            verbose "Matched $source_network from $ip_address at $source_location"
+            #debug   "  Matched $source_network from $ip_address at $source_location"
+            verbose "  Downloading from $source_location"
             break
           fi
         done
