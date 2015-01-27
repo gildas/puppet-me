@@ -728,17 +728,21 @@ function cache_stuff() # {{{2
         *)
          error "Unsupported checksum type ($document_checksum_type) while caching $document_name"
       esac
+      trace "Expect $document_checksum_type checksum: $document_checksum"
       #if [[ ! -z $calc_checksum ]]; then
       #  $NOOP curl -sSL ${source_url}.${document_checksum_type} "${document_destination}.${document_checksum_type}" 2>&1 > /dev/null
       #  if [[ $? == 0 ]]; then
       #  fi
       #fi
       download $source_url "$document_destination"
-      if [ ! -z $calc_checksum ] && [ -r "$document_destination" ] ; then
-        destination_checksum=$($calc_checksum $document_destination)
+      document_path=${source_url##*/}         # Remove everything up to the last /
+      document_path=${document_path%%\?*}     # emove everything after the ? (including)
+      document_path="${document_destination}/${document_path}"
+      if [ ! -z $calc_checksum ] && [ -r "$document_path" ] ; then
+        destination_checksum=$($calc_checksum "$document_path")
         if [[ ! $destination_checksum =~ \s*$document_checksum\s* ]]; then
           error "Invalid ${document_checksum_type} checksum for the downloaded document"
-          $NOOP rm -f "$document_destination"
+          $NOOP sudo rm -f "$document_path"
         fi
       fi
     else
