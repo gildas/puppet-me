@@ -319,17 +319,51 @@ function download() # {{{2
   # download "http://login:password@hostname/path/file?k1=v1&k2=v2" "local_folder"
   local source=$1
   local target=$2
+  local checksum_type=$3
+  local checksum_value=$4
+  local checksum='md5'
+  local target_checksum
   local filename
+  local filename_path
 
   filename=${source##*/}        # Remove everything up to the last /
   filename=${filename%%\?*}     # emove everything after the ? (including)
+  target_path="${target}/${filename}"
+
   verbose "  Downloading ${filename}..."
+
+  case $checksum_type in
+    MD5|md5)   checksum='md5';;
+    SHA1|sha1) checksum='shasum';;
+    null|'')   checksum='';;
+    *)
+    error "Unsupported checksum type ($checksum_type) while downloading $filename"
+    return 1
+  esac
+  trace "Expect $checksum_type checksum: $checksum_value"
 
   [[ -w "$(dirname $target)" ]] || sudo='sudo'
   $NOOP $sudo mkdir -p $target
   [[ -w $target ]] || sudo='sudo'
-  trace $sudo curl --location --show-error --progress-bar --output "${target}/${filename}" "${source}"
-  $NOOP $sudo curl --location --show-error --progress-bar --output "${target}/${filename}" "${source}"
+  if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
+    target_checksum=$( $checksum "${target_path}")
+    if [[ $target_checksum =~ \s*$checksum_value\s* ]]; then
+      verbose "  File already downloaded and checksum verified"
+      return 0
+    else
+      $NOOP sudo rm -f "$target_path"
+    fi
+  fi
+  trace $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
+  $NOOP $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
+  if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
+    target_checksum=$( $checksum "${target_path}")
+    if [[ ! $target_checksum =~ \s*$checksum_value\s* ]]; then
+      error "Invalid ${document_checksum_type} checksum for the downloaded document"
+      $NOOP sudo rm -f "$target_path"
+      return 1
+    fi
+  fi
 } # 2}}}
 
 function install_dmg() # {{{2
@@ -721,30 +755,7 @@ function cache_stuff() # {{{2
       trace "  Destination: ${document_destination}"
       document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
       document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
-      calc_checksum=''
-      case $document_checksum_type in
-        MD5|md5)   calc_checksum='md5';;
-        SHA1|sha1) calc_checksum='shasum';;
-        *)
-         error "Unsupported checksum type ($document_checksum_type) while caching $document_name"
-      esac
-      trace "Expect $document_checksum_type checksum: $document_checksum"
-      #if [[ ! -z $calc_checksum ]]; then
-      #  $NOOP curl -sSL ${source_url}.${document_checksum_type} "${document_destination}.${document_checksum_type}" 2>&1 > /dev/null
-      #  if [[ $? == 0 ]]; then
-      #  fi
-      #fi
-      download $source_url "$document_destination"
-      document_path=${source_url##*/}         # Remove everything up to the last /
-      document_path=${document_path%%\?*}     # emove everything after the ? (including)
-      document_path="${document_destination}/${document_path}"
-      if [ ! -z $calc_checksum ] && [ -r "$document_path" ] ; then
-        destination_checksum=$($calc_checksum "$document_path")
-        if [[ ! $destination_checksum =~ \s*$document_checksum\s* ]]; then
-          error "Invalid ${document_checksum_type} checksum for the downloaded document"
-          $NOOP sudo rm -f "$document_path"
-        fi
-      fi
+      download $source_url "$document_destination" $document_checksum_type $document_checksum
     else
       warn "Cannot cache $( echo "$document" | jq --raw-output '.name' ), no source available"
     fi
