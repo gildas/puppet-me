@@ -127,6 +127,10 @@ function trace_init() # {{{2
 
 function trace_end() # {{{2
 {
+  trace --trace-member "Removing CIFS mount points"
+  if [[ ! -z $(mount | grep /Volumes/WindowsShare) ]]; then
+    sudo umount /Volumes/WindowsShare-* 2>&1 > /dev/null
+  fi
   trace --trace-member "[END] -------"
 } # 2}}}
 
@@ -175,7 +179,7 @@ function capitalize() # {{{2
   echo "$(tr '[:lower:]' '[:upper:]' <<< ${value:0:1})${value:1}"
 } # 2}}}
 
-function mask_cidr2dotted () #{{{2
+function mask_cidr2dotted() #{{{2
 {
    # Number of args to shift, 255..255, first non-255 byte, zeroes
    set -- $(( 5 - ($1 / 8) )) 255 255 255 255 $(( (255 << (8 - ($1 % 8))) & 255 )) 0 0 0
@@ -183,7 +187,7 @@ function mask_cidr2dotted () #{{{2
    echo ${1-0}.${2-0}.${3-0}.${4-0}
 } # 2}}}
 
-function mask_dotted2cidr () #{{{2
+function mask_dotted2cidr() #{{{2
 {
    # Assumes there's no "255." after a non-255 byte in the mask
    set -- 0^^^128^192^224^240^248^252^254^ ${#1} ${1##*255.}
@@ -191,12 +195,36 @@ function mask_dotted2cidr () #{{{2
    echo $(( $1 + (${#2}/4) ))
 } # 2}}}
 
-function mask_hex2cidr () #{{{2
+function mask_hex2cidr() #{{{2
 {
    # Assumes there's no "ff" after a non-ff byte in the mask
    set -- 08ce ${#1} ${1##*f}
    set -- $(( ($2 - ${#3})*4 )) ${1%%${3%%0*}*}
    echo $(( $1 + ${#2} ))
+} # 2}}}
+
+function urldecode() #{{{2
+{
+  local value=${1//+/ }         # decode + into space
+  printf '%b' "${value//%/\\x}" # decode hexa characters (ANSI only)
+} # 2}}}
+
+function prompt() #{{{2
+{
+  local query=$1
+
+  if [[ -z "$SSH_CLIENT" ]]; then
+    # We are on the Mac screen
+    entry=$(osascript -e "Tell application 'System Events' to display dialog '${query}' default answer ''" -e 'text returned of result' 2>/dev/null)
+    if [ $? -ne 0]; then
+      # The user pressed cancel
+      return 1
+    fi
+  else
+    # We are in an SSH session
+    read -p "${query}" value
+    printf '%s' $value
+  fi
 } # 2}}}
 
 function version() # {{{2
@@ -317,6 +345,7 @@ function parse_args() # {{{2
 function download() # {{{2
 {
   # download "http://login:password@hostname/path/file?k1=v1&k2=v2" "local_folder"
+  # download "smb://login:password@hostname/path/file?k1=v1&k2=v2" "local_folder"
   local source=$1
   local target=$2
   local checksum_type=$3
@@ -354,8 +383,73 @@ function download() # {{{2
       $NOOP sudo rm -f "$target_path"
     fi
   fi
-  trace $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
-  $NOOP $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
+  if [[ ${source%%:*} == 'smb' ]]; then
+    verbose "  Copying from CIFS location"
+    # source is like smb://domain;userid:password@server/share/path/file
+    # domain, userid, and password are optional
+    trace ">> source: ${source}"
+    smb_user=''
+    smb_domain=''
+    smb_password=''
+    smb_mount=$(dirname ${source#*:})
+    trace ">> mount: ${smb_mount}"
+    if [[ "${smb_mount}" =~ .*@.* ]]; then      # Search for user
+      trace "  Found a user"
+      smb_user=${smb_mount#*//}                 # remove the heading //
+      smb_user=${smb_user%@*}                   # keep the credentials
+      trace "  >> smb_user: ${smb_user}"
+      if [[ "${smb_user}" =~ .*:.* ]]; then     # Search for password
+        trace "  Found a password"
+        smb_password=${smb_user#*:}             # extract password
+        smb_user=${smb_user%:*}                 # remove all after :
+      fi
+      if [[ "${smb_user}" =~ .*\;.* ]]; then    # Search for domain
+        trace "  Found a domain"
+        smb_domain=${smb_user%;*}               # extract domain
+        smb_user=${smb_user#*;}                 # extract user
+      fi
+    fi
+    smb_host=${smb_mount#*@}                    # remove the user
+    smb_share=${smb_host#*/}                    # remove the host
+    smb_path=${smb_share#*/}                    # extract the path
+    smb_share=${smb_share%%/*}                  # extract the share
+    smb_host=${smb_host%%/*}                    # extract the host
+    trace "smb: host: ${smb_host}, share: ${smb_share}, path: ${smb_path}, user: ${smb_user}, domain: ${smb_domain}, password: ${smb_password}"
+
+    if [[ -z "$smb_user" ]]; then
+      smb_user=$(prompt "User for mounting ${smb_share} on ${smb_host}: ")
+      [[ ! -z "$smb_user" ]] && smb_user=$userid
+      smb_user=${smb_user/\\/;/}                # change \ into ;
+    elif [[ ! -z "$smb_domain" ]]; then
+      smb_user="${smb_domain};${smb_user}"
+    fi
+    if [[ -z "$smb_password" ]]; then
+      smb_password=$(prompt "Password for ${smb_user}: ")
+      smb_mount="//${smb_user}@${smb_host}/${smb_share}"
+    else
+      smb_mount="//${smb_user}:${smb_password}@${smb_host}/${smb_share}"
+    fi
+
+    smb_target="/Volumes/WindowsShare-${smb_host}-${smb_share}.$$"
+    if [[ -z "$(mount | grep $smb_target)" ]]; then
+      verbose "  Mounting ${smb_share} from ${smb_host} as ${smb_user}"
+      trace ">> mount -t smbfs '${smb_mount}' $smb_target"
+      mkdir -p $smb_target
+      mount -t smbfs  "${smb_mount}" $smb_target
+      if [[ $? > 0 ]]; then
+        error "Cannot mount ${smb_mount}"
+        return 1
+      fi
+    fi
+    verbose "  Copying $filename"
+    trace $sudo cp "${smb_target}/$(urldecode ${smb_path})/$filename" "${target_path}"
+    $NOOP $sudo cp "${smb_target}/$(urldecode ${smb_path})/$filename" "${target_path}"
+    $NOOP $sudo chmod 664 "${target_path}"
+  else
+    verbose "  Copying from url location"
+    trace $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
+    $NOOP $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
+  fi
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
     target_checksum=$( $checksum "${target_path}")
     if [[ ! $target_checksum =~ \s*$checksum_value\s* ]]; then
@@ -809,6 +903,5 @@ function main() # {{{
         ;;
     esac
   done
-}
+} # }}}
 main "$@"
-# }}}
