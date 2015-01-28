@@ -436,23 +436,23 @@ function download() # {{{2
     smb_host=${smb_host%%/*}                    # extract the host
     trace "smb: host: ${smb_host}, share: ${smb_share}, path: ${smb_path}, user: ${smb_user}, domain: ${smb_domain}, password: ${smb_password}"
 
-    if [[ -z "$smb_user" ]]; then
-      verbose "  Requesting credentials for //${smb_host}/${smb_share}"
-      smb_user=$(prompt "  User for mounting ${smb_share} on ${smb_host} [${userid}]:")
-      [ -z "$smb_user" ] && smb_user=$userid
-      smb_user=${smb_user/\\/;/}                # change \ into ;
-    elif [[ ! -z "$smb_domain" ]]; then
-      smb_user="${smb_domain};${smb_user}"
-    fi
-    if [[ -z "$smb_password" ]]; then
-      verbose "  Requesting credentials for //${smb_host}/${smb_share}"
-      smb_password=$(prompt -s "  Password for ${smb_user}:")
-      echo
-    fi
-    smb_mount="//${smb_user}:${smb_password//@/%40}@${smb_host}/${smb_share}"
-
     smb_target="/Volumes/WindowsShare-${smb_host}-${smb_share}.$$"
     if [[ -z "$(mount | grep $smb_target)" ]]; then
+      if [[ -z "$smb_user" ]]; then
+        verbose "  Requesting credentials for //${smb_host}/${smb_share}"
+        smb_user=$(prompt "  User for mounting ${smb_share} on ${smb_host} [${userid}]:")
+        [ -z "$smb_user" ] && smb_user=$userid
+        smb_user=${smb_user/\\/;/}                # change \ into ;
+      elif [[ ! -z "$smb_domain" ]]; then
+        smb_user="${smb_domain};${smb_user}"
+      fi
+      if [[ -z "$smb_password" ]]; then
+        verbose "  Requesting credentials for //${smb_host}/${smb_share}"
+        smb_password=$(prompt -s "  Password for ${smb_user}:")
+        echo
+      fi
+      smb_mount="//${smb_user}:${smb_password//@/%40}@${smb_host}/${smb_share}"
+
       verbose "  Mounting ${smb_share} from ${smb_host} as ${smb_user}"
       trace ">> mount -t smbfs '${smb_mount}' $smb_target"
       mkdir -p $smb_target
@@ -462,6 +462,8 @@ function download() # {{{2
         return 1
       fi
       CACHE_MOUNTS+=( "//${smb_user}@${smb_host}/${smb_share}" )
+    else
+      verbose "  ${smb_share} is already mounted"
     fi
     verbose "  Copying $filename"
     trace $sudo cp "${smb_target}/$(urldecode ${smb_path})/$filename" "${target_path}"
