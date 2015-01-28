@@ -23,7 +23,7 @@ MODULE_vagrant_done=0
 MODULE_virtualbox_done=0
 MODULE_vmware_done=0
 
-MODULES=(homebrew puppet)
+MODULES=(homebrew puppet rubytools)
 ALL_MODULES=(homebrew cache packer puppet rubytools vagrant virtualbox vmware)
 
 CACHE_ROOT='/var/cache/daas'
