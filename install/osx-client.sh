@@ -211,20 +211,30 @@ function urldecode() #{{{2
 
 function prompt() #{{{2
 {
-  local query=$1
+  local silent=''
+  local query
+  local value
 
   if [[ -z "$SSH_CLIENT" ]]; then
     # We are on the Mac screen
-    entry=$(osascript -e "Tell application 'System Events' to display dialog '${query}' default answer ''" -e 'text returned of result' 2>/dev/null)
+    if [[ "$1" == '-s' || "$1" == '--silent' ]]; then
+      silent='with hidden answer'
+      shift
+    fi
+    value=$(osascript -e "Tell application 'System Events' to display dialog '$1' default answer '' $silent" -e 'text returned of result' 2>/dev/null)
     if [ $? -ne 0]; then
       # The user pressed cancel
       return 1
     fi
   else
+    if [[ "$1" == '-s' || "$1" == '--silent' ]]; then
+      silent='-s'
+      shift
+    fi
     # We are in an SSH session
-    read -p "${query}" value
-    printf '%s' $value
+    read $silent -p "$1 " value < /dev/tty
   fi
+  printf '%s' $value
 } # 2}}}
 
 function version() # {{{2
