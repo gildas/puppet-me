@@ -631,6 +631,14 @@ function install_packer() # {{{2
     $NOOP git --git-dir "${packer_windows}/.git" pull
   fi
 
+  for file in `\ls -1 /var/cache/daas/`; do
+    [[ "$file" == 'sources.json' ]] && continue
+    if [ ! -L "${packer_windows}/iso/${file}" ]; then
+      [ -r "${packer_windows}/iso/${file}" ] && sudo rm "${packer_windows}/iso/${file}"
+      ln -s "/var/cache/daas/${file}" ${packer_windows}/iso
+    fi
+  done
+
   if [[ -f "$packer_windows/Gemfile" ]]; then
     [[ -z "$NOOP" ]] && (cd $packer_windows ; bundle install)
   fi
