@@ -357,6 +357,11 @@ function download() # {{{2
 {
   # download "http://login:password@hostname/path/file?k1=v1&k2=v2" "local_folder"
   # download "smb://login:password@hostname/path/file?k1=v1&k2=v2" "local_folder"
+  local auth=0
+  if [[ "$1" == '--auth' ]]; then
+    auth=1
+    shift
+  fi
   local source=$1
   local target=$2
   local checksum_type=$3
@@ -395,6 +400,7 @@ function download() # {{{2
     fi
   fi
   if [[ ${source%%:*} == 'smb' ]]; then
+    auth=1
     verbose "  Copying from CIFS location"
     # source is like smb://domain;userid:password@server/share/path/file
     # domain, userid, and password are optional
@@ -462,8 +468,30 @@ function download() # {{{2
     $NOOP $sudo chmod 664 "${target_path}"
   else
     verbose "  Copying from url location"
+    url_host=$(dirname ${source#*://})          # remove the protocol
+    if [[ "${url_host}" =~ .*@.* ]]; then
+      url_host=${url_host#*@}                   # remove the user
+    fi
+    url_host=${url_host%%/*}                    # extract the host
+    url_creds=''
+    if [[ $auth == 1 ]]; then
+      if [[ -z "$url_user" ]]; then
+        verbose "  Requesting credentials for ${url_host}"
+        url_user=$(prompt "  User to download from ${url_host} [${userid}]:")
+        [ -z "$url_user" ] && url_user=$userid
+        url_user=${url_user/\\/;/}                # change \ into ;
+      elif [[ ! -z "$url_domain" ]]; then
+        url_user="${url_domain};${url_user}"
+      fi
+      if [[ -z "$url_password" ]]; then
+        verbose "  Requesting credentials for ${url_host}"
+        url_password=$(prompt -s "  Password for ${url_user}:")
+        echo
+      fi
+      url_creds="--user ${url_user}:${url_password}"
+    fi
     trace $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
-    $NOOP $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
+    $NOOP $sudo curl --location --show-error --progress-bar ${url_creds} --output "${target_path}" "${source}"
   fi
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
     target_checksum=$( $checksum "${target_path}")
@@ -863,8 +891,10 @@ function cache_stuff() # {{{2
           if [[ \"$ip_address\" =~ $source_network  ]]; then
             source_location=$(echo "$source" | jq --raw-output '.location')
             source_url=$(echo "$source" | jq --raw-output '.url')
+	    source_auth=''
+	    [[ "$(echo "$source" | jq '.auth')" == 'true' ]] && source_auth='--auth'
             #debug   "  Matched $source_network from $ip_address at $source_location"
-            verbose "  Downloading from $source_location"
+	    verbose "  Downloading from $source_location (Authentication? ${source_auth})"
             break
           fi
         done
@@ -879,7 +909,7 @@ function cache_stuff() # {{{2
       trace "  Destination: ${document_destination}"
       document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
       document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
-      download $source_url "$document_destination" $document_checksum_type $document_checksum
+      download $source_auth $source_url "$document_destination" $document_checksum_type $document_checksum
     else
       warn "Cannot cache $( echo "$document" | jq --raw-output '.name' ), no source available"
     fi
