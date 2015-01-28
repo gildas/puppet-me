@@ -391,6 +391,7 @@ function download() # {{{2
   $NOOP $sudo mkdir -p $target
   [[ -w $target ]] || sudo='sudo'
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
+    verbose "  Calculating checksum of downloaded file"
     target_checksum=$( $checksum "${target_path}")
     if [[ $target_checksum =~ \s*$checksum_value\s* ]]; then
       verbose "  File already downloaded and checksum verified"
