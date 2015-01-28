@@ -418,8 +418,10 @@ function download() # {{{2
         smb_domain=${smb_user%;*}               # extract domain
         smb_user=${smb_user#*;}                 # extract user
       fi
+      smb_host=${smb_mount#*@}                  # remove the user
+    else
+      smb_host=${smb_mount#*//}                 # remove the heading //
     fi
-    smb_host=${smb_mount#*@}                    # remove the user
     smb_share=${smb_host#*/}                    # remove the host
     smb_path=${smb_share#*/}                    # extract the path
     smb_share=${smb_share%%/*}                  # extract the share
