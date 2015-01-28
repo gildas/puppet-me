@@ -368,11 +368,29 @@ function download() # {{{2
   local checksum_value=$4
   local checksum='md5'
   local target_checksum
+  local archive_source
   local filename
   local filename_path
+  local source_protocol
+  local source_ext
 
-  filename=${source##*/}        # Remove everything up to the last /
-  filename=${filename%%\?*}     # emove everything after the ? (including)
+  source_protocol=${source%%:*}
+  trace ">> source protocol: ${source_protocol}"
+
+  if [[ ${source_protocol} == 'file' && "${source}" =~ .*\?.* ]]; then
+    # source is like: file:///path/archive.ext?filename
+    #   the script will open the archive and extract filename.
+    #   if the archive is an ISO, it is mounted for the extraction
+    trace "extracting a file from an archive"
+    filename_path=${source#*\?}                 # extract the file in archive
+    filename=${filename_path##*/}               # Remove the path
+    source=${source%\?*}                        # Remove the path in archive
+    trace "  >> filename_path: ${filename_path}"
+  else
+    filename=${source##*/}                      # extract the filename
+  fi
+  trace "  >> filename: ${filename}"
+  trace "  >> source: ${source}"
   target_path="${target}/${filename}"
 
   verbose "  Downloading ${filename}..."
@@ -400,7 +418,7 @@ function download() # {{{2
       $NOOP sudo rm -f "$target_path"
     fi
   fi
-  if [[ ${source%%:*} == 'smb' ]]; then
+  if [[ ${source_protocol} == 'smb' ]]; then # {{{3
     auth=1
     verbose "  Copying from CIFS location"
     # source is like smb://domain;userid:password@server/share/path/file
@@ -469,7 +487,47 @@ function download() # {{{2
     trace $sudo rsync --progress "${smb_target}/$(urldecode ${smb_path})/$filename" "${target_path}"
     $NOOP $sudo rsync --progress "${smb_target}/$(urldecode ${smb_path})/$filename" "${target_path}"
     $NOOP $sudo chmod 664 "${target_path}"
-  else
+  # 3}}}
+  elif [[ ${source_protocol} == 'file' ]]; then # {{{3
+    if [[ -n "${filename_path}" ]]; then
+      source=${source#*://}                     # remove the protocol
+      source_ext=${source##*\.}
+      verbose "Archive type: ${source_ext}"
+      case $source_ext in
+        iso|ISO)
+          mount_info=$(hdiutil mount ${source})
+          if [ $? -ne 0 ]; then
+            error "Cannot mount ${source}"
+            return 1
+          fi
+          mount_path=$(echo "$mount_info" | awk '{print $2}')
+          trace "mount info: ${mount_info}"
+          trace "mount path: ${mount_path}"
+          verbose $sudo rsync --progress "${mount_path}/${filename_path}" "${target_path}"
+          $NOOP $sudo rsync --progress "${mount_path}/${filename_path}" "${target_path}"
+          if [ $? -ne 0 ]; then
+            error "Cannot copy ${mount_path}/${filename_path} to ${target_path}"
+          else
+            $NOOP $sudo chmod 664 "${target_path}"
+          fi
+          results=$(hdiutil unmount ${mount_path})
+          if [ $? -ne 0 ]; then
+            error "Cannot unmount ${source}, error: ${results}"
+            return 1
+          fi
+        ;;
+        *)
+          error "Unsupported archive format in ${source}"
+          return 1
+        ;;
+      esac
+return
+    else
+      trace $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
+      $NOOP $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
+    fi
+  # 3}}}
+  else # {{{3
     verbose "  Copying from url location"
     url_host=$(dirname ${source#*://})          # remove the protocol
     if [[ "${url_host}" =~ .*@.* ]]; then
@@ -495,7 +553,7 @@ function download() # {{{2
     fi
     trace $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
     $NOOP $sudo curl --location --show-error --progress-bar ${url_creds} --output "${target_path}" "${source}"
-  fi
+  fi # 3}}}
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
     target_checksum=$( $checksum "${target_path}")
     if [[ ! $target_checksum =~ \s*$checksum_value\s* ]]; then
