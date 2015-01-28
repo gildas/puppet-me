@@ -267,7 +267,7 @@ function parse_args() # {{{2
         die "Argument for option $1 is missing"
         ;;
       --macmini)
-        MODULES=(homebrew rubytools puppet vmware vagrant packer cache)
+        MODULES=(homebrew rubytools puppet vmware vagrant cache packer)
         ;;
       --modules)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing.\nIt is a comma-separated list of the possible values are: ${ALL_MODULES[*]}"
@@ -606,6 +606,8 @@ function install_packer() # {{{2
 {
   [[ $MODULE_homebrew_done  == 0 ]] && install_homebrew
   [[ $MODULE_rubytools_done == 0 ]] && install_rubytools
+  [[ $MODULE_vagrant_done   == 0 ]] && install_vagrant
+  [[ $MODULE_cache_done     == 0 ]] && install_cache
 
   brew_install packer
 
