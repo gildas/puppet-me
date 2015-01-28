@@ -430,8 +430,8 @@ function download() # {{{2
 
     if [[ -z "$smb_user" ]]; then
       verbose "  Requesting credentials for //${smb_host}/${smb_share}"
-      smb_user=$(prompt "  User for mounting ${smb_share} on ${smb_host}:")
-      [[ ! -z "$smb_user" ]] && smb_user=$userid
+      smb_user=$(prompt "  User for mounting ${smb_share} on ${smb_host} [${userid}]:")
+      [ -z "$smb_user" ] && smb_user=$userid
       smb_user=${smb_user/\\/;/}                # change \ into ;
     elif [[ ! -z "$smb_domain" ]]; then
       smb_user="${smb_domain};${smb_user}"
