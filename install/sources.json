@@ -18,7 +18,7 @@
       {
         "location": "Japan",
         "network":  "172.22.16.[0-9]+/23",
-        "url": "http://tyofiles.apac.inin.com/AppShare/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
+        "url": "smb://tyofiles.apac.inin.com/AppShare/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
       },
       {
         "location": "Internet",
@@ -36,7 +36,7 @@
       {
         "location": "Japan",
         "network":  "172.22.16.[0-9]+/23",
-        "url": "http://tyofiles.apac.inin.com/AppShare/Microsoft/Evaluation/SQLServer/2014/SQLEXPRWT_x64_ENU.exe"
+        "url": "smb://tyofiles.apac.inin.com/AppShare/Microsoft/Evaluation/SQLServer/2014/SQLEXPRWT_x64_ENU.exe"
       },
       {
         "location": "Internet",
@@ -77,7 +77,7 @@
       {
         "location": "Japan",
         "network":  "172.22.16.[0-9]+/23",
-        "url": "http://tyofiles.apac.inin.com/AppShare/ININ/Interaction%20Center/2015R1/CIC_2015_R1.iso"
+        "url": "smb://tyofiles.apac.inin.com/AppShare/ININ/Interaction%20Center/2015R1/CIC_2015_R1.iso"
       },
       {
         "location": "Internet",
@@ -105,7 +105,7 @@
       {
         "location": "Japan",
         "network":  "172.22.16.[0-9]+/23",
-        "url": "http://tyofiles.apac.inin.com/AppShare/ININ/Interaction%20Dialer/2015R1/Dialer_2015_R1.iso"
+        "url": "smb://tyofiles.apac.inin.com/AppShare/ININ/Interaction%20Dialer/2015R1/Dialer_2015_R1.iso"
       },
       {
         "location": "Internet",
@@ -118,18 +118,26 @@
     "name": "IC Server 2015R1",
     "id": "ICServer_2015R1",
     "checksum": { "type": "MD5", "value": "97f61b7d6de2c602da9ac6234dde8cbf" },
-    "destination": "${CACHE_ROOT}/ICServer_2015_R1.msi",
     "sources":
     [
+      {
+        "location": "ISO",
+        "network":  ".*",
+        "url": "file:///var/cache/daas//CIC_2015_R1.iso?ICServer_2015_R1.msi"
+      }
     ]
   },
   {
     "name": "IC Firmware 2015R1",
     "id": "ICFirmware_2015R1",
     "checksum": { "type": "MD5", "value": "36092e8ef7dc749e7a06aa3a914531f3" },
-    "destination": "${CACHE_ROOT}/InteractionFirmware_2015_R1.msi",
     "sources":
     [
+      {
+        "location": "ISO",
+        "network":  ".*",
+        "url": "file:///var/cache/daas//CIC_2015_R1.iso?InteractionFirmware_2015_R1.msi"
+      }
     ]
   }
 ]
