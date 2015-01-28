@@ -441,7 +441,7 @@ function download() # {{{2
       smb_password=$(prompt -s "  Password for ${smb_user}:")
       echo
     fi
-    smb_mount="//${smb_user}:${smb_password}@${smb_host}/${smb_share}"
+    smb_mount="//${smb_user}:${smb_password//@/%40}@${smb_host}/${smb_share}"
 
     smb_target="/Volumes/WindowsShare-${smb_host}-${smb_share}.$$"
     if [[ -z "$(mount | grep $smb_target)" ]]; then
