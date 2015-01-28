@@ -125,7 +125,7 @@
       {
         "location": "ISO",
         "network":  ".*",
-        "url": "file:///var/cache/daas//CIC_2015_R1.iso?ICServer_2015_R1.msi"
+        "url": "file:///var/cache/daas//CIC_2015_R1.iso?Installs/ServerComponents/ICServer_2015_R1.msi"
       }
     ]
   },
@@ -138,7 +138,7 @@
       {
         "location": "ISO",
         "network":  ".*",
-        "url": "file:///var/cache/daas//CIC_2015_R1.iso?InteractionFirmware_2015_R1.msi"
+        "url": "file:///var/cache/daas/CIC_2015_R1.iso?Installs/ServerComponents/InteractionFirmware_2015_R1.msi"
       }
     ]
   }
