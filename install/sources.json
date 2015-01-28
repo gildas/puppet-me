@@ -82,6 +82,7 @@
       {
         "location": "Internet",
         "network":  ".*",
+        "auth": true,
         "url": "ftp://ftp.inin.com/Download/CIC2015R1/CIC/CIC_2015_R1.iso"
       }
     ]
@@ -110,6 +111,7 @@
       {
         "location": "Internet",
         "network":  ".*",
+        "auth": true,
         "url": "ftp://ftp.inin.com/Download/CIC2015R1/Dialer/Dialer_2015_R1.iso"
       }
     ]
