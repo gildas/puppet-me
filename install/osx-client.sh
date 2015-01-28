@@ -895,7 +895,7 @@ function cache_stuff() # {{{2
 	    source_auth=''
 	    [[ "$(echo "$source" | jq '.auth')" == 'true' ]] && source_auth='--auth'
             #debug   "  Matched $source_network from $ip_address at $source_location"
-	    verbose "  Downloading from $source_location (Authentication? ${source_auth})"
+	    verbose "  Downloading from $source_location"
             break
           fi
         done
