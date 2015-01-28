@@ -450,7 +450,7 @@ function download() # {{{2
       mkdir -p $smb_target
       mount -t smbfs  "${smb_mount}" $smb_target
       if [[ $? > 0 ]]; then
-        error "Cannot mount ${smb_mount}"
+        error "Cannot mount ${smb_share} on ${smb_host} as ${smb_user}"
         return 1
       fi
     fi
