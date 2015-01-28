@@ -642,6 +642,7 @@ function install_packer() # {{{2
   if [[ -f "$packer_windows/Gemfile" ]]; then
     [[ -z "$NOOP" ]] && (cd $packer_windows ; bundle install)
   fi
+  MODULE_packer_done=1
 } # 2}}}
 
 function install_puppet() # {{{2
@@ -741,6 +742,7 @@ EOF
   fi
   verbose "Starting the puppet agent daemon"
   $NOOP sudo launchctl start com.puppetlabs.puppet
+  MODULE_puppet_done=1
 } # 2}}}
 
 function install_rubytools() # {{{2
@@ -754,6 +756,7 @@ function install_rubytools() # {{{2
   else
     $NOOP sudo gem install bundler
   fi
+  MODULE_rubytools_done=1
 } # 2}}}
 
 function install_vagrant() # {{{2
@@ -779,6 +782,7 @@ function install_vagrant() # {{{2
     $NOOP vagrant plugin install vagrant-vmware-fusion
     warn "  TODO: install your Vagrant for VMWare license!"
   fi
+  MODULE_vagrant_done=1
 } # 2}}}
 
 function install_virtualbox() # {{{2
@@ -786,6 +790,7 @@ function install_virtualbox() # {{{2
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
 
   cask_install virtualbox
+  MODULE_virtualbox_done=1
 } # 2}}}
 
 function install_vmware() # {{{2
@@ -795,6 +800,7 @@ function install_vmware() # {{{2
   else
     warn "Please install VMWare Fusion before building virtual machines"
   fi
+  MODULE_vmware_done=1
 } # 2}}}
 
 function cache_stuff() # {{{2
@@ -862,6 +868,7 @@ function cache_stuff() # {{{2
       warn "Cannot cache $( echo "$document" | jq --raw-output '.name' ), no source available"
     fi
   done
+  MODULE_cache_done=1
 } # 2}}}
 
 # Main
