@@ -417,18 +417,19 @@ function download() # {{{2
     trace "smb: host: ${smb_host}, share: ${smb_share}, path: ${smb_path}, user: ${smb_user}, domain: ${smb_domain}, password: ${smb_password}"
 
     if [[ -z "$smb_user" ]]; then
-      smb_user=$(prompt "User for mounting ${smb_share} on ${smb_host}: ")
+      verbose "  Requesting credentials for //${smb_host}/${smb_share}"
+      smb_user=$(prompt "  User for mounting ${smb_share} on ${smb_host}:")
       [[ ! -z "$smb_user" ]] && smb_user=$userid
       smb_user=${smb_user/\\/;/}                # change \ into ;
     elif [[ ! -z "$smb_domain" ]]; then
       smb_user="${smb_domain};${smb_user}"
     fi
     if [[ -z "$smb_password" ]]; then
-      smb_password=$(prompt "Password for ${smb_user}: ")
-      smb_mount="//${smb_user}@${smb_host}/${smb_share}"
-    else
-      smb_mount="//${smb_user}:${smb_password}@${smb_host}/${smb_share}"
+      verbose "  Requesting credentials for //${smb_host}/${smb_share}"
+      smb_password=$(prompt -s "  Password for ${smb_user}:")
+      echo
     fi
+    smb_mount="//${smb_user}:${smb_password}@${smb_host}/${smb_share}"
 
     smb_target="/Volumes/WindowsShare-${smb_host}-${smb_share}.$$"
     if [[ -z "$(mount | grep $smb_target)" ]]; then
