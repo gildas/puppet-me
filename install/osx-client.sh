@@ -28,6 +28,7 @@ ALL_MODULES=(homebrew cache packer puppet rubytools vagrant virtualbox vmware)
 
 CACHE_ROOT='/var/cache/daas'
 CACHE_SOURCE='https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/sources.json'
+CACHE_MOUNTS=()
 trap trace_end EXIT
 
 # Module: tracing # {{{
@@ -128,9 +129,9 @@ function trace_init() # {{{2
 function trace_end() # {{{2
 {
   trace --trace-member "Removing CIFS mount points"
-  if [[ ! -z $(mount | grep /Volumes/WindowsShare) ]]; then
-    sudo umount /Volumes/WindowsShare-* 2>&1 > /dev/null
-  fi
+  for cache_mount in ${CACHE_MOUNTS[@]}; do
+    sudo umount $cache_mount 2>&1 > /dev/null
+  done
   trace --trace-member "[END] -------"
 } # 2}}}
 
@@ -453,6 +454,7 @@ function download() # {{{2
         error "Cannot mount ${smb_share} on ${smb_host} as ${smb_user}"
         return 1
       fi
+      CACHE_MOUNTS+=( "//${smb_user}@${smb_host}/${smb_share}" )
     fi
     verbose "  Copying $filename"
     trace $sudo cp "${smb_target}/$(urldecode ${smb_path})/$filename" "${target_path}"
