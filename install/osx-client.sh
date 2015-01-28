@@ -466,8 +466,8 @@ function download() # {{{2
       verbose "  ${smb_share} is already mounted"
     fi
     verbose "  Copying $filename"
-    trace $sudo cp "${smb_target}/$(urldecode ${smb_path})/$filename" "${target_path}"
-    $NOOP $sudo cp "${smb_target}/$(urldecode ${smb_path})/$filename" "${target_path}"
+    trace $sudo rsync --progress "${smb_target}/$(urldecode ${smb_path})/$filename" "${target_path}"
+    $NOOP $sudo rsync --progress "${smb_target}/$(urldecode ${smb_path})/$filename" "${target_path}"
     $NOOP $sudo chmod 664 "${target_path}"
   else
     verbose "  Copying from url location"
