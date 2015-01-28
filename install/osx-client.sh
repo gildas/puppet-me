@@ -797,11 +797,9 @@ function install_virtualbox() # {{{2
 
 function install_vmware() # {{{2
 {
-  if [[ -d '/Applications/VMware Fusion.app' ]]; then
-    verbose "VMWare Fusion is installed"
-  else
-    warn "Please install VMWare Fusion before building virtual machines"
-  fi
+  [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
+
+  cask_install vmware-fusion
   MODULE_vmware_done=1
 } # 2}}}
 
