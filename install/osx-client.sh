@@ -24,7 +24,7 @@ MODULE_virtualbox_done=0
 MODULE_vmware_done=0
 
 MODULES=(homebrew puppet rubytools)
-ALL_MODULES=(homebrew cache packer puppet rubytools vagrant virtualbox vmware)
+ALL_MODULES=(homebrew cache packer puppet rubytools vagrant virtualbox vmware parallels)
 
 CACHE_ROOT='/var/cache/daas'
 CACHE_SOURCE='https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/sources.json'
@@ -280,8 +280,17 @@ function parse_args() # {{{2
       --userid=|--user=)
         die "Argument for option $1 is missing"
         ;;
-      --macmini)
+      --macmini|macmini-vmware)
         MODULES=(homebrew rubytools puppet vmware vagrant cache packer)
+        ;;
+      --macmini-parallels)
+        MODULES=(homebrew rubytools puppet parallels vagrant cache packer)
+        ;;
+      --macmini-virtualbox)
+        MODULES=(homebrew rubytools puppet virtualbox vagrant cache packer)
+        ;;
+      --macmini-all)
+        MODULES=(homebrew rubytools puppet parallels virtualbox vmware vagrant cache packer)
         ;;
       --modules)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing.\nIt is a comma-separated list of the possible values are: ${ALL_MODULES[*]}"
