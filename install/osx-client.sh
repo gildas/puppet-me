@@ -31,7 +31,11 @@ CACHE_ROOT='/var/cache/daas'
 CACHE_SOURCE='https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/sources.json'
 CACHE_MOUNTS=()
 
-PACKER_HOME="$HOME/Documents/packer"
+MODULE_PACKER_HOME="$HOME/Documents/packer"
+[[ -n "$PACKER_HOME"    ]] && MODULE_PACKER_HOME="$PACKER_HOME"
+MODULE_VAGRANT_HOME="$HOME/.vagrant.d"
+[[ -n "$XDG_CONFIG_HOME" ]] && MODULE_VAGRANT_HOME="$XDG_CONFIG_HOME/vagrant"
+[[ -n "$VAGRANT_HOME"    ]] && MODULE_VAGRANT_HOME="$VAGRANT_HOME"
 
 trap trace_end EXIT
 
@@ -344,14 +348,26 @@ function parse_args() # {{{2
         ;;
       --packer-home)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
-        PACKER_HOME=$2
+        MODULE_PACKER_HOME=$2
         shift 2
         continue
         ;;
       --packer-home=*?)
-        PACKER_HOME=${1#*=} # delete everything up to =
+        MODULE_PACKER_HOME=${1#*=} # delete everything up to =
         ;;
       --packer-home=)
+        die "Argument for option $1 is missing."
+        ;;
+      --vagrant-home)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        MODULE_VAGRANT_HOME=$2
+        shift 2
+        continue
+        ;;
+      --vagrant-home=*?)
+        MODULE_VAGRANT_HOME=${1#*=} # delete everything up to =
+        ;;
+      --vagrant-home=)
         die "Argument for option $1 is missing."
         ;;
       --noop|--dry-run)
@@ -764,7 +780,7 @@ function install_packer() # {{{2
     $NOOP curl -sSL https://github.com/gildas/packer-provisioner-wait/raw/master/bin/0.1.0/darwin/packer-provisioner-wait --output $packer_bindir/packer-provisioner-wait
   fi
 
-  packer_windows=${PACKER_HOME}/packer-windows
+  packer_windows=${MODULE_PACKER_HOME}/packer-windows
   if [[ ! -d "$packer_windows" ]]; then
     echo "  Installing Packer framework for building Windows machines"
     $NOOP mkdir -p $(dirname $packer_windows)
@@ -774,8 +790,8 @@ function install_packer() # {{{2
     $NOOP git --git-dir "${packer_windows}/.git" pull
   fi
 
-  if [[ "$PACKER_HOME" != "$HOME/Documents/packer" ]]; then
-    [[ -L "$HOME/Documents/packer" ]] || ln -s "$PACKER_HOME" "$HOME/Documents/packer"
+  if [[ "$MODULE_PACKER_HOME" != "$HOME/Documents/packer" ]]; then
+    [[ -L "$HOME/Documents/packer" ]] || ln -s "$MODULE_PACKER_HOME" "$HOME/Documents/packer"
   fi
 
   for file in `\ls -1 $CACHE_ROOT/`; do
@@ -909,7 +925,18 @@ function install_rubytools() # {{{2
 function install_vagrant() # {{{2
 {
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
-  [[ $MODULE_vmware_done == 0 ]] && [[ $MODULE_virtualbox_done == 0 ]] && die "You must install vmware or virtualbox to install vagrant"
+  #[[ $MODULE_vmware_done == 0 ]] && [[ $MODULE_virtualbox_done == 0 ]] && die "You must install vmware or virtualbox to install vagrant"
+
+  if [[ -z "$VAGRANT_HOME" && "$MODULE_VAGRANT_HOME" != "$HOME/.vagrant.d" ]]; then
+    if [[ "$MODULE_VAGRANT_HOME" =~ $HOME ]]; then
+      if [[ -z "$(grep --no-messages VAGRANT_HOME $HOME/.bash_profile)" ]]; then
+        echo "export VAGRANT_HOME=\"$MODULE_VAGRANT_HOME\"" | tee -a $HOME/.bash_profile > /dev/null
+      fi
+    else
+      echo "export VAGRANT_HOME=\"$MODULE_VAGRANT_HOME\"" | sudo tee /etc/profile.d/vagrant.sh > /dev/null
+    fi
+  fi
+  export VAGRANT_HOME="$MODULE_VAGRANT_HOME"
 
   cask_install vagrant
   $NOOP vagrant plugin update
