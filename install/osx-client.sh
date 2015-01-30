@@ -20,6 +20,7 @@ MODULE_packer_done=0
 MODULE_puppet_done=0
 MODULE_rubytools_done=0
 MODULE_vagrant_done=0
+MODULE_parallels_done=0
 MODULE_virtualbox_done=0
 MODULE_vmware_done=0
 
@@ -932,6 +933,14 @@ function install_vagrant() # {{{2
   MODULE_vagrant_done=1
 } # 2}}}
 
+function install_parallels() # {{{2
+{
+  [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
+
+  cask_install parallels
+  MODULE_parallels_done=1
+} # 2}}}
+
 function install_virtualbox() # {{{2
 {
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
@@ -1044,6 +1053,9 @@ function main() # {{{
         ;;
       packer)
         install_packer
+        ;;
+      parallels)
+        install_parallels
         ;;
       puppet)
         install_puppet
