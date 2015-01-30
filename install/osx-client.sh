@@ -305,6 +305,18 @@ function parse_args() # {{{2
       --network=)
         die "Argument for option $1 is missing."
         ;;
+      --cache-root)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        CACHE_ROOT=$2
+        shift 2
+        continue
+        ;;
+      --cache-root=*?)
+        CACHE_ROOT=${1#*=} # delete everything up to =
+        ;;
+      --cache-root=)
+        die "Argument for option $1 is missing."
+        ;;
       --cache-source)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         CACHE_SOURCE=$2
@@ -737,11 +749,11 @@ function install_packer() # {{{2
     $NOOP git --git-dir "${packer_windows}/.git" pull
   fi
 
-  for file in `\ls -1 /var/cache/daas/`; do
+  for file in `\ls -1 $CACHE_ROOT/`; do
     [[ "$file" == 'sources.json' ]] && continue
     if [ ! -L "${packer_windows}/iso/${file}" ]; then
       [ -r "${packer_windows}/iso/${file}" ] && sudo rm "${packer_windows}/iso/${file}"
-      ln -s "/var/cache/daas/${file}" ${packer_windows}/iso
+      ln -s "${CACHE_ROOT}/${file}" ${packer_windows}/iso
     fi
   done
 
