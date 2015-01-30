@@ -31,6 +31,9 @@ CACHE_ROOT='/var/cache/daas'
 CACHE_SOURCE='https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/sources.json'
 CACHE_MOUNTS=()
 
+MODULE_VMWARE_HOME=''
+MODULE_VIRTUALBOX_HOME=''
+MODULE_PARALLELS_HOME=''
 MODULE_PACKER_HOME="$HOME/Documents/packer"
 [[ -n "$PACKER_HOME"    ]] && MODULE_PACKER_HOME="$PACKER_HOME"
 MODULE_VAGRANT_HOME="$HOME/.vagrant.d"
@@ -369,6 +372,42 @@ function parse_args() # {{{2
         MODULE_VAGRANT_HOME=${1#*=} # delete everything up to =
         ;;
       --vagrant-home=)
+        die "Argument for option $1 is missing."
+        ;;
+      --parallels-home)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        MODULE_PARALLELS_HOME=$2
+        shift 2
+        continue
+        ;;
+      --parallels-home=*?)
+        MODULE_PARALLELS_HOME=${1#*=} # delete everything up to =
+        ;;
+      --parallels-home=)
+        die "Argument for option $1 is missing."
+        ;;
+      --virtualbox-home)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        MODULE_VIRTUALBOX_HOME=$2
+        shift 2
+        continue
+        ;;
+      --virtualbox-home=*?)
+        MODULE_VIRTUALBOX_HOME=${1#*=} # delete everything up to =
+        ;;
+      --virtualbox-home=)
+        die "Argument for option $1 is missing."
+        ;;
+      --vmware-home)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        MODULE_VMWARE_HOME=$2
+        shift 2
+        continue
+        ;;
+      --vmware-home=*?)
+        MODULE_VMWARE_HOME=${1#*=} # delete everything up to =
+        ;;
+      --vmware-home=)
         die "Argument for option $1 is missing."
         ;;
       --noop|--dry-run)
