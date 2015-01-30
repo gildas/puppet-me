@@ -1013,7 +1013,20 @@ function install_virtualbox() # {{{2
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
 
   cask_install virtualbox
+
+  if [[ -n "$MODULE_VIRTUALBOX_HOME" ]]; then
+    current=$(/usr/bin/VBoxManage list systemproperties | grep 'Default machine folder' | cut -d: -f2 | sed -e 's/^ *//')
+    if [[ "$current" != "$MODULE_VIRTUALBOX_HOME" ]]; then
+      verbose "Updating Virtual Machine home to ${MODULE_VIRTUALBOX_HOME}"
+      $NOOP /usr/bin/VBoxManage setproperty machinefolder "$MODULE_VIRTUALBOX_HOME"
+      if [ $? -ne 0 ]; then
+        error "Failed to change the Virtual Machine folder for Virtualbox"
+        return 1
+      fi
+    fi
+  fi
   MODULE_virtualbox_done=1
+  return 0
 } # 2}}}
 
 function install_vmware() # {{{2
