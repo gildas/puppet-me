@@ -29,6 +29,9 @@ ALL_MODULES=(homebrew cache packer puppet rubytools vagrant virtualbox vmware)
 CACHE_ROOT='/var/cache/daas'
 CACHE_SOURCE='https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/sources.json'
 CACHE_MOUNTS=()
+
+PACKER_HOME="$HOME/Documents/packer"
+
 trap trace_end EXIT
 
 # Module: tracing # {{{
@@ -327,6 +330,18 @@ function parse_args() # {{{2
         CACHE_SOURCE=${1#*=} # delete everything up to =
         ;;
       --cache-source=)
+        die "Argument for option $1 is missing."
+        ;;
+      --packer-home)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        PACKER_HOME=$2
+        shift 2
+        continue
+        ;;
+      --packer-home=*?)
+        PACKER_HOME=${1#*=} # delete everything up to =
+        ;;
+      --packer-home=)
         die "Argument for option $1 is missing."
         ;;
       --noop|--dry-run)
@@ -739,7 +754,7 @@ function install_packer() # {{{2
     $NOOP curl -sSL https://github.com/gildas/packer-provisioner-wait/raw/master/bin/0.1.0/darwin/packer-provisioner-wait --output $packer_bindir/packer-provisioner-wait
   fi
 
-  packer_windows=$HOME/Documents/packer/packer-windows
+  packer_windows=${PACKER_HOME}/packer-windows
   if [[ ! -d "$packer_windows" ]]; then
     echo "  Installing Packer framework for building Windows machines"
     $NOOP mkdir -p $(dirname $packer_windows)
@@ -747,6 +762,10 @@ function install_packer() # {{{2
   else
     echo "  Upgrading Packer framework for building Windows machines"
     $NOOP git --git-dir "${packer_windows}/.git" pull
+  fi
+
+  if [[ "$PACKER_HOME" != "$HOME/Documents/packer" ]]; then
+    [[ -L "$HOME/Documents/packer" ]] || ln -s "$PACKER_HOME" "$HOME/Documents/packer"
   fi
 
   for file in `\ls -1 $CACHE_ROOT/`; do
