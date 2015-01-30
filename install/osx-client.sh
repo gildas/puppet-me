@@ -230,8 +230,9 @@ function prompt() #{{{2
       silent='with hidden answer'
       shift
     fi
-    value=$(osascript -e "Tell application 'System Events' to display dialog '$1' default answer '' $silent" -e 'text returned of result' 2>/dev/null)
-    if [ $? -ne 0]; then
+    script="Tell application \"System Events\" to display dialog \"$1\" default answer \"\" $silent"
+    value="$(osascript -e "$script" -e 'text returned of result' 2>/dev/null)"
+    if [ $? -ne 0 ]; then
       # The user pressed cancel
       return 1
     fi
