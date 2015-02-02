@@ -734,7 +734,7 @@ function install_xcode_tools() # {{{2
     verbose "Installing CLI tools via Software Update"
     verbose "  Finding proper version"
     touch /tmp/.com.apple.dt.CommandLinetools.installondemand.in-progress
-    product=$(softwareupdate -l 2>&1 | grep "\*.*Command Line" | tail -1 | sed -e 's/^   \* //' | tr -d '\n')
+    product=$(softwareupdate --list 2>&1 | grep "\*.*Command Line" | tail -1 | sed -e 's/^   \* //' | tr -d '\n')
     verbose "  Downloading and Installing $product"
     $NOOP softwareupdate --install "$product"
   else # Older versions like Mountain Lion, Lion
