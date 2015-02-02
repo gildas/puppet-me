@@ -1037,6 +1037,18 @@ function install_vmware() # {{{2
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
 
   cask_install vmware-fusion
+
+  if [[ -n "$MODULE_VMWARE_HOME" ]]; then
+    current=$(defaults read com.vmware.fusion NSNavLastRootDirectory 2> /dev/null)
+    if [[ "$current" != "$MODULE_VMWARE_HOME" ]]; then
+      verbose "Updating Virtual Machine home to ${MODULE_VMWARE_HOME}"
+      $NOOP sudo defaults write com.vmware.fusion NSNavLastRootDirectory "$MODULE_VMWARE_HOME"
+      if [ $? -ne 0 ]; then
+        error "Failed to change the Virtual Machine folder for VMWare Fusion"
+        return 1
+      fi
+    fi
+  fi
   MODULE_vmware_done=1
   MODULE_virtualization_done=1
 } # 2}}}
