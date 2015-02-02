@@ -965,7 +965,7 @@ function install_rubytools() # {{{2
 function install_vagrant() # {{{2
 {
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
-  #[[ $MODULE_vmware_done == 0 ]] && [[ $MODULE_virtualbox_done == 0 ]] && die "You must install vmware or virtualbox to install vagrant"
+  [[ $MODULE_vmware_done == 0 ]] && [[ $MODULE_virtualbox_done == 0 ]] && die "You must install vmware or virtualbox to install vagrant"
 
   if [[ -z "$VAGRANT_HOME" && "$MODULE_VAGRANT_HOME" != "$HOME/.vagrant.d" ]]; then
     if [[ "$MODULE_VAGRANT_HOME" =~ $HOME ]]; then
