@@ -993,7 +993,7 @@ function install_vagrant() # {{{2
     $NOOP vagrant plugin install vagrant-host-shell
   fi
 
-  if [[ -z $(vagrant plugin list | grep 'vagrant-vmware-fusion') ]]; then
+  if [[ $MODULE_vmware_done == 1 && -z $(vagrant plugin list | grep 'vagrant-vmware-fusion') ]]; then
     verbose "  Installing Vagrant Plugin for VMWare"
     $NOOP vagrant plugin install vagrant-vmware-fusion
     warn "  TODO: install your Vagrant for VMWare license!"
