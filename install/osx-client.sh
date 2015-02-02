@@ -779,9 +779,13 @@ function install_homebrew() # {{{2
   fi
 
   # Installing Cask from http://caskroom.io
+  if [[ -z $(brew tap | grep 'caskroom/cask') ]]; then
+    brew tap caskroom/cask
+  fi
+
   if [[ ! -z $(brew info brew-cask | grep '^Not installed$') ]]; then
     verbose "Installing Homebrew Cask..."
-    $NOOP brew install caskroom/cask/brew-cask
+    $NOOP brew install brew-cask
   else
     verbose "Homebrew Cask is already installed"
   fi
@@ -1001,7 +1005,20 @@ function install_parallels() # {{{2
 {
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
 
-  cask_install parallels
+  cask_install parallels-desktop
+
+  if [[ -n "$MODULE_PARALLELS_HOME" ]]; then
+    current=$(prlsrvctl user list 2> /dev/null | grep "$whoami" | awk '{ print $3 }')
+    if [[ "$current" != "$MODULE_PARALLELS_HOME" ]]; then
+      verbose "Updating Virtual Machine home to ${MODULE_PARALLELS_HOME}"
+      $NOOP mkdir -p "$MODULE_PARALLELS_HOME"
+      $NOOP prlsrvctl user set --def-vm-home "$MODULE_PARALLELS_HOME"
+      if [ $? -ne 0 ]; then
+        error "Failed to change the Virtual Machine folder for Parallels"
+        return 1
+      fi
+    fi
+  fi
   MODULE_parallels_done=1
   MODULE_virtualization_done=1
 } # 2}}}
