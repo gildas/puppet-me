@@ -23,6 +23,7 @@ MODULE_vagrant_done=0
 MODULE_parallels_done=0
 MODULE_virtualbox_done=0
 MODULE_vmware_done=0
+MODULE_virtualization_done=0
 
 MODULES=(homebrew puppet rubytools)
 ALL_MODULES=(homebrew cache packer puppet rubytools vagrant virtualbox vmware parallels)
@@ -964,8 +965,8 @@ function install_rubytools() # {{{2
 
 function install_vagrant() # {{{2
 {
-  [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
-  [[ $MODULE_vmware_done == 0 ]] && [[ $MODULE_virtualbox_done == 0 ]] && die "You must install vmware or virtualbox to install vagrant"
+  [[ $MODULE_homebrew_done == 0 ]]        && install_homebrew
+  [[ $MODULE_virtualization_done == 0 ]]  && die "You must install at least one virtualization kit to install vagrant"
 
   if [[ -z "$VAGRANT_HOME" && "$MODULE_VAGRANT_HOME" != "$HOME/.vagrant.d" ]]; then
     if [[ "$MODULE_VAGRANT_HOME" =~ $HOME ]]; then
@@ -1006,6 +1007,7 @@ function install_parallels() # {{{2
 
   cask_install parallels
   MODULE_parallels_done=1
+  MODULE_virtualization_done=1
 } # 2}}}
 
 function install_virtualbox() # {{{2
@@ -1026,6 +1028,7 @@ function install_virtualbox() # {{{2
     fi
   fi
   MODULE_virtualbox_done=1
+  MODULE_virtualization_done=1
   return 0
 } # 2}}}
 
@@ -1035,6 +1038,7 @@ function install_vmware() # {{{2
 
   cask_install vmware-fusion
   MODULE_vmware_done=1
+  MODULE_virtualization_done=1
 } # 2}}}
 
 function cache_stuff() # {{{2
