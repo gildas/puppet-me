@@ -691,15 +691,13 @@ function install_dmg() # {{{2
 
 function brew_install() # {{{2
 {
-  local app_binary=$1
-  local app_name=$(capitalize $1)
+  local app_name=$1
+  local app_binary=${2:-$1}
 
-  if which $app_binary > /dev/null 2>&1; then
-    if [[ ! -z $(brew info $app_binary | grep '^Not installed$') ]]; then
-      verbose "$app_name was manually installed (no automatic updates possible)"
-    else
-      verbose "$app_name is already installed via Homebrew"
-    fi
+  if [[ -z "$(brew info $app_name | grep '^Not Installed$')" ]]; then
+    verbose "$app_name is already installed via Homebrew"
+  elif which "$app_binary" > /dev/null 2>&1; then
+    verbose "$app_name was manually installed (no automatic updates possible)"
   else
     verbose "Installing $app_name"
     $NOOP brew install $app_binary
@@ -708,15 +706,13 @@ function brew_install() # {{{2
 
 function cask_install() # {{{2
 {
-  local app_binary=$1
-  local app_name=$(capitalize $1)
+  local app_name=$1
+  local app_binary=${2:-$1}
 
-  if which $app_binary > /dev/null 2>&1; then
-    if [[ ! -z $(brew cask info $app_binary | grep '^Not installed$') ]]; then
-      verbose "$app_name was manually installed (no automatic updates possible)"
-    else
-      verbose "$app_name is already installed via Homebrew"
-    fi
+  if [[ -z "$(brew cask info $app_name | grep '^Not Installed$')" ]]; then
+    verbose "$app_name is already installed via Homebrew"
+  elif which "$app_binary" > /dev/null 2>&1; then
+    verbose "$app_name was manually installed (no automatic updates possible)"
   else
     verbose "Installing $app_name"
     $NOOP brew install Caskroom/cask/$app_binary
@@ -1036,7 +1032,7 @@ function install_vmware() # {{{2
 {
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
 
-  cask_install vmware-fusion
+  cask_install vmware-fusion '/Applications/VMware Fusion.app/Contents/Library/vmrun'
 
   if [[ -n "$MODULE_VMWARE_HOME" ]]; then
     current=$(defaults read com.vmware.fusion NSNavLastRootDirectory 2> /dev/null)
