@@ -863,9 +863,13 @@ function install_puppet() # {{{2
 
   verbose "Creating user/group resources"
   dseditgroup -o read puppet &> /dev/null
-  if [ ! $? -eq 0 ]; then
+  if [ $? -ne 0 ]; then
     verbose "  Creating group 'puppet'"
     $NOOP sudo puppet resource group puppet ensure=present
+    if [ $? -ne 0 ]; then
+      error "Failure while creating group puppet"
+      return 1
+    fi
   else
     verbose "  Group 'puppet' is already created"
   fi
@@ -873,6 +877,10 @@ function install_puppet() # {{{2
   if [ ! $? -eq 0 ]; then
     verbose "  Adding puppet to group 'puppet'"
     $NOOP sudo puppet resource user puppet ensure=present gid=puppet shell="/sbin/nologin"
+    if [ $? -ne 0 ]; then
+      error "Failure while creating user puppet"
+      return 1
+    fi
   else
     verbose "  User 'puppet' is already a member of group 'puppet'"
   fi
@@ -881,8 +889,16 @@ function install_puppet() # {{{2
   if [[ $os_min -ge 10 ]]; then # Yosemite or later
     if [[ -z $(dscl . read /Users/puppet | grep IsHidden) ]]; then
       sudo dscl . create /Users/puppet IsHidden 1
+      if [ $? -ne 0 ]; then
+        error "Failure while hiding user puppet"
+        return 1
+      fi
     elif [[ -z $(dscl . read /Users/puppet IsHidden | grep 1) ]]; then
       sudo dscl . create /Users/puppet IsHidden 1
+      if [ $? -ne 0 ]; then
+        error "Failure while hiding user puppet"
+        return 1
+      fi
     else
       verbose "  User puppet is already hidden from the Login window"
     fi
@@ -891,10 +907,18 @@ function install_puppet() # {{{2
     if [ ! $? -eq 0 ]; then
       verbose "  Adding the HiddenUsersList entry"
       $NOOP sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList array" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
+      if [ $? -ne 0 ]; then
+        error "Failure while hiding user puppet"
+        return 1
+      fi
     fi
     if [[ ! ${hidden_users} =~ "puppet" ]]; then
       verbose "  Adding puppet to the hidden user list"
       $NOOP sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList: string puppet" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
+      if [ $? -ne 0 ]; then
+        error "Failure while hiding user puppet"
+        return 1
+      fi
     else
       verbose "  User puppet is already hidden from the Login window"
     fi
