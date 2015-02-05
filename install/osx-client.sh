@@ -694,7 +694,7 @@ function brew_install() # {{{2
   local app_name=$1
   local app_binary=${2:-$1}
 
-  if [[ -n "$(brew info $app_name | grep '^Not Installed$')" ]]; then
+  if [[ -z "$(brew info $app_name | grep '^Not installed$')" ]]; then
     verbose "$app_name is already installed via Homebrew"
   elif which "$app_binary" > /dev/null 2>&1; then
     verbose "$app_name was manually installed (no automatic updates possible)"
@@ -709,7 +709,7 @@ function cask_install() # {{{2
   local app_name=$1
   local app_binary=${2:-$1}
 
-  if [[ -n "$(brew cask info $app_name | grep '^Not Installed$')" ]]; then
+  if [[ -z "$(brew cask info $app_name | grep '^Not installed$')" ]]; then
     verbose "$app_name is already installed via Homebrew"
   elif which "$app_binary" > /dev/null 2>&1; then
     verbose "$app_name was manually installed (no automatic updates possible)"
