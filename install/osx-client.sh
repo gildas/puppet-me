@@ -1031,6 +1031,11 @@ function install_parallels() # {{{2
 
   cask_install parallels-desktop
 
+  if ! which prlsrvctl > /dev/null 2>&1; then
+    verbose "Initializing Parallels Desktop"
+    $NOOP sudo $HOME/Applications/Parallels\ Desktop.app/Contents/MacOS/inittool init -s
+  fi
+
   if [[ -n "$MODULE_PARALLELS_HOME" ]]; then
     current=$(prlsrvctl user list 2> /dev/null | grep "$whoami" | awk '{ print $3 }')
     if [[ "$current" != "$MODULE_PARALLELS_HOME" ]]; then
