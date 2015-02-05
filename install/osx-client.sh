@@ -805,7 +805,6 @@ function install_packer() # {{{2
   [[ $MODULE_homebrew_done  == 0 ]] && install_homebrew
   [[ $MODULE_rubytools_done == 0 ]] && install_rubytools
   [[ $MODULE_vagrant_done   == 0 ]] && install_vagrant
-  [[ $MODULE_cache_done     == 0 ]] && install_cache
 
   brew_install packer
 
@@ -835,13 +834,15 @@ function install_packer() # {{{2
     [[ -L "$HOME/Documents/packer" ]] || ln -s "$MODULE_PACKER_HOME" "$HOME/Documents/packer"
   fi
 
-  for file in `\ls -1 $CACHE_ROOT/`; do
-    [[ "$file" == 'sources.json' ]] && continue
-    if [ ! -L "${packer_windows}/iso/${file}" ]; then
-      [ -r "${packer_windows}/iso/${file}" ] && sudo rm "${packer_windows}/iso/${file}"
-      ln -s "${CACHE_ROOT}/${file}" ${packer_windows}/iso
-    fi
-  done
+  if [[ -d "$CACHE_ROOT" ]]; then
+    for file in `\ls -1 $CACHE_ROOT/`; do
+      [[ "$file" == 'sources.json' ]] && continue
+      if [ ! -L "${packer_windows}/iso/${file}" ]; then
+        [ -r "${packer_windows}/iso/${file}" ] && sudo rm "${packer_windows}/iso/${file}"
+        ln -s "${CACHE_ROOT}/${file}" ${packer_windows}/iso
+      fi
+    done
+  fi
 
   if [[ -f "$packer_windows/Gemfile" ]]; then
     [[ -z "$NOOP" ]] && (cd $packer_windows ; bundle install)
