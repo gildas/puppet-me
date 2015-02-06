@@ -715,7 +715,7 @@ function cask_install() # {{{2
     verbose "$app_name was manually installed (no automatic updates possible)"
   else
     verbose "Installing $app_name"
-    $NOOP brew install Caskroom/cask/$app_binary
+    $NOOP brew install "Caskroom/cask/$app_name"
   fi
 } # 2}}}
 
