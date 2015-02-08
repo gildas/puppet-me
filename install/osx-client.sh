@@ -271,6 +271,57 @@ function version() # {{{2
 function usage() # {{{2
 {
   echo "$(basename $0) [options]"
+  echo "  Installs necessary software to run virtual machines" 
+  echo "  Options are:"
+  echo " --cache-root *path*  "
+  echo "   Contains the location of the cache for ISO, MSI, etc files.  "
+  echo "   Default /var/cache/daas"
+  echo " --cache-source *url*  "
+  echo "   Contains the URL of the configuration file for the cached sources.  "
+  echo "   Default value: https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/sources.json"
+  echo " --help  "
+  echo "   Prints some help on the output."
+  echo " --macmini-parallels  "
+  echo "   will install these modules: "
+  echo " --macmini-virtualbox  "
+  echo "   will install these modules: "
+  echo " --macmini-vmware or --macmini  "
+  echo "   will install these modules: "
+  echo " --modules  "
+  echo "   contains a comma-separated list of modules to install.  "
+  echo "   The complete list can be obtained with --help.  "
+  echo "   The --macmini options will change that list.  "
+  echo "   Default: homebrew,puppet,rubytools"
+  echo " --network  *ip_address*/*cidr*"
+  echo "   can be used to force the script to believe it is run in a given network.  "
+  echo "   Both an ip address and a network (in the cidr form) must be given.  "
+  echo "   Default: N/A."
+  echo " --noop, --dry-run  "
+  echo "   Do not execute instructions that would make changes to the system (write files, install software, etc)."
+  echo " --packer-home *path*  "
+  echo "   Contains the location where packer user work data will be stored.  "
+  echo "   Default: \$HOME/Documents/packer"
+  echo " --parallels-home *path*  "
+  echo "   Contains the location virtual machine data will be stored.  "
+  echo "   Default: \$HOME/Documents/Virtual Machines"
+  echo " --quiet  "
+  echo "   Runs the script without any message."
+  echo " --userid *value*  "
+  echo "   contains the default user for various authentications \(like cifs/smb\).  "
+  echo "   Default: current user."
+  echo " --vagrant-home *path*  "
+  echo "   Contains the location where vagrant user work data will be stored.  "
+  echo "   Default value: \$HOME/.vagrant.d"
+  echo " --verbose  "
+  echo "   Runs the script verbosely, that's by default."
+  echo " --virtualbox-home *path*  "
+  echo "   Contains the location virtual machine data will be stored.  "
+  echo "   Default value: $HOME/Documents/Virtual Machines"
+  echo " --vmware-home *path*  "
+  echo "   Contains the location virtual machine data will be stored.  "
+  echo "   Default value: $HOME/Documents/Virtual Machines"
+  echo " --yes, --assumeyes, -y  "
+  echo "   Answers yes to any questions automatiquely."
 } # 2}}}
 
 function parse_args() # {{{2
@@ -418,7 +469,7 @@ function parse_args() # {{{2
       -h|-\?|--help)
        trace "Showing usage"
        usage
-       exit 1
+       return 1
        ;;
      --quiet)
        VERBOSE=0
