@@ -1149,6 +1149,7 @@ function install_vmware() # {{{2
 
 function cache_stuff() # {{{2
 {
+  [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
   local nic_names nic_name nic_info nic_ip nic_mask ip_addresses ip_address ip_masks ip_mask
 
   verbose "Caching ISO files"
