@@ -59,9 +59,9 @@
     ]
   },
   {
-    "name": "CIC 2015R1",
-    "id": "CIC_2015R1",
-    "checksum": { "type": "MD5", "value": "f191af91a8fd38043c1f15028e0cfcf6" },
+    "name": "CIC 2015R2",
+    "id": "CIC_2015R2",
+    "checksum": { "type": "MD5", "value": "c71382093ea3c66acd7c2d62c3ac7427" },
     "sources":
     [
       {
@@ -77,20 +77,39 @@
       {
         "location": "Japan",
         "network":  "172.22.16.[0-9]+/23",
-        "url": "smb://tyofiles.apac.inin.com/AppShare/ININ/Interaction%20Center/2015R1/CIC_2015_R1.iso"
+        "url": "smb://tyofiles.apac.inin.com/AppShare/ININ/Interaction%20Center/2015R2/CIC_2015_R2.iso"
       },
       {
         "location": "Internet",
         "network":  ".*",
         "auth": true,
-        "url": "ftp://ftp.inin.com/Download/CIC2015R1/CIC/CIC_2015_R1.iso"
+        "url": "ftp://ftp.inin.com/Download/CIC2015R2/CIC/CIC_2015_R2.iso"
       }
     ]
   },
   {
-    "name": "Dialer 2015R1",
-    "id": "Dialer_2015R1",
-    "checksum": { "type": "MD5", "value": "035c83e03ce6978d4bb0ccb605797d8c" },
+    "name": "Appliances 2015R2",
+    "id": "Appliances_2015R2",
+    "checksum": { "type": "MD5", "value": "508ea8cfc95777a8340eac0708df3adf" },
+    "sources":
+    [
+      {
+        "location": "Japan",
+        "network":  "172.22.16.[0-9]+/23",
+        "url": "smb://tyofiles.apac.inin.com/AppShare/ININ/Appliances/2015R2/CIC_Appliance_2015_R2.iso"
+      },
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "auth": true,
+        "url": "ftp://ftp.inin.com/Download/CIC2015R2/CIC/CIC_Appliance_2015_R2.iso"
+      }
+    ]
+  },
+  {
+    "name": "Dialer 2015R2",
+    "id": "Dialer_2015R2",
+    "checksum": { "type": "MD5", "value": "c69d2b72712c84d12e5d6ebe518a3ad2" },
     "sources":
     [
       {
@@ -106,39 +125,52 @@
       {
         "location": "Japan",
         "network":  "172.22.16.[0-9]+/23",
-        "url": "smb://tyofiles.apac.inin.com/AppShare/ININ/Interaction%20Dialer/2015R1/Dialer_2015_R1.iso"
+        "url": "smb://tyofiles.apac.inin.com/AppShare/ININ/Interaction%20Dialer/2015R2/Dialer_2015_R2.iso"
       },
       {
         "location": "Internet",
         "network":  ".*",
         "auth": true,
-        "url": "ftp://ftp.inin.com/Download/CIC2015R1/Dialer/Dialer_2015_R1.iso"
+        "url": "ftp://ftp.inin.com/Download/CIC2015R2/Dialer/Dialer_2015_R2.iso"
       }
     ]
   },
   {
-    "name": "IC Server 2015R1",
-    "id": "ICServer_2015R1",
-    "checksum": { "type": "MD5", "value": "97f61b7d6de2c602da9ac6234dde8cbf" },
+    "name": "IC Server 2015R2",
+    "id": "ICServer_2015R2",
+    "checksum": { "type": "MD5", "value": "035c83e03ce6978d4bb0ccb605797d8c" },
     "sources":
     [
       {
         "location": "ISO",
         "network":  ".*",
-        "url": "file:///var/cache/daas//CIC_2015_R1.iso?Installs/ServerComponents/ICServer_2015_R1.msi"
+        "url": "file:///var/cache/daas//CIC_2015_R2.iso?Installs/ServerComponents/ICServer_2015_R2.msi"
       }
     ]
   },
   {
-    "name": "IC Firmware 2015R1",
-    "id": "ICFirmware_2015R1",
-    "checksum": { "type": "MD5", "value": "36092e8ef7dc749e7a06aa3a914531f3" },
+    "name": "IC Firmware 2015R2",
+    "id": "ICFirmware_2015R2",
+    "checksum": { "type": "MD5", "value": "e8b6903cd42e6c3600e85f979bd6d6c9" },
     "sources":
     [
       {
         "location": "ISO",
         "network":  ".*",
-        "url": "file:///var/cache/daas/CIC_2015_R1.iso?Installs/ServerComponents/InteractionFirmware_2015_R1.msi"
+        "url": "file:///var/cache/daas/CIC_2015_R2.iso?Installs/ServerComponents/InteractionFirmware_2015_R2.msi"
+      }
+    ]
+  },
+  {
+    "name": "MediaServer 2015R2",
+    "id": "MediaServer_2015R2",
+    "checksum": { "type": "MD5", "value": "44b2a2235f3318129826290c49cd1099" },
+    "sources":
+    [
+      {
+        "location": "ISO",
+        "network":  ".*",
+        "url": "file:///var/cache/daas/CIC_Appliance_2015_R2.iso?Installs/MediaServer_2015_R2.msi"
       }
     ]
   }
