@@ -699,6 +699,7 @@ return
     trace $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
     $NOOP $sudo curl --location --show-error --progress-bar ${url_creds} --output "${target_path}" "${source}"
   fi # 3}}}
+
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
     target_checksum=$( $checksum "${target_path}")
     if [[ ! $target_checksum =~ \s*$checksum_value\s* ]]; then
@@ -843,7 +844,7 @@ function install_homebrew() # {{{2
 
   # Installing jq for querying json from bash
   if [[ ! -z $(brew info jq | grep '^Not installed$') ]]; then
-    verbose "Installing ijq..."
+    verbose "Installing jq..."
     $NOOP brew install jq
   else
     verbose "jq is already installed"
