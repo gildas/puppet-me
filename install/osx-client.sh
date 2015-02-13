@@ -1075,6 +1075,11 @@ function install_vagrant() # {{{2
     $NOOP vagrant plugin install vagrant-vmware-fusion
     warn "  TODO: install your Vagrant for VMWare license!"
   fi
+
+  if [[ $MODULE_parallels_done == 1 && -z $(vagrant plugin list | grep 'vagrant-parallels') ]]; then
+    verbose "  Installing Vagrant Plugin for Parallels"
+    $NOOP vagrant plugin install vagrant-parallels
+  fi
   MODULE_vagrant_done=1
 } # 2}}}
 
