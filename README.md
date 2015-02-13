@@ -102,7 +102,7 @@ The possible options are:
   Contains the location virtual machine data will be stored.  
   Default value: $HOME/Documents/Virtual Machines
 - --yes, --assumeyes, -y  
-  Answers yes to any questions automatiquely.
+  Answers yes to any questions automatically.
 
 For example, if your Mac mini has an HDD and an SSD, you would want to run all virtual machines as well as their builds on the SSD. If the SSD is at /Volumes/SSD, the install invocation would be:
 
