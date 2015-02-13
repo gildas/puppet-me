@@ -886,16 +886,6 @@ function install_packer() # {{{2
     [[ -L "$HOME/Documents/packer" ]] || ln -s "$MODULE_PACKER_HOME" "$HOME/Documents/packer"
   fi
 
-  if [[ -d "$CACHE_ROOT" ]]; then
-    for file in `\ls -1 $CACHE_ROOT/`; do
-      [[ "$file" == 'sources.json' ]] && continue
-      if [ ! -L "${packer_windows}/iso/${file}" ]; then
-        [ -r "${packer_windows}/iso/${file}" ] && sudo rm "${packer_windows}/iso/${file}"
-        ln -s "${CACHE_ROOT}/${file}" ${packer_windows}/iso
-      fi
-    done
-  fi
-
   if [[ -f "$packer_windows/Gemfile" ]]; then
     [[ -z "$NOOP" ]] && (cd $packer_windows ; bundle install)
   fi
