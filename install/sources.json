@@ -88,25 +88,6 @@
     ]
   },
   {
-    "name": "Appliances 2015R2",
-    "id": "Appliances_2015R2",
-    "checksum": { "type": "MD5", "value": "508ea8cfc95777a8340eac0708df3adf" },
-    "sources":
-    [
-      {
-        "location": "Japan",
-        "network":  "172.22.16.[0-9]+/23",
-        "url": "smb://tyofiles.apac.inin.com/AppShare/ININ/Appliances/2015R2/CIC_Appliance_2015_R2.iso"
-      },
-      {
-        "location": "Internet",
-        "network":  ".*",
-        "auth": true,
-        "url": "ftp://ftp.inin.com/Download/CIC2015R2/CIC/CIC_Appliance_2015_R2.iso"
-      }
-    ]
-  },
-  {
     "name": "Dialer 2015R2",
     "id": "Dialer_2015R2",
     "checksum": { "type": "MD5", "value": "c69d2b72712c84d12e5d6ebe518a3ad2" },
@@ -170,7 +151,7 @@
       {
         "location": "ISO",
         "network":  ".*",
-        "url": "file:///var/cache/daas/CIC_Appliance_2015_R2.iso?Installs/MediaServer_2015_R2.msi"
+        "url": "file:///var/cache/daas/CIC_2015_R2.iso?Installs/Off-ServerComponents/MediaServer_2015_R2.msi"
       }
     ]
   }
