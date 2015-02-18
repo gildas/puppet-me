@@ -75,7 +75,7 @@ function trace_init() # {{{2
   local log_group="wheel"
   local result
 
-  while :; do # {{{3
+  while :; do # Parse arguments {{{3
     case $1 in
       --logdest)
         [[ -z $2 || ${2:0:1} == '-' ]] && die -n "Argument for option $1 is missing"
