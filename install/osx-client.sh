@@ -538,6 +538,7 @@ function download() # {{{2
     auth=1
     shift
   fi
+  local curl_options="--location --continue-at - --progress-bar "
   local source=$1
   local target=$2
   local checksum_type=$3
@@ -693,8 +694,8 @@ function download() # {{{2
       verbose "  ${source_share} is already mounted on ${smb_target}"
     fi
     verbose "  Copying $filename"
-    trace $sudo rsync --progress "${smb_target}/$(urldecode ${source_path})/$filename" "${target_path}"
-    $NOOP $sudo rsync --progress "${smb_target}/$(urldecode ${source_path})/$filename" "${target_path}"
+    trace $sudo curl $curl_options --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
+    $NOOP $sudo curl $curl_options --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
     $NOOP $sudo chmod 664 "${target_path}"
   # 3}}}
   elif [[ ${source_protocol} == 'file' ]]; then # {{{3
@@ -712,8 +713,8 @@ function download() # {{{2
           mount_path=$(echo "$mount_info" | awk '{print $2}')
           trace "mount info: ${mount_info}"
           trace "mount path: ${mount_path}"
-          trace $sudo rsync --progress "${mount_path}/${filename_path}" "${target_path}"
-          $NOOP $sudo rsync --progress "${mount_path}/${filename_path}" "${target_path}"
+          trace $sudo curl $curl_options --output "${target_path}" "file://${mount_path}/${filename_path}"
+          $NOOP $sudo curl $curl_options --output "${target_path}" "file://${mount_path}/${filename_path}"
           if [ $? -ne 0 ]; then
             error "Cannot copy ${mount_path}/${filename_path} to ${target_path}"
           else
@@ -731,8 +732,9 @@ function download() # {{{2
         ;;
       esac
     else
-      trace $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
-      $NOOP $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
+      trace $sudo curl $curl_options --output "${target_path}" "${source}"
+      $NOOP $sudo curl $curl_options --output "${target_path}" "${source}"
+      $NOOP $sudo chmod 664 "${target_path}"
     fi
   # 3}}}
   else # other urls (http, https, ftp) {{{3
@@ -753,12 +755,13 @@ function download() # {{{2
         curl_creds="--user ${source_user/\\/;/}:${source_password}" # encode domain
       fi
       verbose "  Downloading..."
-      trace $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
-      $NOOP $sudo curl --location --show-error --progress-bar ${url_creds} --output "${target_path}" "${source}"
+      trace $sudo curl $curl_options --output "${target_path}" "${source}"
+      $NOOP $sudo curl $curl_options ${url_creds} --output "${target_path}" "${source}"
       status=$?
       case $status in
         0)
           trace "Successful download"
+          $NOOP $sudo chmod 664 "${target_path}"
           break
         ;;
         67)
