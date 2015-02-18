@@ -14,7 +14,6 @@ tmp="tmp"
 puppet_master="puppet"
 userid=$(whoami)
 
-#CURL="/usr/bin/curl --location --continue-at - --progress-bar "
 CURL="/usr/bin/curl --location --progress-bar "
 
 MODULE_homebrew_done=0
@@ -249,7 +248,7 @@ function prompt() #{{{2
         error "Argument for option $1 is missing"
         return 1
         ;;
-      -s|--silent?)
+      -s|--silent)
         silent='-s'
       ;;
       -?*) # Invalid options
@@ -308,15 +307,12 @@ function download() # {{{2
 {
   # download "http://login:password@hostname/path/file?k1=v1&k2=v2" "local_folder"
   # download "smb://login:password@hostname/path/file?k1=v1&k2=v2" "local_folder"
-  local auth=0
-  if [[ "$1" == '--auth' ]]; then
-    auth=1
-    shift
-  fi
-  local source=$1
-  local target=$2
-  local checksum_type=$3
-  local checksum_value=$4
+  local need_auth=0
+  local has_resume
+  local source
+  local target
+  local checksum_type
+  local checksum_value
   local checksum='md5'
   local target_checksum
   local archive_source
@@ -330,6 +326,29 @@ function download() # {{{2
   local source_path
   local source_ext
   local sudo
+
+  while :; do # Parse aguments {{{3
+    case $1 in
+      --has_resume)
+        has_resume="--continue-at -"
+      ;;
+      --need_auth)
+        need_auth=1
+      ;;
+      -?*) # Invalid options
+        warn "Unknown option $1 will be ignored"
+      ;;
+      *)  # End of options
+        break
+      ;;
+    esac
+    shift
+  done # }}}3
+
+  source=$1
+  target=$2
+  checksum_type=$3
+  checksum_value=$4
 
   # Extract source components {{{3
   trace ">> source: ${source}"
@@ -416,7 +435,7 @@ function download() # {{{2
   fi # }}}3
 
   if [[ ${source_protocol} == 'smb' ]]; then # {{{3
-    auth=1
+    need_auth=1
     verbose "  Copying from CIFS location"
     # source is like smb://domain;userid:password@server/share/path/file
     # domain, userid, and password are optional
@@ -468,8 +487,8 @@ function download() # {{{2
       verbose "  ${source_share} is already mounted on ${smb_target}"
     fi
     verbose "  Copying $filename"
-    trace $sudo $CURL --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
-    $NOOP $sudo $CURL --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
+    trace $sudo $CURL $has_resume --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
+    $NOOP $sudo $CURL $has_resume --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
     $NOOP $sudo chmod 664 "${target_path}"
   # }}}3
   elif [[ ${source_protocol} == 'file' ]]; then # {{{3
@@ -487,8 +506,8 @@ function download() # {{{2
           mount_path=$(echo "$mount_info" | awk '{print $2}')
           trace "mount info: ${mount_info}"
           trace "mount path: ${mount_path}"
-          trace $sudo $CURL --output "${target_path}" "file://${mount_path}/${filename_path}"
-          $NOOP $sudo $CURL --output "${target_path}" "file://${mount_path}/${filename_path}"
+          trace $sudo $CURL $has_resume --output "${target_path}" "file://${mount_path}/${filename_path}"
+          $NOOP $sudo $CURL $has_resume --output "${target_path}" "file://${mount_path}/${filename_path}"
           if [ $? -ne 0 ]; then
             error "Cannot copy ${mount_path}/${filename_path} to ${target_path}"
           else
@@ -506,8 +525,8 @@ function download() # {{{2
         ;;
       esac
     else
-      trace $sudo $CURL --output "${target_path}" "${source}"
-      $NOOP $sudo $CURL --output "${target_path}" "${source}"
+      trace $sudo $CURL $has_resume --output "${target_path}" "${source}"
+      $NOOP $sudo $CURL $has_resume --output "${target_path}" "${source}"
       $NOOP $sudo chmod 664 "${target_path}"
     fi
   # }}}3
@@ -515,7 +534,7 @@ function download() # {{{2
     verbose "  Copying from url location"
     while true; do
       curl_creds=''
-      if [[ $auth == 1 ]]; then
+      if [[ $need_auth == 1 ]]; then
         if [[ -z "$source_password" ]]; then
           verbose "  Requesting credentials for ${source_host}"
           source_user=$(prompt --default="$source_user" "  User to download from ${source_host}")
@@ -529,8 +548,8 @@ function download() # {{{2
         curl_creds="--user ${source_user/\\/;/}:${source_password}" # encode domain
       fi
       verbose "  Downloading..."
-      trace $sudo $CURL --output "${target_path}" "${source}"
-      $NOOP $sudo $CURL ${url_creds} --output "${target_path}" "${source}"
+      trace $sudo $CURL $has_resume --output "${target_path}" "${source}"
+      $NOOP $sudo $CURL $has_resume ${url_creds} --output "${target_path}" "${source}"
       status=$?
       case $status in
         0)
@@ -541,7 +560,7 @@ function download() # {{{2
         67)
           error "  Wrong credentials, please enter new credentials"
           source_password=''
-          auth=1
+          need_auth=1
         ;;
         *)
           error "  Unable to download from ${source}\nError: $status"
@@ -1046,8 +1065,10 @@ function cache_stuff() # {{{2
           if [[ \"$ip_address\" =~ $source_network  ]]; then
             source_location=$(echo "$source" | jq --raw-output '.location')
             source_url=$(echo "$source" | jq --raw-output '.url')
-	    source_auth=''
-	    [[ "$(echo "$source" | jq '.auth')" == 'true' ]] && source_auth='--auth'
+            source_has_resume=''
+	    [[ "$(echo "$source" | jq '.has_resume')" == 'true' ]] && source_has_resume='--has_resume'
+	    source_need_auth=''
+	    [[ "$(echo "$source" | jq '.need_auth')" == 'true' ]] && source_need_auth='--need_auth'
             #debug   "  Matched $source_network from $ip_address at $source_location"
 	    verbose "  Downloading from $source_location"
             break
@@ -1064,7 +1085,7 @@ function cache_stuff() # {{{2
       trace "  Destination: ${document_destination}"
       document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
       document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
-      download $source_auth $source_url "$document_destination" $document_checksum_type $document_checksum
+      download $source_has_resume $source_need_auth $source_url "$document_destination" $document_checksum_type $document_checksum
     else
       warn "Cannot cache $( echo "$document" | jq --raw-output '.name' ), no source available"
     fi
