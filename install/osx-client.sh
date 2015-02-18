@@ -14,7 +14,8 @@ tmp="tmp"
 puppet_master="puppet"
 userid=$(whoami)
 
-CURL="/usr/bin/curl --location --continue-at - --progress-bar "
+#CURL="/usr/bin/curl --location --continue-at - --progress-bar "
+CURL="/usr/bin/curl --location --progress-bar "
 
 MODULE_homebrew_done=0
 MODULE_cache_done=0
