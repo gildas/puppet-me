@@ -642,8 +642,8 @@ function download() # {{{2
     smb_host=${smb_host%%/*}                    # extract the host
     trace "smb: host: ${smb_host}, share: ${smb_share}, path: ${smb_path}, user: ${smb_user}, domain: ${smb_domain}, password: ${smb_password}"
 
-    smb_target="/Volumes/WindowsShare-${smb_host}-${smb_share}.$$"
-    if [[ -z "$(mount | grep $smb_target)" ]]; then
+    smb_target=''
+    if [[ -z "$(mount | grep -i $smb_host | grep -i $smb_share)" ]]; then
       if [[ -z "$smb_user" ]]; then
         verbose "  Requesting credentials for //${smb_host}/${smb_share}"
         smb_user=$(prompt --default="$userid" "  User for mounting ${smb_share} on ${smb_host}")
@@ -658,6 +658,7 @@ function download() # {{{2
         echo
       fi
       smb_mount="//${smb_user}:${smb_password//@/%40}@${smb_host}/${smb_share}"
+      smb_target="/Volumes/WindowsShare-${smb_host}-${smb_share}.$$"
 
       verbose "  Mounting ${smb_share} from ${smb_host} as ${smb_user}"
       trace ">> mount -t smbfs '${smb_mount}' $smb_target"
@@ -669,7 +670,8 @@ function download() # {{{2
       fi
       CACHE_MOUNTS+=( "//${smb_user}@${smb_host}/${smb_share}" )
     else
-      verbose "  ${smb_share} is already mounted"
+      smb_target=$(mount | grep -i $smb_host | grep -i $smb_share | awk '{print $3}')
+      verbose "  ${smb_share} is already mounted on ${smb_target}"
     fi
     verbose "  Copying $filename"
     trace $sudo rsync --progress "${smb_target}/$(urldecode ${smb_path})/$filename" "${target_path}"
