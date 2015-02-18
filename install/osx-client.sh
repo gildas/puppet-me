@@ -603,7 +603,7 @@ function download() # {{{2
       verbose "  File already downloaded and checksum verified"
       return 0
     else
-      $NOOP sudo rm -f "$target_path"
+      $NOOP $sudo rm -f "$target_path"
     fi
   fi
   if [[ ${source_protocol} == 'smb' ]]; then # {{{3
