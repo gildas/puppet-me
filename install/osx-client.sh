@@ -549,6 +549,7 @@ function download() # {{{2
   local filename_path
   local source_protocol
   local source_ext
+  local sudo
 
   source_protocol=${source%%:*}
   trace ">> source protocol: ${source_protocol}"
@@ -581,9 +582,20 @@ function download() # {{{2
   esac
   trace "Expect $checksum_type checksum: $checksum_value"
 
-  [[ -w "$(dirname $target)" ]] || sudo='sudo'
-  $NOOP $sudo mkdir -p $target
-  [[ -w $target ]] || sudo='sudo'
+  if [[ -e "$target" ]] ; then
+    trace "  Target ${target} exists"
+    [[ -w "$target" ]] || sudo='sudo'
+  else
+    trace "  Target ${target} does not exists"
+    # Here we are a bit lazy and choose the admin group which of the user has to be a member
+    [[ -w "$(dirname $target)" ]] || sudo='sudo'
+    $NOOP $sudo mkdir -p "$target"
+    $NOOP $sudo chgrp -R admin "$target"
+    $NOOP $sudo chmod -R g+w "$target"
+    sudo=''
+    [[ -w "$target" ]] || sudo='sudo'
+  fi
+
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
     verbose "  Calculating checksum of downloaded file"
     target_checksum=$( $checksum "${target_path}")
@@ -1204,7 +1216,9 @@ function cache_stuff() # {{{2
   local nic_names nic_name nic_info nic_ip nic_mask ip_addresses ip_address ip_masks ip_mask
 
   verbose "Caching ISO files"
-  [[ -d "$CACHE_ROOT" ]] || $NOOP sudo mkdir -p "$CACHE_ROOT"
+  [[ -d "$CACHE_ROOT" ]]                          || $NOOP sudo mkdir -p "$CACHE_ROOT"
+  [[ $(stat -f "%Sg" "$CACHE_ROOT") == 'admin' ]] || $NOOP sudo chgrp -R admin "$CACHE_ROOT"
+  [[ -w "$CACHE_ROOT" ]]                          || $NOOP sudo chmod -R g+w "$CACHE_ROOT"
   download "$CACHE_SOURCE" "${CACHE_ROOT}"
   document_catalog="${CACHE_ROOT}/sources.json"
 
