@@ -28,7 +28,7 @@ MODULE_vmware_done=0
 MODULE_virtualization_done=0
 
 MODULES=(homebrew puppet rubytools)
-ALL_MODULES=(homebrew cache packer puppet rubytools vagrant virtualbox vmware parallels)
+ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels)
 
 CACHE_ROOT='/var/cache/daas'
 CACHE_SOURCE='https://cdn.rawgit.com/inin-apac/puppet-me/master/install/sources.json'
@@ -1092,6 +1092,17 @@ function cache_stuff() # {{{2
   done
   MODULE_cache_done=1
 } # }}}2
+
+function set_noidle() # {{{2
+{
+  verbose "Setting Energy Saver for Mac Mini server"
+  sudo pmset -c autorestart 1
+  sudo pmset -c sleep       0
+  sudo pmset -c disksleep   0
+
+  MODULE_noidle_done=1
+} # }}}2
+
 # }}}
 
 # Module: Argument parsing {{{
@@ -1110,11 +1121,11 @@ function usage() # {{{2
   echo " --help  "
   echo "   Prints some help on the output."
   echo " --macmini-parallels  "
-  echo "   will install these modules: "
+  echo "   will install these modules: noidle homebrew rubytools puppet parallels vagrant cache packer"
   echo " --macmini-virtualbox  "
-  echo "   will install these modules: "
+  echo "   will install these modules: noidle homebrew rubytools puppet virtualbox vagrant cache packer"
   echo " --macmini-vmware or --macmini  "
-  echo "   will install these modules: "
+  echo "   will install these modules: noidle homebrew rubytools puppet vmware vagrant cache packer"
   echo " --modules  "
   echo "   contains a comma-separated list of modules to install.  "
   echo "   The complete list can be obtained with --help.  "
@@ -1150,6 +1161,9 @@ function usage() # {{{2
   echo "   Default value: $HOME/Documents/Virtual Machines"
   echo " --yes, --assumeyes, -y  "
   echo "   Answers yes to any questions automatiquely."
+  echo ""
+  echo "The possible modules are currently: "
+  echo "${ALL_MODULES[*]}"
 } # }}}2
 
 function parse_args() # {{{2
@@ -1170,16 +1184,16 @@ function parse_args() # {{{2
         die "Argument for option $1 is missing"
         ;;
       --macmini|macmini-vmware)
-        MODULES=(homebrew rubytools puppet vmware vagrant cache packer)
+        MODULES=(noidle homebrew rubytools puppet vmware vagrant cache packer)
         ;;
       --macmini-parallels)
-        MODULES=(homebrew rubytools puppet parallels vagrant cache packer)
+        MODULES=(noidle homebrew rubytools puppet parallels vagrant cache packer)
         ;;
       --macmini-virtualbox)
-        MODULES=(homebrew rubytools puppet virtualbox vagrant cache packer)
+        MODULES=(noidle homebrew rubytools puppet virtualbox vagrant cache packer)
         ;;
       --macmini-all)
-        MODULES=(homebrew rubytools puppet parallels virtualbox vmware vagrant cache packer)
+        MODULES=(noidle homebrew rubytools puppet parallels virtualbox vmware vagrant cache packer)
         ;;
       --modules)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing.\nIt is a comma-separated list of the possible values are: ${ALL_MODULES[*]}"
@@ -1345,6 +1359,9 @@ function main() # {{{
   for module in ${MODULES[*]} ; do
     trace "Installing Module ${module}"
     case $module in
+      noidle)
+        set_noidle
+        ;;
       homebrew)
         install_homebrew
         ;;
