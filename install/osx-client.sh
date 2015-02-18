@@ -225,29 +225,60 @@ function urldecode() #{{{2
 function prompt() #{{{2
 {
   local silent=''
+  local default=''
   local query
   local value
 
+  while :; do # Parse aguments {{{3
+    case $1 in
+      --default)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "$FUNCNAME: Argument for option $1 is missing" && return 1
+        default=$2
+        shift 2
+        continue
+      ;;
+      --default=*?)
+        default=${1#*=} # delete everything up to =
+      ;;
+      --default=)
+        error "Argument for option $1 is missing"
+        return 1
+        ;;
+      -s|--silent?)
+        silent='-s'
+      ;;
+      -?*) # Invalid options
+        warn "Unknown option $1 will be ignored"
+      ;;
+      *)  # End of options
+        break
+      ;;
+    esac
+    shift
+  done # 3}}}
+  query=$1
+  trace "Query: ${query}"
+  trace "Default: ${default}"
+  trace "Silent: ${silent}"
   if [[ -z "$SSH_CLIENT" ]]; then
     # We are on the Mac screen
-    if [[ "$1" == '-s' || "$1" == '--silent' ]]; then
-      silent='with hidden answer'
-      shift
-    fi
-    script="Tell application \"System Events\" to display dialog \"$1\" default answer \"\" $silent"
+    trace "Prompting with GUI"
+    [[ -n $silent ]] && silent='with hidden answer'
+    script="Tell application \"System Events\" to display dialog \"${query}\" default answer \"${default}\" $silent"
+    trace "OSA Script: $script"
     value="$(osascript -e "$script" -e 'text returned of result' 2>/dev/null)"
     if [ $? -ne 0 ]; then
       # The user pressed cancel
       return 1
     fi
   else
-    if [[ "$1" == '-s' || "$1" == '--silent' ]]; then
-      silent='-s'
-      shift
-    fi
     # We are in an SSH session
-    read $silent -p "$1 " value < /dev/tty
+    trace "Prompting within the shell"
+    [[ -n "$default" ]] && query="${query} [${default}]"
+    trace "Query: $query"
+    read $silent -p "${query}: " value < /dev/tty
   fi
+  [[ -z "$value" ]] && value=$default
   printf '%s' $value
 } # 2}}}
 
@@ -603,7 +634,7 @@ function download() # {{{2
     if [[ -z "$(mount | grep $smb_target)" ]]; then
       if [[ -z "$smb_user" ]]; then
         verbose "  Requesting credentials for //${smb_host}/${smb_share}"
-        smb_user=$(prompt "  User for mounting ${smb_share} on ${smb_host} [${userid}]:")
+        smb_user=$(prompt --default="$userid" "  User for mounting ${smb_share} on ${smb_host}")
         [ -z "$smb_user" ] && smb_user=$userid
         smb_user=${smb_user/\\/;}                # change \ into ;
       elif [[ ! -z "$smb_domain" ]]; then
@@ -611,7 +642,7 @@ function download() # {{{2
       fi
       if [[ -z "$smb_password" ]]; then
         verbose "  Requesting credentials for //${smb_host}/${smb_share}"
-        smb_password=$(prompt -s "  Password for ${smb_user}:")
+        smb_password=$(prompt -s "  Password for ${smb_user}")
         echo
       fi
       smb_mount="//${smb_user}:${smb_password//@/%40}@${smb_host}/${smb_share}"
@@ -688,14 +719,13 @@ return
       if [[ $auth == 1 ]]; then
         if [[ -z "$url_password" ]]; then
           verbose "  Requesting credentials for ${url_host}"
-          tmp_user=$(prompt "  User to download from ${url_host} [${url_user}]:")
+          url_user=$(prompt --default="$url_user" "  User to download from ${url_host}")
           if [[ $? != 0 ]]; then
             warn "User cancelled prompt operation"
             return 1
 	  fi
-          [ -n "$tmp_user" ] && url_user=$tmp_user
           url_user=${url_user/\\/;/}                # change \ into ;
-          url_password=$(prompt -s "  Password for ${url_user/;/\\/}:")
+          url_password=$(prompt -s "  Password for ${url_user/;/\\/}")
           echo
         fi
         if [[ ! -z "$url_domain" ]]; then
@@ -703,6 +733,7 @@ return
         fi
         url_creds="--user ${url_user}:${url_password}"
       fi
+      verbose "  Downloading..."
       trace $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
       $NOOP $sudo curl --location --show-error --progress-bar ${url_creds} --output "${target_path}" "${source}"
       status=$?
@@ -712,12 +743,12 @@ return
           break
         ;;
         67)
-          error "Wrong credentials, please enter new credentials"
+          error "  Wrong credentials, please enter new credentials"
           url_password=''
           auth=1
         ;;
         *)
-          error "Unable to download from ${source}\nError: $status"
+          error "  Unable to download from ${source}\nError: $status"
           return 1
         ;;
       esac
