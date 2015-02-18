@@ -14,6 +14,8 @@ tmp="tmp"
 puppet_master="puppet"
 userid=$(whoami)
 
+CURL="/usr/bin/curl --location --continue-at - --progress-bar "
+
 MODULE_homebrew_done=0
 MODULE_cache_done=0
 MODULE_packer_done=0
@@ -538,7 +540,6 @@ function download() # {{{2
     auth=1
     shift
   fi
-  local curl_options="--location --continue-at - --progress-bar "
   local source=$1
   local target=$2
   local checksum_type=$3
@@ -694,8 +695,8 @@ function download() # {{{2
       verbose "  ${source_share} is already mounted on ${smb_target}"
     fi
     verbose "  Copying $filename"
-    trace $sudo curl $curl_options --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
-    $NOOP $sudo curl $curl_options --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
+    trace $sudo $CURL --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
+    $NOOP $sudo $CURL --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
     $NOOP $sudo chmod 664 "${target_path}"
   # 3}}}
   elif [[ ${source_protocol} == 'file' ]]; then # {{{3
@@ -713,8 +714,8 @@ function download() # {{{2
           mount_path=$(echo "$mount_info" | awk '{print $2}')
           trace "mount info: ${mount_info}"
           trace "mount path: ${mount_path}"
-          trace $sudo curl $curl_options --output "${target_path}" "file://${mount_path}/${filename_path}"
-          $NOOP $sudo curl $curl_options --output "${target_path}" "file://${mount_path}/${filename_path}"
+          trace $sudo $CURL --output "${target_path}" "file://${mount_path}/${filename_path}"
+          $NOOP $sudo $CURL --output "${target_path}" "file://${mount_path}/${filename_path}"
           if [ $? -ne 0 ]; then
             error "Cannot copy ${mount_path}/${filename_path} to ${target_path}"
           else
@@ -732,8 +733,8 @@ function download() # {{{2
         ;;
       esac
     else
-      trace $sudo curl $curl_options --output "${target_path}" "${source}"
-      $NOOP $sudo curl $curl_options --output "${target_path}" "${source}"
+      trace $sudo $CURL --output "${target_path}" "${source}"
+      $NOOP $sudo $CURL --output "${target_path}" "${source}"
       $NOOP $sudo chmod 664 "${target_path}"
     fi
   # 3}}}
@@ -755,8 +756,8 @@ function download() # {{{2
         curl_creds="--user ${source_user/\\/;/}:${source_password}" # encode domain
       fi
       verbose "  Downloading..."
-      trace $sudo curl $curl_options --output "${target_path}" "${source}"
-      $NOOP $sudo curl $curl_options ${url_creds} --output "${target_path}" "${source}"
+      trace $sudo $CURL --output "${target_path}" "${source}"
+      $NOOP $sudo $CURL ${url_creds} --output "${target_path}" "${source}"
       status=$?
       case $status in
         0)
@@ -947,7 +948,7 @@ function install_packer() # {{{2
   packer_bindir=$(dirname $(which packer))
   if [[ ! -x $packer_bindir/packer-provisioner-wait ]]; then
     verbose "  Install Packer plugin: provisioner-wait"
-    $NOOP curl -sSL https://github.com/gildas/packer-provisioner-wait/raw/master/bin/0.1.0/darwin/packer-provisioner-wait --output $packer_bindir/packer-provisioner-wait
+    download https://github.com/gildas/packer-provisioner-wait/raw/master/bin/0.1.0/darwin/packer-provisioner-wait "${packer_bindir}"
   fi
 
   packer_windows=${MODULE_PACKER_HOME}/packer-windows
@@ -1085,7 +1086,7 @@ EOF
 
   verbose "Installing the puppet agent daemon"
   if [ ! -f "/Library/LaunchDaemons/com.puppetlabs.puppet.plist" ]; then
-    $NOOP curl --location --show-error --progress-bar --output "$HOME/Downloads/com.puppetlabs.puppet.plist" https://raw.github.com/inin-apac/puppet-me/master/config/osx/com.puppetlabs.puppet.plist
+    download https://raw.github.com/inin-apac/puppet-me/master/config/osx/com.puppetlabs.puppet.plist "$HOME/Downloads"
     $NOOP sudo install -m 0644 -o root -g wheel $HOME/Downloads/com.puppetlabs.puppet.plist /Library/LaunchDaemons
     $NOOP sudo launchctl load -w /Library/LaunchDaemons/com.puppetlabs.puppet.plist
   fi
