@@ -686,24 +686,26 @@ return
     while true; do
       url_creds=''
       if [[ $auth == 1 ]]; then
-        if [[ -z "$url_user" ]]; then
-          verbose "  Requesting credentials for ${url_host}"
-          url_user=$(prompt "  User to download from ${url_host} [${url_user}]:")
-          [ -z "$url_user" ] && url_user=$userid
-          url_user=${url_user/\\/;/}                # change \ into ;
-        elif [[ ! -z "$url_domain" ]]; then
-          url_user="${url_domain};${url_user}"
-        fi
         if [[ -z "$url_password" ]]; then
           verbose "  Requesting credentials for ${url_host}"
-          url_password=$(prompt -s "  Password for ${url_user}:")
+          tmp_user=$(prompt "  User to download from ${url_host} [${url_user}]:")
+          if [[ $? != 0 ]]; then
+            warn "User cancelled prompt operation"
+            return 1
+	  fi
+          [ -n "$tmp_user" ] && url_user=$tmp_user
+          url_user=${url_user/\\/;/}                # change \ into ;
+          url_password=$(prompt -s "  Password for ${url_user/;/\\/}:")
           echo
+        fi
+        if [[ ! -z "$url_domain" ]]; then
+          url_user="${url_domain};${url_user}"
         fi
         url_creds="--user ${url_user}:${url_password}"
       fi
       trace $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
       $NOOP $sudo curl --location --show-error --progress-bar ${url_creds} --output "${target_path}" "${source}"
-      $status = $?
+      status=$?
       case $status in
         0)
           trace "Successful download"
