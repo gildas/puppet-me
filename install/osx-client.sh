@@ -469,7 +469,7 @@ function parse_args() # {{{2
       -h|-\?|--help)
        trace "Showing usage"
        usage
-       return 1
+       exit 0
        ;;
      --quiet)
        VERBOSE=0
