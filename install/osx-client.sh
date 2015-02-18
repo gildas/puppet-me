@@ -142,7 +142,7 @@ function trace_end() # {{{2
 {
   trace --trace-member "Removing CIFS mount points"
   for cache_mount in ${CACHE_MOUNTS[@]}; do
-    sudo umount $cache_mount 2>&1 > /dev/null
+    umount $cache_mount 2>&1 > /dev/null
   done
   trace --trace-member "[END] -------"
 } # 2}}}
@@ -548,9 +548,16 @@ function download() # {{{2
   local filename
   local filename_path
   local source_protocol
+  local source_user=$userid
+  local source_domain
+  local source_password
+  local source_host
+  local source_path
   local source_ext
   local sudo
 
+  # Extract source components {{{3
+  trace ">> source: ${source}"
   source_protocol=${source%%:*}
   trace ">> source protocol: ${source_protocol}"
 
@@ -559,29 +566,44 @@ function download() # {{{2
     #   the script will open the archive and extract filename.
     #   if the archive is an ISO, it is mounted for the extraction
     trace "extracting a file from an archive"
-    filename_path=${source#*\?}                 # extract the file in archive
-    filename=${filename_path##*/}               # Remove the path
-    source=${source%\?*}                        # Remove the path in archive
+    filename_path=${source#*\?}                       # extract file in archive
+    filename=${filename_path##*/}                     # remove path
+    source=${source%\?*}                              # remove path in archive
+    trace "  >> filename: ${filename}"
     trace "  >> filename_path: ${filename_path}"
   else
-    filename=${source##*/}                      # extract the filename
+    trace "Extracting components from a URL"
+    filename=${source##*/}                            # extract filename
+    trace "  >> filename: ${filename}"
+    source_host=$(dirname ${source#*://})             # remove protocol
+    if [[ "${source_host}" =~ .*@.* ]]; then          # search for credentials
+      source_user=${source_host#*//}                  # remove heading //
+      source_user=${source_user%@*}                   # keep credentials
+      if [[ "${source_user}" =~ .*:.* ]]; then        # search for password
+        source_password=${source_user#*:}             # extract password
+        source_user=${source_user%:*}                 # remove all after :
+	trace "  >> source_password: (obfuscated)"
+      fi
+      if [[ "${source_user}" =~ .*\;.* ]]; then       # search for domain
+        source_domain=${source_user%;*}               # extract domain
+        source_user=${source_user#*;}                 # extract user
+        trace "  >> source_domain: ${source_domain}"
+      fi
+      trace "  >> source_user: ${source_user}"
+      source_host=${source_host#*@}                   # remove user
+    fi
+    source_path=${source_host#*/}                     # extract path
+    source_host=${source_host%%/*}                    # extract host
+    trace "  >> source_path: ${source_path}"
+    trace "  >> source_host: ${source_host}"
   fi
-  trace "  >> filename: ${filename}"
   trace "  >> source: ${source}"
-  target_path="${target}/${filename}"
+  # 3}}}
 
+  target_path="${target}/${filename}"
   verbose "  Downloading ${filename}..."
 
-  case $checksum_type in
-    MD5|md5)   checksum='md5';;
-    SHA1|sha1) checksum='shasum';;
-    null|'')   checksum='';;
-    *)
-    error "Unsupported checksum type ($checksum_type) while downloading $filename"
-    return 1
-  esac
-  trace "Expect $checksum_type checksum: $checksum_value"
-
+  # Validate target {{{3
   if [[ -e "$target" ]] ; then
     trace "  Target ${target} exists"
     [[ -w "$target" ]] || sudo='sudo'
@@ -594,7 +616,18 @@ function download() # {{{2
     $NOOP $sudo chmod -R g+w "$target"
     sudo=''
     [[ -w "$target" ]] || sudo='sudo'
-  fi
+  fi # 3}}}
+
+  # Validate checksum  # {{{3
+  case $checksum_type in
+    MD5|md5)   checksum='md5';;
+    SHA1|sha1) checksum='shasum';;
+    null|'')   checksum='';;
+    *)
+    error "Unsupported checksum type ($checksum_type) while downloading $filename"
+    return 1
+  esac
+  trace "Expect $checksum_type checksum: $checksum_value"
 
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
     verbose "  Calculating checksum of downloaded file"
@@ -605,83 +638,69 @@ function download() # {{{2
     else
       $NOOP $sudo rm -f "$target_path"
     fi
-  fi
+  fi # 3}}}
+
   if [[ ${source_protocol} == 'smb' ]]; then # {{{3
     auth=1
     verbose "  Copying from CIFS location"
     # source is like smb://domain;userid:password@server/share/path/file
     # domain, userid, and password are optional
-    trace ">> source: ${source}"
-    smb_user=''
-    smb_domain=''
-    smb_password=''
-    smb_mount=$(dirname ${source#*:})
-    trace ">> mount: ${smb_mount}"
-    if [[ "${smb_mount}" =~ .*@.* ]]; then      # Search for user
-      trace "  Found a user"
-      smb_user=${smb_mount#*//}                 # remove the heading //
-      smb_user=${smb_user%@*}                   # keep the credentials
-      trace "  >> smb_user: ${smb_user}"
-      if [[ "${smb_user}" =~ .*:.* ]]; then     # Search for password
-        trace "  Found a password"
-        smb_password=${smb_user#*:}             # extract password
-        smb_user=${smb_user%:*}                 # remove all after :
-      fi
-      if [[ "${smb_user}" =~ .*\;.* ]]; then    # Search for domain
-        trace "  Found a domain"
-        smb_domain=${smb_user%;*}               # extract domain
-        smb_user=${smb_user#*;}                 # extract user
-      fi
-      smb_host=${smb_mount#*@}                  # remove the user
-    else
-      smb_host=${smb_mount#*//}                 # remove the heading //
+    source_share=${source_path%%/*}             # extract SMB share
+    source_path=${source_path#*/}               # remove SMB share
+
+    if [[ -n "$source_domain" ]]; then
+      source_user="${source_domain}\\${source_user}"
     fi
-    smb_share=${smb_host#*/}                    # remove the host
-    smb_path=${smb_share#*/}                    # extract the path
-    smb_share=${smb_share%%/*}                  # extract the share
-    smb_host=${smb_host%%/*}                    # extract the host
-    trace "smb: host: ${smb_host}, share: ${smb_share}, path: ${smb_path}, user: ${smb_user}, domain: ${smb_domain}, password: ${smb_password}"
 
     smb_target=''
-    if [[ -z "$(mount | grep -i $smb_host | grep -i $smb_share)" ]]; then
-      if [[ -z "$smb_user" ]]; then
-        verbose "  Requesting credentials for //${smb_host}/${smb_share}"
-        smb_user=$(prompt --default="$userid" "  User for mounting ${smb_share} on ${smb_host}")
-        [ -z "$smb_user" ] && smb_user=$userid
-        smb_user=${smb_user/\\/;}                # change \ into ;
-      elif [[ ! -z "$smb_domain" ]]; then
-        smb_user="${smb_domain};${smb_user}"
-      fi
-      if [[ -z "$smb_password" ]]; then
-        verbose "  Requesting credentials for //${smb_host}/${smb_share}"
-        smb_password=$(prompt -s "  Password for ${smb_user}")
-        echo
-      fi
-      smb_mount="//${smb_user}:${smb_password//@/%40}@${smb_host}/${smb_share}"
-      smb_target="/Volumes/WindowsShare-${smb_host}-${smb_share}.$$"
+    if [[ -z "$(mount | grep -i $source_host | grep -i $source_share)" ]]; then
+      while true; do
+        if [[ -z "$source_password" ]]; then
+          verbose "  Requesting credentials for //${source_host}/${source_share}"
+          source_user=$(prompt --default="$source_user" "  User for mounting ${source_share} on ${source_host}")
+          if [[ $? != 0 ]]; then
+            warn "User cancelled prompt operation"
+            return 1
+	  fi
+          source_password=$(prompt -s "  Password for ${source_user}")
+          echo
+        fi
+        smb_mount="//${source_user/\\/;/}:${source_password//@/%40}@${source_host}/${source_share}"
+        smb_target="/Volumes/WindowsShare-${source_host}-${source_share}.$$"
 
-      verbose "  Mounting ${smb_share} from ${smb_host} as ${smb_user}"
-      trace ">> mount -t smbfs '${smb_mount}' $smb_target"
-      mkdir -p $smb_target
-      mount -t smbfs  "${smb_mount}" $smb_target
-      if [[ $? > 0 ]]; then
-        error "Cannot mount ${smb_share} on ${smb_host} as ${smb_user}"
-        return 1
-      fi
-      CACHE_MOUNTS+=( "//${smb_user}@${smb_host}/${smb_share}" )
+        verbose "  Mounting ${source_share} from ${source_host} as ${source_user}"
+        trace ">> mount -t smbfs '//${source_user/\\/;/}:XXXXX@${source_host}/${source_share}' $smb_target"
+        mkdir -p $smb_target && mount -t smbfs  "${smb_mount}" $smb_target
+        status=$?
+        case $status in
+          0)
+            trace "Successful download"
+            CACHE_MOUNTS+=( "//${source_user}@${source_host}/${source_share}" )
+            break
+          ;;
+          77)
+            error "  Wrong credentials, please enter new credentials"
+            source_password=''
+          ;;
+          *)
+            error "  Cannot mount ${source_share} on ${source_host} as ${source_user}\nError: $status"
+            return 1
+          ;;
+        esac
+      done
     else
-      smb_target=$(mount | grep -i $smb_host | grep -i $smb_share | awk '{print $3}')
-      verbose "  ${smb_share} is already mounted on ${smb_target}"
+      smb_target=$(mount | grep -i $source_host | grep -i $source_share | awk '{print $3}')
+      verbose "  ${source_share} is already mounted on ${smb_target}"
     fi
     verbose "  Copying $filename"
-    trace $sudo rsync --progress "${smb_target}/$(urldecode ${smb_path})/$filename" "${target_path}"
-    $NOOP $sudo rsync --progress "${smb_target}/$(urldecode ${smb_path})/$filename" "${target_path}"
+    trace $sudo rsync --progress "${smb_target}/$(urldecode ${source_path})/$filename" "${target_path}"
+    $NOOP $sudo rsync --progress "${smb_target}/$(urldecode ${source_path})/$filename" "${target_path}"
     $NOOP $sudo chmod 664 "${target_path}"
   # 3}}}
   elif [[ ${source_protocol} == 'file' ]]; then # {{{3
     if [[ -n "${filename_path}" ]]; then
-      source=${source#*://}                     # remove the protocol
-      source_ext=${source##*\.}
+      source=${source#*://}                     # remove protocol
+      source_ext=${source##*\.}                 # extract extension
       verbose "Archive type: ${source_ext}"
       case $source_ext in
         iso|ISO)
@@ -693,7 +712,7 @@ function download() # {{{2
           mount_path=$(echo "$mount_info" | awk '{print $2}')
           trace "mount info: ${mount_info}"
           trace "mount path: ${mount_path}"
-          verbose $sudo rsync --progress "${mount_path}/${filename_path}" "${target_path}"
+          trace $sudo rsync --progress "${mount_path}/${filename_path}" "${target_path}"
           $NOOP $sudo rsync --progress "${mount_path}/${filename_path}" "${target_path}"
           if [ $? -ne 0 ]; then
             error "Cannot copy ${mount_path}/${filename_path} to ${target_path}"
@@ -711,7 +730,6 @@ function download() # {{{2
           return 1
         ;;
       esac
-return
     else
       trace $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
       $NOOP $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
@@ -719,33 +737,20 @@ return
   # 3}}}
   else # other urls (http, https, ftp) {{{3
     verbose "  Copying from url location"
-    url_user=$userid
-    url_host=$(dirname ${source#*://})          # remove the protocol
-    if [[ "${url_host}" =~ .*@.* ]]; then
-      url_user=${url_host#*//}                 # remove the heading //
-      url_user=${url_user%@*}                   # keep the credentials
-      trace "  >> url_user: ${url_user}"
-      url_host=${url_host#*@}                   # remove the user
-    fi
-    url_host=${url_host%%/*}                    # extract the host
     while true; do
-      url_creds=''
+      curl_creds=''
       if [[ $auth == 1 ]]; then
-        if [[ -z "$url_password" ]]; then
-          verbose "  Requesting credentials for ${url_host}"
-          url_user=$(prompt --default="$url_user" "  User to download from ${url_host}")
+        if [[ -z "$source_password" ]]; then
+          verbose "  Requesting credentials for ${source_host}"
+          source_user=$(prompt --default="$source_user" "  User to download from ${source_host}")
           if [[ $? != 0 ]]; then
             warn "User cancelled prompt operation"
             return 1
 	  fi
-          url_user=${url_user/\\/;/}                # change \ into ;
-          url_password=$(prompt -s "  Password for ${url_user/;/\\/}")
+          source_password=$(prompt -s "  Password for ${source_user}")
           echo
         fi
-        if [[ ! -z "$url_domain" ]]; then
-          url_user="${url_domain};${url_user}"
-        fi
-        url_creds="--user ${url_user}:${url_password}"
+        curl_creds="--user ${source_user/\\/;/}:${source_password}" # encode domain
       fi
       verbose "  Downloading..."
       trace $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
@@ -758,7 +763,7 @@ return
         ;;
         67)
           error "  Wrong credentials, please enter new credentials"
-          url_password=''
+          source_password=''
           auth=1
         ;;
         *)
@@ -769,14 +774,15 @@ return
     done
   fi # 3}}}
 
+  # Validate downloaded target checksum {{{3
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
     target_checksum=$( $checksum "${target_path}")
     if [[ ! $target_checksum =~ \s*$checksum_value\s* ]]; then
       error "Invalid ${document_checksum_type} checksum for the downloaded document"
-      $NOOP sudo rm -f "$target_path"
+      $NOOP $sudo rm -f "$target_path"
       return 1
     fi
-  fi
+  fi # 3}}}
 } # 2}}}
 
 function install_dmg() # {{{2
