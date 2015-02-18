@@ -672,32 +672,54 @@ return
       $NOOP $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
     fi
   # 3}}}
-  else # {{{3
+  else # other urls (http, https, ftp) {{{3
     verbose "  Copying from url location"
+    url_user=$userid
     url_host=$(dirname ${source#*://})          # remove the protocol
     if [[ "${url_host}" =~ .*@.* ]]; then
+      url_user=${url_host#*//}                 # remove the heading //
+      url_user=${url_user%@*}                   # keep the credentials
+      trace "  >> url_user: ${url_user}"
       url_host=${url_host#*@}                   # remove the user
     fi
     url_host=${url_host%%/*}                    # extract the host
-    url_creds=''
-    if [[ $auth == 1 ]]; then
-      if [[ -z "$url_user" ]]; then
-        verbose "  Requesting credentials for ${url_host}"
-        url_user=$(prompt "  User to download from ${url_host} [${userid}]:")
-        [ -z "$url_user" ] && url_user=$userid
-        url_user=${url_user/\\/;/}                # change \ into ;
-      elif [[ ! -z "$url_domain" ]]; then
-        url_user="${url_domain};${url_user}"
+    while true; do
+      url_creds=''
+      if [[ $auth == 1 ]]; then
+        if [[ -z "$url_user" ]]; then
+          verbose "  Requesting credentials for ${url_host}"
+          url_user=$(prompt "  User to download from ${url_host} [${url_user}]:")
+          [ -z "$url_user" ] && url_user=$userid
+          url_user=${url_user/\\/;/}                # change \ into ;
+        elif [[ ! -z "$url_domain" ]]; then
+          url_user="${url_domain};${url_user}"
+        fi
+        if [[ -z "$url_password" ]]; then
+          verbose "  Requesting credentials for ${url_host}"
+          url_password=$(prompt -s "  Password for ${url_user}:")
+          echo
+        fi
+        url_creds="--user ${url_user}:${url_password}"
       fi
-      if [[ -z "$url_password" ]]; then
-        verbose "  Requesting credentials for ${url_host}"
-        url_password=$(prompt -s "  Password for ${url_user}:")
-        echo
-      fi
-      url_creds="--user ${url_user}:${url_password}"
-    fi
-    trace $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
-    $NOOP $sudo curl --location --show-error --progress-bar ${url_creds} --output "${target_path}" "${source}"
+      trace $sudo curl --location --show-error --progress-bar --output "${target_path}" "${source}"
+      $NOOP $sudo curl --location --show-error --progress-bar ${url_creds} --output "${target_path}" "${source}"
+      $status = $?
+      case $status in
+        0)
+          trace "Successful download"
+          break
+        ;;
+        67)
+          error "Wrong credentials, please enter new credentials"
+          url_password=''
+          auth=1
+        ;;
+        *)
+          error "Unable to download from ${source}\nError: $status"
+          return 1
+        ;;
+      esac
+    done
   fi # 3}}}
 
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
