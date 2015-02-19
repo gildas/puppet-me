@@ -578,9 +578,8 @@ function keychain_get_password() # {{{2
     return 2
   fi # }}}4
   # }}}3
-  trace "Searching password for $kind user $user @ $service (protocol: $protocol, protocol_option: $protocol_option)"
-  trace "Exec: [/usr/bin/security $command $protocol_option -s \"$service\" -a \"$user\" -w]"
-  #user=$(/usr/bin/security $command $protocol_option -s "$service" -a \"$user\" -w 2> /dev/null)
+  trace "Searching password for $kind user $user @ $service (protocol: $protocol)"
+  trace "Exec: [/usr/bin/security $command -r "$protocol" -s \"$service\" -a \"$user\" -w]"
   if [[ -n "$protocol" ]]; then
     password=$(/usr/bin/security $command -r "$protocol" -s "$service" -a "$user" -w)
   else
