@@ -1253,7 +1253,7 @@ function install_packer() # {{{2
   packer_bindir=$(dirname $(which packer))
   if [[ ! -x $packer_bindir/packer-provisioner-wait ]]; then
     verbose "  Install Packer plugin: provisioner-wait"
-    download https://github.com/gildas/packer-provisioner-wait/raw/master/bin/0.1.0/darwin/packer-provisioner-wait "${packer_bindir}"
+    download https://cdn.rawgit.com/gildas/packer-provisioner-wait/master/bin/0.1.0/darwin/packer-provisioner-wait "${packer_bindir}"
     status=$? && [[ $status != 0 ]] && return $status
   fi
 
