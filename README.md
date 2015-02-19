@@ -59,7 +59,7 @@ The possible options are:
   Default: /var/cache/daas
 - --cache-source *url*  
   Contains the URL of the configuration file for the cached sources.  
-  Default: https://cdn.rawgit.com/inin-apac/puppet-me/master/install/sources.json
+  Default: [sources.json on cdn.rawgit.com](https://cdn.rawgit.com/inin-apac/puppet-me/da22e817bcbf197e5a5454f781c79ceaf98b93af/config/sources.json)
 - --help  
   Prints some help on the output.
 - --macmini-parallels  
