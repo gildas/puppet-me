@@ -426,15 +426,15 @@ function keychain_get_user() # {{{2
   # }}}3
   trace "Searching $kind user $user @ $service (protocol: $protocol)"
   if [[ -n "$protocol" ]]; then
-    trace "Exec: [/usr/bin/security $command -r "$protocol" -s \"$service\" | grep acct"
-    user=$(/usr/bin/security $command -r "$protocol" -s "$service" | grep acct)
+    trace "Exec: [/usr/bin/security $command -r "$protocol" -s \"$service\"]"
+    user=$(/usr/bin/security $command -r "$protocol" -s "$service" 2>&1)
   else
-    trace "Exec: [/usr/bin/security $command -s \"$service\" | grep acct"
-    user=$(/usr/bin/security $command -s "$service" | grep acct)
+    trace "Exec: [/usr/bin/security $command -s \"$service\"]"
+    user=$(/usr/bin/security $command -s "$service" 2>&1)
   fi
   status=$?
-  [[ $status != 0 ]] && trace "Error: $status" && return $status
-  user=$(echo $user | awk -F= '{print $2 }' | tr -d '"' | sed -e 's/^0x[0-9,A-F]*[[:space:]]*//' | sed -e 's/\\134/\\/')
+  [[ $status != 0 ]] && trace "Error $status: $user" && return $status
+  user=$(echo "$user" | grep acct | awk -F= '{print $2 }' | tr -d '"' | sed -e 's/^0x[0-9,A-F]*[[:space:]]*//' | sed -e 's/\\134/\\/')
   trace "Found $kind user @ $service: $user"
   printf '%s' $user
 } # }}}2
@@ -581,12 +581,12 @@ function keychain_get_password() # {{{2
   trace "Searching password for $kind user $user @ $service (protocol: $protocol)"
   trace "Exec: [/usr/bin/security $command -r "$protocol" -s \"$service\" -a \"$user\" -w]"
   if [[ -n "$protocol" ]]; then
-    password=$(/usr/bin/security $command -r "$protocol" -s "$service" -a "$user" -w)
+    password=$(/usr/bin/security $command -r "$protocol" -s "$service" -a "$user" -w 2>&1)
   else
-    password=$(/usr/bin/security $command -s "$service" -a "$user" -w)
+    password=$(/usr/bin/security $command -s "$service" -a "$user" -w 2>&1)
   fi
   status=$?
-  [[ $status != 0 ]] && trace "Error: $status" && return $status
+  [[ $status != 0 ]] && trace "Error $status: $password" && return $status
   trace "Found password for $user @ $service: XXXXXX"
   printf '%s' $password
 } # }}}2
