@@ -142,8 +142,8 @@ function trace_init() # {{{2
 
 function trace_end() # {{{2
 {
-  trace --trace-member "Removing CIFS mount points"
   for cache_mount in ${CACHE_MOUNTS[@]}; do
+    trace --trace-member "Removing CIFS mount point: $cache_mount"
     umount $cache_mount 2>&1 > /dev/null
   done
   trace --trace-member "[END] -------"
@@ -757,17 +757,17 @@ function download() # {{{2
           source_password=$(prompt -s "  Password for ${source_user}")
           echo
         fi
-        smb_mount="//${source_user/\\/;/}:${source_password//@/%40}@${source_host}/${source_share}"
+        smb_mount="//${source_user/\\/;}:${source_password//@/%40}@${source_host}/${source_share}"
         smb_target="/Volumes/WindowsShare-${source_host}-${source_share}.$$"
 
         verbose "  Mounting ${source_share} from ${source_host} as ${source_user}"
-        trace ">> mount -t smbfs '//${source_user/\\/;/}:XXXXX@${source_host}/${source_share}' $smb_target"
+        trace ">> mount -t smbfs '//${source_user/\\/;}:XXXXX@${source_host}/${source_share}' $smb_target"
         mkdir -p $smb_target && mount -t smbfs  "${smb_mount}" $smb_target
         status=$?
         case $status in
           0)
             trace "Successful download"
-            CACHE_MOUNTS+=( "//${source_user}@${source_host}/${source_share}" )
+            CACHE_MOUNTS+=( "//${source_user/\\/;}@${source_host}/${source_share}" )
             break
           ;;
           77)
