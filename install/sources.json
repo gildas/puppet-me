@@ -115,7 +115,7 @@
       {
         "location": "Internet",
         "network":  ".*",
-        "auth": true,
+        "need_auth": true,
         "has_resume": true,
         "url": "ftp://ftp.inin.com/Download/CIC2015R2/Dialer/Dialer_2015_R2.iso"
       }
