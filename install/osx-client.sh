@@ -892,10 +892,10 @@ function download() # {{{2
   trace "Expect $checksum_type checksum: $checksum_value"
 
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
-    verbose "  Calculating checksum of downloaded file"
-    target_checksum=$( $checksum "${target_path}")
+    verbose "  Calculating checksum of the already cached file"
+    target_checksum=$(bar -n "$target_path" | $checksum)
     if [[ $target_checksum =~ \s*$checksum_value\s* ]]; then
-      verbose "  File already downloaded and checksum verified"
+      verbose "  File already cached and checksum verified"
       return 0
     else
       $NOOP $sudo rm -f "$target_path"
@@ -1041,8 +1041,9 @@ function download() # {{{2
   fi # }}}3
 
   # Validate downloaded target checksum {{{3
-  if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
-    target_checksum=$( $checksum "${target_path}")
+  if [[ -r "${target_path}" && -n ${checksum} ]]; then
+    verbose "  Calculating checksum of the downloaded file"
+    target_checksum=$(bar -n "$target_path" | $checksum)
     if [[ ! $target_checksum =~ \s*$checksum_value\s* ]]; then
       error "Invalid ${document_checksum_type} checksum for the downloaded document"
       $NOOP $sudo rm -f "$target_path"
@@ -1190,6 +1191,13 @@ function install_homebrew() # {{{2
     $NOOP brew install brew-cask
   else
     verbose "Homebrew Cask is already installed"
+  fi
+
+  if [[ ! -z $(brew info bar | grep '^Not installed$') ]]; then
+    verbose "Installing bar..."
+    $NOOP brew install bar
+  else
+    verbose "bar is already installed"
   fi
 
   # Installing jq for querying json from bash
