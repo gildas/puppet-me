@@ -1054,7 +1054,9 @@ function download() # {{{2
   # The download was a success, let's save the credentials in keychain
   if [[ $source_credentials_updated != 0 ]]; then
     keychain_set_password --kind=internet --protocol=$source_protocol --site=$source_host --user=$source_user --password=$source_password
+    status=$? && [[ $status != 0 ]] && error "Could not save credentials.\nError: $status"
   fi
+  return 0
 } # }}}2
 
 # }}}
@@ -1076,20 +1078,22 @@ function dmg_install() # {{{2
   target="${target_dir}/${filename}"
 
   download "$source" "$target_dir"
+  status=$? && [[ $status != 0 ]] && return $status
 
   verbose "    Mounting ${target}"
   mount=$(hdiutil attach ${target} | sed -e 's/^\/.* \//\//')
+  status=$? && [[ $status != 0 ]] && return $status
   verbose "      mounted on ${mount}"
-
-  #  #TODO: ERROR
 
   verbose "    Installing ${target}"
   local package=$(find ${mount} -name '*.pkg' -mindepth 1 -maxdepth 1)
   verbose "      Package: ${package}"
   $NOOP sudo installer -pkg ${package} -target /
+  status=$? && [[ $status != 0 ]] && return $status
 
   verbose "    Unmounting ${target}"
   hdiutil eject ${mount} > /dev/null
+  status=$? && [[ $status != 0 ]] && return $status
 } # }}}2
 
 function brew_install() # {{{2
@@ -1104,7 +1108,9 @@ function brew_install() # {{{2
   else
     verbose "Installing $app_name"
     $NOOP brew install $app_binary
+    status=$? && [[ $status != 0 ]] && return $status
   fi
+  return 0
 } # }}}2
 
 function cask_install() # {{{2
@@ -1119,7 +1125,9 @@ function cask_install() # {{{2
   else
     verbose "Installing $app_name"
     $NOOP brew install "Caskroom/cask/$app_name"
+    status=$? && [[ $status != 0 ]] && return $status
   fi
+  return 0
 } # }}}2
 
 function install_xcode_tools() # {{{2
@@ -1138,14 +1146,18 @@ function install_xcode_tools() # {{{2
     verbose "  Finding proper version"
     touch /tmp/.com.apple.dt.CommandLinetools.installondemand.in-progress
     product=$(softwareupdate --list 2>&1 | grep "\*.*Command Line" | tail -1 | sed -e 's/^   \* //' | tr -d '\n')
+    status=$? && [[ $status != 0 ]] && return $status
     verbose "  Downloading and Installing ${product}. You should get some coffee or tea as this might take a while..."
     $NOOP sudo softwareupdate --install "$product"
+    status=$? && [[ $status != 0 ]] && return $status
   else # Older versions like Mountain Lion, Lion
     verbose "Installing XCode tools from Website"
     [[ $os_min == 7 ]] && url=http://devimages.apple.com/downloads/xcode/command_line_tools_for_xcode_os_x_lion_april_2013.dmg
     [[ $os_min == 8 ]] && url=http://devimages.apple.com/downloads/xcode/command_line_tools_for_osx_mountain_lion_april_2014.dmg
     $NOOP dmg_install $url
+    status=$? && [[ $status != 0 ]] && return $status
   fi
+  return 0
 } # }}}2
 
 function install_homebrew() # {{{2
@@ -1153,42 +1165,51 @@ function install_homebrew() # {{{2
   # Installing homebrew from http://brew.sh
   # prerequisites:
   install_xcode_tools
+  status=$? && [[ $status != 0 ]] && return $status
 
   if which brew > /dev/null 2>&1; then
     verbose "Homebrew is already installed, upgrading..."
     $NOOP brew update && brew upgrade && brew cleanup
+    status=$? && [[ $status != 0 ]] && return $status
   else
     verbose "Installing Homebrew..."
     $NOOP ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    status=$? && [[ $status != 0 ]] && return $status
 
     # Preparing brew for first time or sanitizing it if already installed
     $NOOP brew doctor
+    status=$? && [[ $status != 0 ]] && return $status
   fi
 
   # Installing bash completion
   if [[ ! -z $(brew info bash-completion | grep '^Not installed$') ]]; then
     verbose "Installing bash completion..."
     $NOOP brew install bash-completion
+    status=$? && [[ $status != 0 ]] && return $status
   else
     verbose "Homebrew bash completion is already installed"
   fi
 
   if [[ -z $(brew tap | grep 'homebrew/completions') ]]; then
     brew tap homebrew/completions
+    status=$? && [[ $status != 0 ]] && return $status
   fi
 
   if [[ -z $(brew tap | grep 'homebrew/binary') ]]; then
     brew tap homebrew/binary
+    status=$? && [[ $status != 0 ]] && return $status
   fi
 
   # Installing Cask from http://caskroom.io
   if [[ -z $(brew tap | grep 'caskroom/cask') ]]; then
     brew tap caskroom/cask
+    status=$? && [[ $status != 0 ]] && return $status
   fi
 
   if [[ ! -z $(brew info brew-cask | grep '^Not installed$') ]]; then
     verbose "Installing Homebrew Cask..."
     $NOOP brew install brew-cask
+    status=$? && [[ $status != 0 ]] && return $status
   else
     verbose "Homebrew Cask is already installed"
   fi
@@ -1196,6 +1217,7 @@ function install_homebrew() # {{{2
   if [[ ! -z $(brew info bar | grep '^Not installed$') ]]; then
     verbose "Installing bar..."
     $NOOP brew install bar
+    status=$? && [[ $status != 0 ]] && return $status
   else
     verbose "bar is already installed"
   fi
@@ -1204,10 +1226,12 @@ function install_homebrew() # {{{2
   if [[ ! -z $(brew info jq | grep '^Not installed$') ]]; then
     verbose "Installing jq..."
     $NOOP brew install jq
+    status=$? && [[ $status != 0 ]] && return $status
   else
     verbose "jq is already installed"
   fi
   MODULE_homebrew_done=1
+  return 0
 } # }}}2
 
 function install_packer() # {{{2
@@ -1217,17 +1241,20 @@ function install_packer() # {{{2
   [[ $MODULE_vagrant_done   == 0 ]] && install_vagrant
 
   brew_install packer
+  status=$? && [[ $status != 0 ]] && return $status
 
   # Installing bash completion
   if [[ ! -z $(brew info homebrew/completions/packer-completion | grep '^Not installed$') ]]; then
     verbose "Installing bash completion for Packer..."
     $NOOP brew install homebrew/completions/packer-completion
+    status=$? && [[ $status != 0 ]] && return $status
   fi
 
   packer_bindir=$(dirname $(which packer))
   if [[ ! -x $packer_bindir/packer-provisioner-wait ]]; then
     verbose "  Install Packer plugin: provisioner-wait"
     download https://github.com/gildas/packer-provisioner-wait/raw/master/bin/0.1.0/darwin/packer-provisioner-wait "${packer_bindir}"
+    status=$? && [[ $status != 0 ]] && return $status
   fi
 
   packer_windows=${MODULE_PACKER_HOME}/packer-windows
@@ -1235,9 +1262,11 @@ function install_packer() # {{{2
     echo "  Installing Packer framework for building Windows machines"
     $NOOP mkdir -p $(dirname $packer_windows)
     $NOOP git clone https://github.com/gildas/packer-windows $packer_windows
+    status=$? && [[ $status != 0 ]] && return $status
   else
     echo "  Upgrading Packer framework for building Windows machines"
     $NOOP git --git-dir "${packer_windows}/.git" pull
+    status=$? && [[ $status != 0 ]] && return $status
   fi
 
   if [[ "$MODULE_PACKER_HOME" != "$HOME/Documents/packer" ]]; then
@@ -1246,8 +1275,10 @@ function install_packer() # {{{2
 
   if [[ -f "$packer_windows/Gemfile" ]]; then
     [[ -z "$NOOP" ]] && (cd $packer_windows ; bundle install)
+    status=$? && [[ $status != 0 ]] && return $status
   fi
   MODULE_packer_done=1
+  return 0
 } # }}}2
 
 function install_puppet() # {{{2
@@ -1259,18 +1290,18 @@ function install_puppet() # {{{2
 
   verbose "installing facter, hiera, and puppet"
   cask_install puppet
+  status=$? && [[ $status != 0 ]] && return $status
   cask_install hiera
+  status=$? && [[ $status != 0 ]] && return $status
   cask_install facter
+  status=$? && [[ $status != 0 ]] && return $status
 
   verbose "Creating user/group resources"
   dseditgroup -o read puppet &> /dev/null
   if [ $? -ne 0 ]; then
     verbose "  Creating group 'puppet'"
     $NOOP sudo puppet resource group puppet ensure=present
-    if [ $? -ne 0 ]; then
-      error "Failure while creating group puppet"
-      return 1
-    fi
+    status=$? && [[ $status != 0 ]] && return $status
   else
     verbose "  Group 'puppet' is already created"
   fi
@@ -1278,10 +1309,7 @@ function install_puppet() # {{{2
   if [ ! $? -eq 0 ]; then
     verbose "  Adding puppet to group 'puppet'"
     $NOOP sudo puppet resource user puppet ensure=present gid=puppet shell="/sbin/nologin"
-    if [ $? -ne 0 ]; then
-      error "Failure while creating user puppet"
-      return 1
-    fi
+    status=$? && [[ $status != 0 ]] && return $status
   else
     verbose "  User 'puppet' is already a member of group 'puppet'"
   fi
@@ -1290,16 +1318,10 @@ function install_puppet() # {{{2
   if [[ $os_min -ge 10 ]]; then # Yosemite or later
     if [[ -z $(dscl . read /Users/puppet | grep IsHidden) ]]; then
       sudo dscl . create /Users/puppet IsHidden 1
-      if [ $? -ne 0 ]; then
-        error "Failure while hiding user puppet"
-        return 1
-      fi
+      status=$? && [[ $status != 0 ]] && return $status
     elif [[ -z $(dscl . read /Users/puppet IsHidden | grep 1) ]]; then
       sudo dscl . create /Users/puppet IsHidden 1
-      if [ $? -ne 0 ]; then
-        error "Failure while hiding user puppet"
-        return 1
-      fi
+      status=$? && [[ $status != 0 ]] && return $status
     else
       verbose "  User puppet is already hidden from the Login window"
     fi
@@ -1308,18 +1330,12 @@ function install_puppet() # {{{2
     if [ ! $? -eq 0 ]; then
       verbose "  Adding the HiddenUsersList entry"
       $NOOP sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList array" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
-      if [ $? -ne 0 ]; then
-        error "Failure while hiding user puppet"
-        return 1
-      fi
+      status=$? && [[ $status != 0 ]] && return $status
     fi
     if [[ ! ${hidden_users} =~ "puppet" ]]; then
       verbose "  Adding puppet to the hidden user list"
       $NOOP sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList: string puppet" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
-      if [ $? -ne 0 ]; then
-        error "Failure while hiding user puppet"
-        return 1
-      fi
+      status=$? && [[ $status != 0 ]] && return $status
     else
       verbose "  User puppet is already hidden from the Login window"
     fi
@@ -1327,15 +1343,25 @@ function install_puppet() # {{{2
 
   verbose "Creating folders"
   [[ ! -d /var/log/puppet ]]       && $NOOP sudo mkdir -p /var/log/puppet
+  status=$? && [[ $status != 0 ]] && return $status
   [[ ! -d /var/lib/puppet ]]       && $NOOP sudo mkdir -p /var/lib/puppet
+  status=$? && [[ $status != 0 ]] && return $status
   [[ ! -d /var/lib/puppet/cache ]] && $NOOP sudo mkdir -p /var/lib/puppet/cache
+  status=$? && [[ $status != 0 ]] && return $status
   [[ ! -d /etc/puppet/ssl ]]       && $NOOP sudo mkdir -p /etc/puppet/ssl
+  status=$? && [[ $status != 0 ]] && return $status
   $NOOP sudo chown -R puppet:puppet /var/lib/puppet
+  status=$? && [[ $status != 0 ]] && return $status
   $NOOP sudo chmod 750 /var/lib/puppet
+  status=$? && [[ $status != 0 ]] && return $status
   $NOOP sudo chown -R puppet:puppet /var/log/puppet
+  status=$? && [[ $status != 0 ]] && return $status
   $NOOP sudo chmod 750 /var/log/puppet
+  status=$? && [[ $status != 0 ]] && return $status
   $NOOP sudo chown -R puppet:puppet /etc/puppet
+  status=$? && [[ $status != 0 ]] && return $status
   $NOOP sudo chmod 750 /etc/puppet
+  status=$? && [[ $status != 0 ]] && return $status
 
   verbose "Configuring Puppet"
   if [ ! -f "/etc/puppet/puppet.conf" ]; then
@@ -1360,18 +1386,25 @@ function install_puppet() # {{{2
   report      = true
   runinterval = 300
 EOF
+    status=$? && [[ $status != 0 ]] && return $status
     $NOOP sudo install -m 0644 -o puppet -g puppet ${config} /etc/puppet/puppet.conf
+    status=$? && [[ $status != 0 ]] && return $status
   fi
 
   verbose "Installing the puppet agent daemon"
   if [ ! -f "/Library/LaunchDaemons/com.puppetlabs.puppet.plist" ]; then
     download https://raw.github.com/inin-apac/puppet-me/master/config/osx/com.puppetlabs.puppet.plist "$HOME/Downloads"
+    status=$? && [[ $status != 0 ]] && return $status
     $NOOP sudo install -m 0644 -o root -g wheel $HOME/Downloads/com.puppetlabs.puppet.plist /Library/LaunchDaemons
+    status=$? && [[ $status != 0 ]] && return $status
     $NOOP sudo launchctl load -w /Library/LaunchDaemons/com.puppetlabs.puppet.plist
+    status=$? && [[ $status != 0 ]] && return $status
   fi
   verbose "Starting the puppet agent daemon"
   $NOOP sudo launchctl start com.puppetlabs.puppet
+  status=$? && [[ $status != 0 ]] && return $status
   MODULE_puppet_done=1
+  return 0
 } # }}}2
 
 function install_rubytools() # {{{2
@@ -1384,8 +1417,10 @@ function install_rubytools() # {{{2
     verbose "Bundler is already installed"
   else
     $NOOP sudo gem install bundler
+    status=$? && [[ $status != 0 ]] && return $status
   fi
   MODULE_rubytools_done=1
+  return 0
 } # }}}2
 
 function install_vagrant() # {{{2
@@ -1405,30 +1440,37 @@ function install_vagrant() # {{{2
   export VAGRANT_HOME="$MODULE_VAGRANT_HOME"
 
   cask_install vagrant
+  status=$? && [[ $status != 0 ]] && return $status
   $NOOP vagrant plugin update
+  status=$? && [[ $status != 0 ]] && return $status
 
   # Installing bash completion
   if [[ ! -z $(brew info homebrew/completions/vagrant-completion | grep '^Not installed$') ]]; then
     verbose "Installing bash completion for Vagrant..."
     $NOOP brew install homebrew/completions/vagrant-completion
+    status=$? && [[ $status != 0 ]] && return $status
   fi
 
   if [[ -z $(vagrant plugin list | grep 'vagrant-host-shell') ]]; then
     verbose "  Installing Vagrant Plugin for Host Shell"
     $NOOP vagrant plugin install vagrant-host-shell
+    status=$? && [[ $status != 0 ]] && return $status
   fi
 
   if [[ $MODULE_vmware_done == 1 && -z $(vagrant plugin list | grep 'vagrant-vmware-fusion') ]]; then
     verbose "  Installing Vagrant Plugin for VMWare"
     $NOOP vagrant plugin install vagrant-vmware-fusion
+    status=$? && [[ $status != 0 ]] && return $status
     warn "  TODO: install your Vagrant for VMWare license!"
   fi
 
   if [[ $MODULE_parallels_done == 1 && -z $(vagrant plugin list | grep 'vagrant-parallels') ]]; then
     verbose "  Installing Vagrant Plugin for Parallels"
     $NOOP vagrant plugin install vagrant-parallels
+    status=$? && [[ $status != 0 ]] && return $status
   fi
   MODULE_vagrant_done=1
+  return 0
 } # }}}2
 
 function install_parallels() # {{{2
@@ -1436,10 +1478,12 @@ function install_parallels() # {{{2
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
 
   cask_install parallels-desktop
+  status=$? && [[ $status != 0 ]] && return $status
 
   if ! which prlsrvctl > /dev/null 2>&1; then
     verbose "Initializing Parallels Desktop"
     $NOOP sudo $HOME/Applications/Parallels\ Desktop.app/Contents/MacOS/inittool init -s
+    status=$? && [[ $status != 0 ]] && return $status
   fi
 
   if [[ -n "$MODULE_PARALLELS_HOME" ]]; then
@@ -1448,14 +1492,12 @@ function install_parallels() # {{{2
       verbose "Updating Virtual Machine home to ${MODULE_PARALLELS_HOME}"
       $NOOP mkdir -p "$MODULE_PARALLELS_HOME"
       $NOOP prlsrvctl user set --def-vm-home "$MODULE_PARALLELS_HOME"
-      if [ $? -ne 0 ]; then
-        error "Failed to change the Virtual Machine folder for Parallels"
-        return 1
-      fi
+      status=$? && [[ $status != 0 ]] && return $status
     fi
   fi
   MODULE_parallels_done=1
   MODULE_virtualization_done=1
+  return 0
 } # }}}2
 
 function install_virtualbox() # {{{2
@@ -1463,16 +1505,14 @@ function install_virtualbox() # {{{2
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
 
   cask_install virtualbox
+  status=$? && [[ $status != 0 ]] && return $status
 
   if [[ -n "$MODULE_VIRTUALBOX_HOME" ]]; then
     current=$(/usr/bin/VBoxManage list systemproperties | grep 'Default machine folder' | cut -d: -f2 | sed -e 's/^ *//')
     if [[ "$current" != "$MODULE_VIRTUALBOX_HOME" ]]; then
       verbose "Updating Virtual Machine home to ${MODULE_VIRTUALBOX_HOME}"
       $NOOP /usr/bin/VBoxManage setproperty machinefolder "$MODULE_VIRTUALBOX_HOME"
-      if [ $? -ne 0 ]; then
-        error "Failed to change the Virtual Machine folder for Virtualbox"
-        return 1
-      fi
+      status=$? && [[ $status != 0 ]] && return $status
     fi
   fi
   MODULE_virtualbox_done=1
@@ -1485,16 +1525,14 @@ function install_vmware() # {{{2
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
 
   cask_install vmware-fusion '/Applications/VMware Fusion.app/Contents/Library/vmrun'
+  status=$? && [[ $status != 0 ]] && return $status
 
   if [[ -n "$MODULE_VMWARE_HOME" ]]; then
     current=$(defaults read com.vmware.fusion NSNavLastRootDirectory 2> /dev/null)
     if [[ "$current" != "$MODULE_VMWARE_HOME" ]]; then
       verbose "Updating Virtual Machine home to ${MODULE_VMWARE_HOME}"
       $NOOP sudo defaults write com.vmware.fusion NSNavLastRootDirectory "$MODULE_VMWARE_HOME"
-      if [ $? -ne 0 ]; then
-        error "Failed to change the Virtual Machine folder for VMWare Fusion"
-        return 1
-      fi
+      status=$? && [[ $status != 0 ]] && return $status
     fi
   fi
   MODULE_vmware_done=1
@@ -1508,9 +1546,13 @@ function cache_stuff() # {{{2
 
   verbose "Caching ISO files"
   [[ -d "$CACHE_ROOT" ]]                          || $NOOP sudo mkdir -p "$CACHE_ROOT"
+  status=$? && [[ $status != 0 ]] && return $status
   [[ $(stat -f "%Sg" "$CACHE_ROOT") == 'admin' ]] || $NOOP sudo chgrp -R admin "$CACHE_ROOT"
+  status=$? && [[ $status != 0 ]] && return $status
   [[ -w "$CACHE_ROOT" ]]                          || $NOOP sudo chmod -R g+w "$CACHE_ROOT"
+  status=$? && [[ $status != 0 ]] && return $status
   download "$CACHE_SOURCE" "${CACHE_ROOT}"
+  status=$? && [[ $status != 0 ]] && return $status
   document_catalog="${CACHE_ROOT}/sources.json"
 
   ip_addresses=( $NETWORK )
@@ -1569,21 +1611,27 @@ function cache_stuff() # {{{2
       document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
       document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
       download $source_has_resume $source_need_auth $source_url "$document_destination" $document_checksum_type $document_checksum
+      status=$? && [[ $status != 0 ]] && return $status
     else
       warn "Cannot cache $( echo "$document" | jq --raw-output '.name' ), no source available"
     fi
   done
   MODULE_cache_done=1
+  return 0
 } # }}}2
 
 function set_noidle() # {{{2
 {
   verbose "Setting Energy Saver for Mac Mini server"
   sudo pmset -c autorestart 1
+  status=$? && [[ $status != 0 ]] && return $status
   sudo pmset -c sleep       0
+  status=$? && [[ $status != 0 ]] && return $status
   sudo pmset -c disksleep   0
+  status=$? && [[ $status != 0 ]] && return $status
 
   MODULE_noidle_done=1
+  return 0
 } # }}}2
 
 # }}}
@@ -1894,6 +1942,7 @@ function main() # {{{
         die "Unsupported Module: ${module}"
         ;;
     esac
+    status=$? && [[ $status != 0 ]] && die "Error $status while installing module $module" $status
   done
 } # }}}
 main "$@"
