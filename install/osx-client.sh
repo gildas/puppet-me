@@ -1046,6 +1046,9 @@ function download() # {{{2
       return 1
     fi
   fi # }}}3
+
+  # The download was a success, let's save the credentials in keychain
+  keychain_set_password --kind=internet --protocol=$source_protocol --site=$source_host --user=$source_user --password=$source_password
 } # }}}2
 
 # }}}
