@@ -1908,39 +1908,17 @@ function main() # {{{
   for module in ${MODULES[*]} ; do
     trace "Installing Module ${module}"
     case $module in
-      noidle)
-        set_noidle
-        ;;
-      homebrew)
-        install_homebrew
-        ;;
-      cache)
-        cache_stuff
-        ;;
-      packer)
-        install_packer
-        ;;
-      parallels)
-        install_parallels
-        ;;
-      puppet)
-        install_puppet
-        ;;
-      rubytools)
-        install_rubytools
-        ;;
-      vagrant)
-        install_vagrant
-        ;;
-      virtualbox)
-        install_virtualbox
-        ;;
-      vmware)
-        install_vmware
-        ;;
-      *)
-        die "Unsupported Module: ${module}"
-        ;;
+      noidle)     set_noidle ;;
+      homebrew)   install_homebrew ;;
+      cache)      cache_stuff ;;
+      packer)     install_packer ;;
+      parallels)  install_parallels ;;
+      puppet)     install_puppet ;;
+      rubytools)  install_rubytools ;;
+      vagrant)    install_vagrant ;;
+      virtualbox) install_virtualbox ;;
+      vmware)     install_vmware ;;
+      *)          die "Unsupported Module: ${module}" ;;
     esac
     status=$? && [[ $status != 0 ]] && die "Error $status while installing module $module" $status
   done
