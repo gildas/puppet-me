@@ -245,7 +245,7 @@ function prompt() #{{{2
         default=${1#*=} # delete everything up to =
       ;;
       --default=)
-        error "Argument for option $1 is missing"
+        error "$FUNCNAME: Argument for option $1 is missing"
         return 1
         ;;
       -s|--silent)
@@ -303,6 +303,294 @@ function version() # {{{2
   echo -n $version | tr -d '\n'
 } # }}}2
 
+function keychain_get_user() # {{{2
+{
+  local service
+  local protocol
+  local command
+  local kind
+  local user
+  local url
+
+  while :; do # Parse aguments {{{3
+    case $1 in
+      --kind|-k)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+        kind=$2
+        shift 2
+        continue
+      ;;
+      --kind=*?)
+        kind=${1#*=} # delete everything up to =
+      ;;
+      --kind=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      --protocol|-p)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+        protocol=$2
+        shift 2
+        continue
+      ;;
+      --protocol=*?)
+        protocol=${1#*=} # delete everything up to =
+      ;;
+      --protocol=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      --service|--host|--site|-s)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+        service=$2
+        shift 2
+        continue
+      ;;
+      --service=*?|--host=*?|--site=*?)
+        service=${1#*=} # delete everything up to =
+      ;;
+      --service=|--host=|--site=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      --url)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+        url=$2
+        shift 2
+        continue
+      ;;
+      --url=*?)
+        url=${1#*=} # delete everything up to =
+      ;;
+      --url=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      -?*) # Invalid options
+        warn "${FUNCTNAME}: Unknown option $1 will be ignored"
+      ;;
+      *)  # End of options
+        break
+      ;;
+    esac
+    shift
+  done # }}}3
+
+  # Validate Arguments {{{3
+  case $kind in # {{{4
+    internet|'')         command='find-internet-password' ;;
+    application|generic) command='find-generic-password' ;;
+    *)
+      error "$FUNCNAME: Unsupported kind \"${kind}\""
+      return 2
+    ;;
+  esac # }}}4
+  if [[ -n "$url" ]]; then # url {{{4
+    trace "  >> url: ${url}"
+    protocol=${url%%:*}
+    trace "  >> url protocol: ${protocol}"
+    service=${url#*://}                               # remove protocol
+    if [[ "${service}" =~ .*@.* ]]; then              # search for credentials
+      user=${service#*//}                             # remove heading //
+      user=${user%@*}                                 # keep credentials
+      if [[ "${user}" =~ .*:.* ]]; then               # search for password
+        user=${user%:*}                               # remove all after :
+      fi
+      user=${user/;/\\/}
+      service=${service#*@}                           # remove user
+      trace "  >> user: ${user}"
+    fi
+    service=${service%%/*}                            # extract host
+    trace "  >> service: ${service}"
+  fi # }}}4
+  if [[ $command == 'find-internet-password' ]]; then # protocol {{{4
+    trace "Kind is internet, analyzing protocol ($protocol)"
+    case $protocol in
+      afp)        protocol='afp ' ;;
+      http)       protocol='http' ;;
+      https|htps) protocol='htps' ;;
+      ftp)        protocol='ftp ' ;;
+      smb|cifs)   protocol='smb ' ;;
+      ssh)        protocol='ssh ' ;;
+      '')         protocol='';;
+      *)
+        error "$FUNCNAME: Unsupported protocol \"${protocol}\""
+        return 2
+      ;;
+    esac
+  fi # }}}4
+  if [[ -z "$service" ]]; then # {{{4
+    error "option service cannot be empty"
+    return 2
+  fi # }}}4
+  # }}}3
+  trace "Searching $kind user $user @ $service (protocol: $protocol)"
+  if [[ -n "$protocol" ]]; then
+    trace "Exec: [/usr/bin/security $command -r "$protocol" -s \"$service\" | grep acct | awk -F= '{print \$2 }' | tr -d '\"']"
+    user=$(/usr/bin/security $command -r "$protocol" -s "$service" | grep acct | awk -F= '{print $2 }' | tr -d '"')
+  else
+    trace "Exec: [/usr/bin/security $command -s \"$service\" | grep acct | awk -F= '{print \$2 }' | tr -d '\"']"
+    user=$(/usr/bin/security $command -s "$service" | grep acct | awk -F= '{print $2 }' | tr -d '"')
+  fi
+  status=$?
+  [[ $status != 0 ]] && trace "Error: $status" && return $status
+  trace "Found $kind user @ $service: $user"
+  printf '%s' $user
+} # }}}2
+
+function keychain_get_password() # {{{2
+{
+  local service
+  local protocol
+  local command
+  local kind
+  local user
+  local password
+  local url
+
+  while :; do # Parse aguments {{{3
+    case $1 in
+      --kind|-k)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+        kind=$2
+        shift 2
+        continue
+      ;;
+      --kind=*?)
+        kind=${1#*=} # delete everything up to =
+      ;;
+      --kind=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      --protocol|-p)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+        protocol=$2
+        shift 2
+        continue
+      ;;
+      --protocol=*?)
+        protocol=${1#*=} # delete everything up to =
+      ;;
+      --protocol=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      --service|--host|--site|-s)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+        service=$2
+        shift 2
+        continue
+      ;;
+      --service=*?|--host=*?|--site=*?)
+        service=${1#*=} # delete everything up to =
+      ;;
+      --service=|--host=|--site=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      --url)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+        url=$2
+        shift 2
+        continue
+      ;;
+      --url=*?)
+        url=${1#*=} # delete everything up to =
+      ;;
+      --url=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      --user|--userid|--username|-u)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+        user=$2
+        shift 2
+        continue
+      ;;
+      --user=*?|--userid=*?|--username=*?)
+        user=${1#*=} # delete everything up to =
+      ;;
+      --user=|--userid=|--username=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      -?*) # Invalid options
+        warn "${FUNCTNAME}: Unknown option $1 will be ignored"
+      ;;
+      *)  # End of options
+        break
+      ;;
+    esac
+    shift
+  done # }}}3
+
+  # Validate Arguments {{{3
+  case $kind in # {{{4
+    internet|'')         command='find-internet-password' ;;
+    application|generic) command='find-generic-password' ;;
+    *)
+      error "$FUNCNAME: Unsupported kind \"${kind}\""
+      return 2
+    ;;
+  esac # }}}4
+  if [[ -n "$url" ]]; then # url {{{4
+    trace "  >> url: ${url}"
+    protocol=${url%%:*}
+    trace "  >> url protocol: ${protocol}"
+    service=${url#*://}                               # remove protocol
+    if [[ "${service}" =~ .*@.* ]]; then              # search for credentials
+      user=${service#*//}                             # remove heading //
+      user=${user%@*}                                 # keep credentials
+      if [[ "${user}" =~ .*:.* ]]; then               # search for password
+        user=${user%:*}                               # remove all after :
+      fi
+      user=${user/;/\\/}
+      service=${service#*@}                           # remove user
+      trace "  >> user: ${user}"
+    fi
+    service=${service%%/*}                            # extract host
+    trace "  >> service: ${service}"
+  fi # }}}4
+  if [[ $command == 'find-internet-password' ]]; then # protocol {{{4
+    trace "Kind is internet, analyzing protocol ($protocol)"
+    case $protocol in
+      afp)        protocol='afp ' ;;
+      http)       protocol='http' ;;
+      https|htps) protocol='htps' ;;
+      ftp)        protocol='ftp ' ;;
+      smb|cifs)   protocol='smb ' ;;
+      ssh)        protocol='ssh ' ;;
+      '')         protocol='';;
+      *)
+        error "$FUNCNAME: Unsupported protocol \"${protocol}\""
+        return 2
+      ;;
+    esac
+  fi # }}}4
+  if [[ -z "$service" ]]; then # {{{4
+    error "option service cannot be empty"
+    return 2
+  fi # }}}4
+  if [[ -z "$user" ]]; then # {{{4
+    error "option user cannot be empty"
+    return 2
+  fi # }}}4
+  # }}}3
+  trace "Searching password for $kind user $user @ $service (protocol: $protocol, protocol_option: $protocol_option)"
+  trace "Exec: [/usr/bin/security $command $protocol_option -s \"$service\" -a \"$user\" -w]"
+  #user=$(/usr/bin/security $command $protocol_option -s "$service" -a \"$user\" -w 2> /dev/null)
+  if [[ -n "$protocol" ]]; then
+    password=$(/usr/bin/security $command -r "$protocol" -s "$service" -a "$user" -w)
+  else
+    password=$(/usr/bin/security $command -s "$service" -a "$user" -w)
+  fi
+  status=$?
+  [[ $status != 0 ]] && trace "Error: $status" && return $status
+  trace "Found password for $user @ $service: XXXXXX"
+  printf '%s' $password
+} # }}}2
+
 function download() # {{{2
 {
   # download "http://login:password@hostname/path/file?k1=v1&k2=v2" "local_folder"
@@ -319,7 +607,7 @@ function download() # {{{2
   local filename
   local filename_path
   local source_protocol
-  local source_user=$userid
+  local source_user
   local source_domain
   local source_password
   local source_host
@@ -390,6 +678,16 @@ function download() # {{{2
     source_host=${source_host%%/*}                    # extract host
     trace "  >> source_path: ${source_path}"
     trace "  >> source_host: ${source_host}"
+
+    if [[ -z "$source_user" ]]; then
+      source_user=$(keychain_get_user --kind=internet --protocol=$source_protocol --site=$source_host)
+      trace "  >> source_user: ${source_user}"
+    fi
+    if [[ -z "$source_password" && -n "$source_user" ]]; then
+      source_password=$(keychain_get_password --kind=internet --protocol=$source_protocol --site=$source_host --user=$source_user)
+      trace "  >> source_password: XXXXXX"
+    fi
+    [[ -n "$source_user" ]] || source_user=$userid
   fi
   trace "  >> source: ${source}"
   # }}}3
@@ -534,7 +832,7 @@ function download() # {{{2
     verbose "  Copying from url location"
     while true; do
       curl_creds=''
-      if [[ $need_auth == 1 ]]; then
+      if [[ $need_auth == 1 || -n "$source_user" ]]; then
         if [[ -z "$source_password" ]]; then
           verbose "  Requesting credentials for ${source_host}"
           source_user=$(prompt --default="$source_user" "  User to download from ${source_host}")
@@ -548,8 +846,8 @@ function download() # {{{2
         curl_creds="--user ${source_user/\\/;/}:${source_password}" # encode domain
       fi
       verbose "  Downloading..."
-      trace $sudo $CURL $has_resume --output "${target_path}" "${source}"
-      $NOOP $sudo $CURL $has_resume ${url_creds} --output "${target_path}" "${source}"
+      trace $sudo $CURL $has_resume ${curl_creds} --output "${target_path}" "${source}"
+      $NOOP $sudo $CURL $has_resume ${curl_creds} --output "${target_path}" "${source}"
       status=$?
       case $status in
         0)
@@ -1307,6 +1605,24 @@ function parse_args() # {{{2
       --noop|--dry-run)
         warn "This program will execute in dry mode, your system will not be modified"
         NOOP=:
+        ;;
+      --test-keychain)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        user=$(keychain_get_user --kind=internet --url=$2)
+        status=$?
+        [[ $status != 0 ]] && exit $status
+        if [[ -n "$user" ]]; then
+          password=$(keychain_get_password --kind=internet --url=$2 --user=$user)
+          status=$?
+          [[ $status != 0 ]] && exit $status
+        fi
+        echo "URL: $2 => user=$user, password=$password"
+        exit
+        ;;
+      --test-keychain=*?)
+        ;;
+      --test-keychain=)
+        die "Argument for option $1 is missing."
         ;;
       -h|-\?|--help)
        trace "Showing usage"
