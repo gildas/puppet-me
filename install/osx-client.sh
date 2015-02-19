@@ -1139,7 +1139,7 @@ function install_xcode_tools() # {{{2
     touch /tmp/.com.apple.dt.CommandLinetools.installondemand.in-progress
     product=$(softwareupdate --list 2>&1 | grep "\*.*Command Line" | tail -1 | sed -e 's/^   \* //' | tr -d '\n')
     verbose "  Downloading and Installing ${product}. You should get some coffee or tea as this might take a while..."
-    $NOOP softwareupdate --install "$product"
+    $NOOP sudo softwareupdate --install "$product"
   else # Older versions like Mountain Lion, Lion
     verbose "Installing XCode tools from Website"
     [[ $os_min == 7 ]] && url=http://devimages.apple.com/downloads/xcode/command_line_tools_for_xcode_os_x_lion_april_2013.dmg
