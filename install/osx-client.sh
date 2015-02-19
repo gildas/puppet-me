@@ -426,14 +426,15 @@ function keychain_get_user() # {{{2
   # }}}3
   trace "Searching $kind user $user @ $service (protocol: $protocol)"
   if [[ -n "$protocol" ]]; then
-    trace "Exec: [/usr/bin/security $command -r "$protocol" -s \"$service\" | grep acct | awk -F= '{print \$2 }' | tr -d '\"']"
-    user=$(/usr/bin/security $command -r "$protocol" -s "$service" | grep acct | awk -F= '{print $2 }' | tr -d '"')
+    trace "Exec: [/usr/bin/security $command -r "$protocol" -s \"$service\" | grep acct"
+    user=$(/usr/bin/security $command -r "$protocol" -s "$service" | grep acct)
   else
-    trace "Exec: [/usr/bin/security $command -s \"$service\" | grep acct | awk -F= '{print \$2 }' | tr -d '\"']"
-    user=$(/usr/bin/security $command -s "$service" | grep acct | awk -F= '{print $2 }' | tr -d '"')
+    trace "Exec: [/usr/bin/security $command -s \"$service\" | grep acct"
+    user=$(/usr/bin/security $command -s "$service" | grep acct)
   fi
   status=$?
   [[ $status != 0 ]] && trace "Error: $status" && return $status
+  user=$(echo $user | awk -F= '{print $2 }' | tr -d '"' | sed -e 's/^0x[0-9,A-F]*[[:space:]]*//' | sed -e 's/\\134/\\/')
   trace "Found $kind user @ $service: $user"
   printf '%s' $user
 } # }}}2
