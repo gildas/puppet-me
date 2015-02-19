@@ -1342,14 +1342,10 @@ function install_puppet() # {{{2
   fi
 
   verbose "Creating folders"
-  [[ ! -d /var/log/puppet ]]       && $NOOP sudo mkdir -p /var/log/puppet
-  status=$? && [[ $status != 0 ]] && return $status
-  [[ ! -d /var/lib/puppet ]]       && $NOOP sudo mkdir -p /var/lib/puppet
-  status=$? && [[ $status != 0 ]] && return $status
-  [[ ! -d /var/lib/puppet/cache ]] && $NOOP sudo mkdir -p /var/lib/puppet/cache
-  status=$? && [[ $status != 0 ]] && return $status
-  [[ ! -d /etc/puppet/ssl ]]       && $NOOP sudo mkdir -p /etc/puppet/ssl
-  status=$? && [[ $status != 0 ]] && return $status
+  [[ ! -d /var/log/puppet ]]       && $NOOP sudo mkdir -p /var/log/puppet       && status=$? && [[ $status != 0 ]] && return $status
+  [[ ! -d /var/lib/puppet ]]       && $NOOP sudo mkdir -p /var/lib/puppet       && status=$? && [[ $status != 0 ]] && return $status
+  [[ ! -d /var/lib/puppet/cache ]] && $NOOP sudo mkdir -p /var/lib/puppet/cache && status=$? && [[ $status != 0 ]] && return $status
+  [[ ! -d /etc/puppet/ssl ]]       && $NOOP sudo mkdir -p /etc/puppet/ssl       && status=$? && [[ $status != 0 ]] && return $status
   $NOOP sudo chown -R puppet:puppet /var/lib/puppet
   status=$? && [[ $status != 0 ]] && return $status
   $NOOP sudo chmod 750 /var/lib/puppet
