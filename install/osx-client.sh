@@ -782,6 +782,7 @@ function download() # {{{2
   local source_host
   local source_path
   local source_ext
+  local source_credentials_updated=0
   local sudo
 
   while :; do # Parse aguments {{{3
@@ -924,6 +925,7 @@ function download() # {{{2
             return 1
 	  fi
           source_password=$(prompt -s "  Password for ${source_user}")
+          source_credentials_updated=1
           echo
         fi
         smb_mount="//${source_user/\\/;}:${source_password//@/%40}@${source_host}/${source_share}"
@@ -1010,6 +1012,7 @@ function download() # {{{2
             return 1
 	  fi
           source_password=$(prompt -s "  Password for ${source_user}")
+          source_credentials_updated=1
           echo
         fi
         curl_creds="--user ${source_user/\\/;/}:${source_password}" # encode domain
@@ -1048,7 +1051,9 @@ function download() # {{{2
   fi # }}}3
 
   # The download was a success, let's save the credentials in keychain
-  keychain_set_password --kind=internet --protocol=$source_protocol --site=$source_host --user=$source_user --password=$source_password
+  if [[ $source_credentials_updated != 0 ]]; then
+    keychain_set_password --kind=internet --protocol=$source_protocol --site=$source_host --user=$source_user --password=$source_password
+  fi
 } # }}}2
 
 # }}}
