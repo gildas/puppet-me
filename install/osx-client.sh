@@ -1003,7 +1003,7 @@ function download() # {{{2
     verbose "  Copying from url location"
     while true; do
       curl_creds=''
-      if [[ $need_auth == 1 || -n "$source_user" ]]; then
+      if [[ $need_auth == 1 ]]; then
         if [[ -z "$source_password" ]]; then
           verbose "  Requesting credentials for ${source_host}"
           source_user=$(prompt --default="$source_user" "  User to download from ${source_host}")
