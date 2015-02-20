@@ -892,7 +892,7 @@ function download() # {{{2
   trace "Expect $checksum_type checksum: $checksum_value"
 
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
-    verbose "  Calculating checksum of the already cached file"
+    verbose "  Calculating checksum of the file that is already cached"
     target_checksum=$(bar -n "$target_path" | $checksum)
     if [[ $target_checksum =~ \s*$checksum_value\s* ]]; then
       verbose "  File already cached and checksum verified"
