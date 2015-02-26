@@ -887,7 +887,7 @@ function download() # {{{2
   # }}}3
 
   target_path="${target}/${filename}"
-  verbose "  Downloading ${filename}..."
+  verbose "  File to eventually download: ${filename}..."
 
   # Validate target {{{3
   if [[ -e "$target" ]] ; then
