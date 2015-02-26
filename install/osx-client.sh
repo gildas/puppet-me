@@ -137,7 +137,7 @@ function trace_init() # {{{2
       [[ $result ]] && die -n "Could not change permissions for $LOG" $result
     fi
   fi
-  trace --trace-member "[BEGIN] -------"
+  trace --trace-member "[BEGIN] --8<----------------------8<------------------------8<------------  [BEGIN]"
 } # }}}
 
 function trace_end() # {{{2
@@ -146,7 +146,7 @@ function trace_end() # {{{2
     trace --trace-member "Removing CIFS mount point: $cache_mount"
     umount $cache_mount 2>&1 > /dev/null
   done
-  trace --trace-member "[END] -------"
+  trace --trace-member "[END]   --8<----------------------8<------------------------8<------------    [END]"
 } # }}}2
 
 function verbose() ## {{{2
