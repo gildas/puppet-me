@@ -919,7 +919,7 @@ function download() # {{{2
   trace "Expect ${checksum_type:-no} checksum${checksum_type:+: }$checksum_value"
 
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
-    if [[ ! -f "${target_path}.${checksum_type}" || -n "$(find "${target_path}.${checksum_type}" -mmin +20)" ]]; then
+    if [[ ! -f "${target_path}.${checksum_type}" || -n "$(find "${target_path}.${checksum_type}" -mmin +240)" ]]; then
       verbose "  Calculating checksum of the file that is already cached"
       target_checksum=$(bar -n "$target_path" | $checksum)
     else
