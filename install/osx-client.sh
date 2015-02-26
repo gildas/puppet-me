@@ -1483,6 +1483,7 @@ function install_vagrant() # {{{2
 
   cask_install vagrant
   status=$? && [[ $status != 0 ]] && return $status
+  verbose "Updating installed Vagrant plugins..."
   $NOOP vagrant plugin update
   status=$? && [[ $status != 0 ]] && return $status
 
