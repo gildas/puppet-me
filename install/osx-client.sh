@@ -268,7 +268,7 @@ function prompt() #{{{2
     # We are on the Mac screen
     trace "Prompting with GUI"
     [[ -n $silent ]] && silent='with hidden answer'
-    script="Tell application \"System Events\" to display dialog \"${query}\" default answer \"${default}\" $silent"
+    script="Tell application \"System Events\" to display dialog \"${query}\" giving up after 20 default answer \"${default}\" $silent"
     trace "OSA Script: $script"
     value="$(osascript -e "$script" -e 'text returned of result' 2>&1)"
     status=$?
