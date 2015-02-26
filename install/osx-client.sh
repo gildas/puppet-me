@@ -1175,9 +1175,14 @@ function install_homebrew() # {{{2
   status=$? && [[ $status != 0 ]] && return $status
 
   if which brew > /dev/null 2>&1; then
-    verbose "Homebrew is already installed, upgrading..."
-    $NOOP brew update && brew upgrade && brew cleanup
-    status=$? && [[ $status != 0 ]] && return $status
+    if [[ -f "$CACHE_ROOT/last_updated-homebrew" && -n "$(find "$CACHE_ROOT/last_updated-homebrew" -mmin +240)" ]]; then
+      verbose "Homebrew is already installed, upgrading..."
+      $NOOP brew update && brew upgrade && brew cleanup
+      status=$? && [[ $status != 0 ]] && return $status
+      touch $CACHE_ROOT/last_updated-homebrew
+    else
+      verbose "Homebrew was updated less than 4 hours ago, let's give the Internet some rest..."
+    fi
   else
     verbose "Installing Homebrew..."
     $NOOP ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
