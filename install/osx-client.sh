@@ -809,6 +809,13 @@ function download() # {{{2
   checksum_value=$4
 
   # Extract source components {{{3
+  if [[ "$source" =~ ^\/\/.* ]] ; then
+    trace ">> Missing protocol, assuming smb/cifs"
+    source="smb:${source}"
+  elif [[ "$source" =~ ^\/.* ]] ; then
+    trace ">> Missing protocol, assuming file"
+    source="file://${source}"
+  fi
   trace ">> source: ${source}"
   source_protocol=${source%%:*}
   trace ">> source protocol: ${source_protocol}"
