@@ -924,6 +924,7 @@ function download() # {{{2
     fi
     if [[ $target_checksum =~ \s*$checksum_value\s* ]]; then
       verbose "  File already cached and checksum verified"
+      [[ -f "${target_path}.${checksum_type}" ]] || (echo -n "$target_checksum" | $sudo tee "${target_path}.$checksum_type" > /dev/null)
       return 0
     else
       $NOOP $sudo rm -f "$target_path"
