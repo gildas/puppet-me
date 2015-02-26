@@ -974,6 +974,11 @@ function download() # {{{2
             CACHE_MOUNTS+=( "//${source_user/\\/;}@${source_host}/${source_share}" )
             break
           ;;
+          68)
+            error "  Empty password, please enter new credentials"
+            source_password=''
+            need_auth=1
+          ;;
           77)
             error "  Wrong credentials, please enter new credentials"
             source_password=''
