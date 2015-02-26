@@ -911,12 +911,12 @@ function download() # {{{2
   case $checksum_type in
     MD5|md5)   checksum='md5';;
     SHA1|sha1) checksum='shasum';;
-    null|'')   checksum='';;
+    null|'')   checksum=''; checksum_value=''; checksum_type='';;
     *)
     error "Unsupported checksum type ($checksum_type) while downloading $filename"
     return 1
   esac
-  trace "Expect $checksum_type checksum: $checksum_value"
+  trace "Expect ${checksum_type:-no} checksum${checksum_type:+: }$checksum_value"
 
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
     if [[ ! -f "${target_path}.${checksum_type}" || -n "$(find "${target_path}.${checksum_type}" -mmin +20)" ]]; then
