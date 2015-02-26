@@ -915,7 +915,7 @@ function download() # {{{2
   trace "Expect $checksum_type checksum: $checksum_value"
 
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
-    if [[ -f "${target_path}.${checksum_type}" && -n "$(find "${target_path}.${checksum_type}" -mmin +240)" ]]; then
+    if [[ ! -f "${target_path}.${checksum_type}" || -n "$(find "${target_path}.${checksum_type}" -mmin +20)" ]]; then
       verbose "  Calculating checksum of the file that is already cached"
       target_checksum=$(bar -n "$target_path" | $checksum)
     else
@@ -1202,7 +1202,7 @@ function install_homebrew() # {{{2
   status=$? && [[ $status != 0 ]] && return $status
 
   if which brew > /dev/null 2>&1; then
-    if [[ -f "$CACHE_ROOT/last_updated-homebrew" && -n "$(find "$CACHE_ROOT/last_updated-homebrew" -mmin +240)" ]]; then
+    if [[ ! -f "$CACHE_ROOT/last_updated-homebrew" || -n "$(find "$CACHE_ROOT/last_updated-homebrew" -mmin +240)" ]]; then
       verbose "Homebrew is already installed, upgrading..."
       $NOOP brew update && brew upgrade && brew cleanup
       status=$? && [[ $status != 0 ]] && return $status
