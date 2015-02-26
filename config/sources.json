@@ -74,7 +74,7 @@
       {
         "location": "Intranet",
         "network":  ".*",
-        "need_auth": false,
+        "need_auth": true,
         "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_01core_prod_vm.i3lic"
       }
     ]
@@ -88,7 +88,7 @@
       {
         "location": "Intranet",
         "network":  ".*",
-        "need_auth": false,
+        "need_auth": true,
         "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_02cores_prod_vm.i3lic"
       }
     ]
@@ -102,7 +102,7 @@
       {
         "location": "Intranet",
         "network":  ".*",
-        "need_auth": false,
+        "need_auth": true,
         "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_04cores_prod_vm.i3lic"
       }
     ]
@@ -116,7 +116,7 @@
       {
         "location": "Intranet",
         "network":  ".*",
-        "need_auth": false,
+        "need_auth": true,
         "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_06cores_prod_vm.i3lic"
       }
     ]
@@ -130,7 +130,7 @@
       {
         "location": "Intranet",
         "network":  ".*",
-        "need_auth": false,
+        "need_auth": true,
         "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_08cores_prod_vm.i3lic"
       }
     ]
