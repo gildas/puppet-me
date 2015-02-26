@@ -270,9 +270,10 @@ function prompt() #{{{2
     [[ -n $silent ]] && silent='with hidden answer'
     script="Tell application \"System Events\" to display dialog \"${query}\" default answer \"${default}\" $silent"
     trace "OSA Script: $script"
-    value="$(osascript -e "$script" -e 'text returned of result' 2>/dev/null)"
-    if [ $? -ne 0 ]; then
-      # The user pressed cancel
+    value="$(osascript -e "$script" -e 'text returned of result' 2>&1)"
+    status=$?
+    if [ $status -ne 0 ]; then
+      trace " Error $status: $value"
       return 1
     fi
   else
