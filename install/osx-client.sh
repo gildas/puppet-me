@@ -895,9 +895,12 @@ function download() # {{{2
     [[ -w "$target" ]] || sudo='sudo'
   else
     trace "  Target ${target} does not exists"
+    verbose "Creating folder ${target}"
     # Here we are a bit lazy and choose the admin group which of the user has to be a member
-    [[ -w "$(dirname $target)" ]] || sudo='sudo'
-    $NOOP $sudo mkdir -p "$target"
+    if ! mkdir -p "$target" 2>&1 > /dev/null; then
+      sudo='sudo'
+      $NOOP sudo mkdir -p "$target"
+    fi
     $NOOP $sudo chgrp -R admin "$target"
     $NOOP $sudo chmod -R g+w "$target"
     sudo=''
