@@ -789,9 +789,11 @@ function download() # {{{2
     case $1 in
       --has_resume)
         has_resume="--continue-at -"
+        trace "The source URL handles resume downloads"
       ;;
       --need_auth)
         need_auth=1
+        trace "The source URL needs authentication"
       ;;
       -?*) # Invalid options
         warn "Unknown option $1 will be ignored"
@@ -848,7 +850,7 @@ function download() # {{{2
         source_user=${source_user#*;}                 # extract user
         trace "  >> source_domain: ${source_domain}"
       fi
-      trace "  >> source_user: ${source_user}"
+      trace "  >> source_user (from URL): ${source_user}"
       source_host=${source_host#*@}                   # remove user
     fi
     source_path=${source_host#*/}                     # extract path
@@ -857,14 +859,28 @@ function download() # {{{2
     trace "  >> source_host: ${source_host}"
 
     if [[ -z "$source_user" ]]; then
-      source_user=$(keychain_get_user --kind=internet --protocol=$source_protocol --site=$source_host)
-      trace "  >> source_user: ${source_user}"
+      trace "  Querying keychain for user on site $source_host over $source_protocol"
+      source_user=$(keychain_get_user --kind=internet --protocol=$source_protocol --site=$source_host 2>&1)
+      status=$?
+      if [[ $status != 0 ]]; then
+        trace "  Error $status: No user for site $source_host over $source_protocol"
+        source_user=''
+      else
+        trace "  >> source_user (from keychain): ${source_user}"
+      fi
     fi
     if [[ -z "$source_password" && -n "$source_user" ]]; then
+      trace "  Querying keychain for password for user $source_user on site $source_host over $source_protocol"
       source_password=$(keychain_get_password --kind=internet --protocol=$source_protocol --site=$source_host --user=$source_user)
-      trace "  >> source_password: XXXXXX"
+      if [[ $status != 0 ]]; then
+        trace "  Error $status: No password for use $source_user"
+        source_password=''
+      else
+        trace "  >> source_password (from keychain): XXXXXX"
+      fi
     fi
-    [[ -n "$source_user" ]] || source_user=$userid
+    [[ -z "$source_user" && $need_auth == 1 ]] && source_user=$userid
+    trace "  >> source_user: ${source_user}"
   fi
   trace "  >> source: ${source}"
   # }}}3
@@ -910,7 +926,6 @@ function download() # {{{2
   fi # }}}3
 
   if [[ ${source_protocol} == 'smb' ]]; then # {{{3
-    need_auth=1
     verbose "  Copying from CIFS location"
     # source is like smb://domain;userid:password@server/share/path/file
     # domain, userid, and password are optional
@@ -922,24 +937,28 @@ function download() # {{{2
     fi
 
     smb_target=''
+    smb_creds=''
     if [[ -z "$(mount | grep -i $source_host | grep -i $source_share)" ]]; then
       while true; do
-        if [[ -z "$source_password" ]]; then
-          verbose "  Requesting credentials for //${source_host}/${source_share}"
-          source_user=$(prompt --default="$source_user" "  User for mounting ${source_share} on ${source_host}")
-          if [[ $? != 0 ]]; then
-            warn "User cancelled prompt operation"
-            return 1
-	  fi
-          source_password=$(prompt -s "  Password for ${source_user}")
-          source_credentials_updated=1
-          echo
+        if [[ $need_auth == 1 ]]; then
+          if [[ -z "$source_password" ]]; then
+            verbose "  Requesting credentials for //${source_host}/${source_share}"
+            source_user=$(prompt --default="$source_user" "  User for mounting ${source_share} on ${source_host}")
+            if [[ $? != 0 ]]; then
+              warn "User cancelled prompt operation"
+              return 1
+            fi
+            source_password=$(prompt -s "  Password for ${source_user}")
+            source_credentials_updated=1
+            echo
+          fi
+          smb_creds="${source_user/\\/;}:${source_password//@/%40}@"
         fi
-        smb_mount="//${source_user/\\/;}:${source_password//@/%40}@${source_host}/${source_share}"
+        smb_mount="//${smb_creds}${source_host}/${source_share}"
         smb_target="/Volumes/WindowsShare-${source_host}-${source_share}.$$"
 
-        verbose "  Mounting ${source_share} from ${source_host} as ${source_user}"
-        trace ">> mount -t smbfs '//${source_user/\\/;}:XXXXX@${source_host}/${source_share}' $smb_target"
+        verbose "  Mounting ${source_share} from ${source_host} ${source_user:+as }${source_user}"
+        trace ">> mount -t smbfs '//${source_user/\\/;}${source_password:+:XXXXX}${source_user:+@}${source_host}/${source_share}' $smb_target"
         mkdir -p $smb_target && mount -t smbfs  "${smb_mount}" $smb_target
         status=$?
         case $status in
@@ -951,6 +970,7 @@ function download() # {{{2
           77)
             error "  Wrong credentials, please enter new credentials"
             source_password=''
+            need_auth=1
           ;;
           *)
             error "  Cannot mount ${source_share} on ${source_host} as ${source_user}\nError: $status"
@@ -1615,6 +1635,7 @@ function cache_stuff() # {{{2
       document_destination=$(echo "$document" | jq --raw-output '.destination')
       trace "  Destination: ${document_destination}"
       [[ -z "$document_destination" || "$document_destination" == 'null' ]] && document_destination=$CACHE_ROOT
+      [[ ! "$document_destination" =~ ^\/.* ]]                              && document_destination="${CACHE_ROOT}/${document_destination}"
       trace "  Destination: ${document_destination}"
       document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
       document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
