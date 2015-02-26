@@ -915,8 +915,13 @@ function download() # {{{2
   trace "Expect $checksum_type checksum: $checksum_value"
 
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
-    verbose "  Calculating checksum of the file that is already cached"
-    target_checksum=$(bar -n "$target_path" | $checksum)
+    if [[ -f "${target_path}.${checksum_type}" && -n "$(find "${target_path}.${checksum_type}" -mmin +240)" ]]; then
+      verbose "  Calculating checksum of the file that is already cached"
+      target_checksum=$(bar -n "$target_path" | $checksum)
+    else
+      verbose "  Loading checksum of the file that is already cached"
+      target_checksum=$(cat "${target_path}.$checksum_type")
+    fi
     if [[ $target_checksum =~ \s*$checksum_value\s* ]]; then
       verbose "  File already cached and checksum verified"
       return 0
@@ -1075,6 +1080,8 @@ function download() # {{{2
       error "Invalid ${document_checksum_type} checksum for the downloaded document"
       $NOOP $sudo rm -f "$target_path"
       return 1
+    else
+      echo -n "$target_checksum" | $sudo tee "${target_path}.$checksum_type" > /dev/null
     fi
   fi # }}}3
 
