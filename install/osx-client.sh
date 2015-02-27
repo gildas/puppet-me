@@ -408,7 +408,7 @@ function keychain_get_user() # {{{2
     trace "  >> service: ${service}"
   fi # }}}4
   if [[ $command == 'find-internet-password' ]]; then # protocol {{{4
-    trace "Kind is internet, analyzing protocol ($protocol)"
+    trace "Key Type is internet, analyzing protocol $protocol"
     case $protocol in
       afp)        protocol='afp ' ;;
       http)       protocol='http' ;;
@@ -428,7 +428,7 @@ function keychain_get_user() # {{{2
     return 2
   fi # }}}4
   # }}}3
-  trace "Searching $kind user $user @ $service (protocol: $protocol)"
+  trace "Searching $kind user $user @ $service protocol: $protocol"
   if [[ -n "$protocol" ]]; then
     trace "Exec: [/usr/bin/security $command -r "$protocol" -s \"$service\"]"
     user=$(/usr/bin/security $command -r "$protocol" -s "$service" 2>&1)
@@ -558,7 +558,7 @@ function keychain_get_password() # {{{2
     trace "  >> service: ${service}"
   fi # }}}4
   if [[ $command == 'find-internet-password' ]]; then # protocol {{{4
-    trace "Kind is internet, analyzing protocol ($protocol)"
+    trace "Key Type is internet, analyzing protocol $protocol"
     case $protocol in
       afp)        protocol='afp ' ;;
       http)       protocol='http' ;;
@@ -582,7 +582,7 @@ function keychain_get_password() # {{{2
     return 2
   fi # }}}4
   # }}}3
-  trace "Searching password for $kind user $user @ $service (protocol: $protocol)"
+  trace "Searching password for $kind user $user @ $service protocol: $protocol"
   trace "Exec: [/usr/bin/security $command -r "$protocol" -s \"$service\" -a \"$user\" -w]"
   if [[ -n "$protocol" ]]; then
     password=$(/usr/bin/security $command -r "$protocol" -s "$service" -a "$user" -w 2>&1)
@@ -724,7 +724,7 @@ function keychain_set_password() # {{{2
     trace "  >> service: ${service}"
   fi # }}}4
   if [[ $command == 'find-internet-password' ]]; then # protocol {{{4
-    trace "Kind is internet, analyzing protocol ($protocol)"
+    trace "Key Type is internet, analyzing protocol $protocol"
     case $protocol in
       afp)        protocol='afp ' ;;
       http)       protocol='http' ;;
@@ -752,7 +752,7 @@ function keychain_set_password() # {{{2
     return 2
   fi # }}}4
   # }}}3
-  trace "Updating password for $kind user $user @ $service (protocol: $protocol)"
+  trace "Updating password for $kind user $user @ $service protocol: $protocol"
   trace "Exec: [/usr/bin/security $command -r "$protocol" -s \"$service\" -a \"$user\" -w XXXX]"
   if [[ -n "$protocol" ]]; then
     /usr/bin/security $command -U -r "$protocol" -s "$service" -a "$user" -w "$password"
@@ -847,14 +847,14 @@ function download() # {{{2
       if [[ "${source_user}" =~ .*:.* ]]; then        # search for password
         source_password=${source_user#*:}             # extract password
         source_user=${source_user%:*}                 # remove all after :
-	trace "  >> source_password: (obfuscated)"
+	trace "  >> source_password: XXXXXXXX"
       fi
       if [[ "${source_user}" =~ .*\;.* ]]; then       # search for domain
         source_domain=${source_user%;*}               # extract domain
         source_user=${source_user#*;}                 # extract user
         trace "  >> source_domain: ${source_domain}"
       fi
-      trace "  >> source_user (from URL): ${source_user}"
+      trace "  >> source_user [from URL]: ${source_user}"
       source_host=${source_host#*@}                   # remove user
     fi
     source_path=${source_host#*/}                     # extract path
@@ -870,7 +870,7 @@ function download() # {{{2
         trace "  Error $status: No user for site $source_host over $source_protocol"
         source_user=''
       else
-        trace "  >> source_user (from keychain): ${source_user}"
+        trace "  >> source_user [from keychain]: ${source_user}"
       fi
     fi
     if [[ -z "$source_password" && -n "$source_user" ]]; then
@@ -880,7 +880,7 @@ function download() # {{{2
         trace "  Error $status: No password for use $source_user"
         source_password=''
       else
-        trace "  >> source_password (from keychain): XXXXXX"
+        trace "  >> source_password [from keychain]: XXXXXX"
       fi
     fi
     [[ -z "$source_user" && $need_auth == 1 ]] && source_user=$userid
@@ -916,7 +916,7 @@ function download() # {{{2
     SHA1|sha1) checksum='shasum';;
     null|'')   checksum=''; checksum_value=''; checksum_type='';;
     *)
-    error "Unsupported checksum type ($checksum_type) while downloading $filename"
+    error "Unsupported checksum type $checksum_type while downloading $filename"
     return 1
   esac
   trace "Expect ${checksum_type:-no} checksum${checksum_type:+: }$checksum_value"
@@ -1151,7 +1151,7 @@ function brew_install() # {{{2
   if [[ -z "$(brew info $app_name | grep '^Not installed$')" ]]; then
     verbose "$app_name is already installed via Homebrew"
   elif which "$app_binary" > /dev/null 2>&1; then
-    verbose "$app_name was manually installed (no automatic updates possible)"
+    verbose "$app_name was manually installed \(no automatic updates possible\)"
   else
     verbose "Installing $app_name"
     $NOOP brew install $app_binary
@@ -1168,7 +1168,7 @@ function cask_install() # {{{2
   if [[ -z "$(brew cask info $app_name | grep '^Not installed$')" ]]; then
     verbose "$app_name is already installed via Homebrew"
   elif which "$app_binary" > /dev/null 2>&1; then
-    verbose "$app_name was manually installed (no automatic updates possible)"
+    verbose "$app_name was manually installed \(no automatic updates possible\)"
   else
     verbose "Installing $app_name"
     $NOOP brew install "Caskroom/cask/$app_name"
