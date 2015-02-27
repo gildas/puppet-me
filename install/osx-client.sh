@@ -959,9 +959,13 @@ function download() # {{{2
             source_user=$(prompt --default="$source_user" "  User for mounting ${source_share} on ${source_host}")
             if [[ $? != 0 ]]; then
               warn "User cancelled prompt operation"
-              return 1
+              return 0
             fi
             source_password=$(prompt -s "  Password for ${source_user}")
+            if [[ $? != 0 ]]; then
+              warn "User cancelled prompt operation"
+              return 0
+            fi
             source_credentials_updated=1
             echo
           fi
@@ -1054,9 +1058,13 @@ function download() # {{{2
           source_user=$(prompt --default="$source_user" "  User to download from ${source_host}")
           if [[ $? != 0 ]]; then
             warn "User cancelled prompt operation"
-            return 1
+            return 0
 	  fi
           source_password=$(prompt -s "  Password for ${source_user}")
+          if [[ $? != 0 ]]; then
+            warn "User cancelled prompt operation"
+            return 0
+	  fi
           source_credentials_updated=1
           echo
         fi
