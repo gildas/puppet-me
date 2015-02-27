@@ -282,6 +282,11 @@ function prompt() #{{{2
     read $silent -p "${query}: " value < /dev/tty
   fi
   [[ -z "$value" ]] && value=$default
+  if [[ -n "$silent" ]]; then
+    trace "Results: XXXXXXXXXX"
+  else
+    trace "Results: ${value}"
+  fi
   printf '%s' $value
 } # }}}2
 
