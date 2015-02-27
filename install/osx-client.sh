@@ -261,9 +261,7 @@ function prompt() #{{{2
     shift
   done # }}}3
   query=$1
-  trace "Query: ${query}"
-  trace "Default: ${default}"
-  trace "Silent: ${silent}"
+  trace "Query: ${query}, Default: ${default}, Silent: ${silent}"
   if [[ -z "$SSH_CLIENT" ]]; then
     # We are on the Mac screen
     trace "Prompting with GUI"
