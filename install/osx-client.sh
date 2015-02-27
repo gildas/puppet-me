@@ -228,6 +228,7 @@ function urldecode() #{{{2
 
 function prompt() #{{{2
 {
+  local title='DaaS Me!'
   local silent=''
   local default=''
   local query
@@ -251,6 +252,19 @@ function prompt() #{{{2
       -s|--silent)
         silent='-s'
       ;;
+      --title)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "$FUNCNAME: Argument for option $1 is missing" && return 1
+        title=$2
+        shift 2
+        continue
+      ;;
+      --title=*?)
+        title=${1#*=} # delete everything up to =
+      ;;
+      --title=)
+        error "$FUNCNAME: Argument for option $1 is missing"
+        return 1
+        ;;
       -?*) # Invalid options
         warn "Unknown option $1 will be ignored"
       ;;
@@ -266,7 +280,7 @@ function prompt() #{{{2
     # We are on the Mac screen
     trace "Prompting with GUI"
     [[ -n $silent ]] && silent='with hidden answer'
-    script="Tell application \"System Events\" to display dialog \"${query/\\/\\\\}\" giving up after 7200 ${silent} default answer \"${default/\\/\\\\}\""
+    script="Tell application \"System Events\" to display dialog \"${query/\\/\\\\}\" giving up after 119 with title \"${title}\" with icon 0 ${silent} default answer \"${default/\\/\\\\}\""
     trace "OSA Script: $script"
     value="$(osascript -e "$script" -e 'text returned of result' 2>&1)"
     status=$?
@@ -956,12 +970,12 @@ function download() # {{{2
         if [[ $need_auth == 1 ]]; then
           if [[ -z "$source_password" ]]; then
             verbose "  Requesting credentials for //${source_host}/${source_share}"
-            source_user=$(prompt --default="$source_user" "  User for mounting ${source_share} on ${source_host}")
+            source_user=$(prompt --default="$source_user" --title "Downloading $filename" "User for mounting ${source_share} on ${source_host}")
             if [[ $? != 0 ]]; then
               warn "User cancelled prompt operation"
               return 0
             fi
-            source_password=$(prompt -s "  Password for ${source_user}")
+            source_password=$(prompt -s --title "Downloading $filename" "Password for ${source_user}")
             if [[ $? != 0 ]]; then
               warn "User cancelled prompt operation"
               return 0
@@ -1055,12 +1069,12 @@ function download() # {{{2
       if [[ $need_auth == 1 ]]; then
         if [[ -z "$source_password" ]]; then
           verbose "  Requesting credentials for ${source_host}"
-          source_user=$(prompt --default="$source_user" "  User to download from ${source_host}")
+          source_user=$(prompt --default="$source_user" --title "Downloading $filename" "User to download from ${source_host}")
           if [[ $? != 0 ]]; then
             warn "User cancelled prompt operation"
             return 0
 	  fi
-          source_password=$(prompt -s "  Password for ${source_user}")
+          source_password=$(prompt -s --title "Downloading $filename" "Password for ${source_user}")
           if [[ $? != 0 ]]; then
             warn "User cancelled prompt operation"
             return 0
