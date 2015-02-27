@@ -922,16 +922,16 @@ function download() # {{{2
   trace "Expect ${checksum_type:-no} checksum${checksum_type:+: }$checksum_value"
 
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
-    if [[ ! -f "${target_path}.${checksum_type}" || -n "$(find "${target_path}.${checksum_type}" -mmin +240)" ]]; then
+    if [[ ! -f "${target_path}.${checksum_type}" ]]; then
       verbose "  Calculating checksum of the file that is already cached"
       target_checksum=$(bar -n "$target_path" | $checksum)
+      echo -n "$target_checksum" | $sudo tee "${target_path}.$checksum_type" > /dev/null
     else
       verbose "  Loading checksum of the file that is already cached"
       target_checksum=$(cat "${target_path}.$checksum_type")
     fi
     if [[ $target_checksum =~ \s*$checksum_value\s* ]]; then
       verbose "  File already cached and checksum verified"
-      [[ -f "${target_path}.${checksum_type}" ]] || (echo -n "$target_checksum" | $sudo tee "${target_path}.$checksum_type" > /dev/null)
       return 0
     else
       $NOOP $sudo rm -f "$target_path"
