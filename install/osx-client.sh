@@ -421,34 +421,23 @@ function keychain_get_user() # {{{2
     service=${service%%/*}                            # extract host
     trace "  >> service: ${service}"
   fi # }}}4
-  if [[ $command == 'find-internet-password' ]]; then # protocol {{{4
-    trace "Key Type is internet, analyzing protocol $protocol"
-    case $protocol in
-      afp)        protocol='afp ' ;;
-      http)       protocol='http' ;;
-      https|htps) protocol='htps' ;;
-      ftp)        protocol='ftp ' ;;
-      smb|cifs)   protocol='smb ' ;;
-      ssh)        protocol='ssh ' ;;
-      '')         protocol='';;
-      *)
-        error "$FUNCNAME: Unsupported protocol \"${protocol}\""
-        return 2
-      ;;
-    esac
-  fi # }}}4
   if [[ -z "$service" ]]; then # {{{4
     error "option service cannot be empty"
     return 2
   fi # }}}4
   # }}}3
   trace "Searching $kind user $user @ $service protocol: $protocol"
-  if [[ -n "$protocol" ]]; then
-    trace "Exec: [/usr/bin/security $command -r "$protocol" -s \"$service\"]"
-    user=$(/usr/bin/security $command -r "$protocol" -s "$service" 2>&1)
+  if [[ $command == 'find-internet-password' ]]; then
+    trace "Key Type is internet, analyzing protocol $protocol"
+    case $protocol in
+      http)            user=$(/usr/bin/security $command -r "$protocol" -s "$service") ;;
+      https|htps)      user=$(/usr/bin/security $command -r "htps" -s "$service") ;;
+      cifs)            user=$(/usr/bin/security $command -r "smb " -s "$service") ;;
+      afp|ftp|smb|ssh) user=$(/usr/bin/security $command -r "$protocol " -s "$service") ;;
+      *)               user=$(/usr/bin/security $command -s "$service") ;;
+    esac
   else
-    trace "Exec: [/usr/bin/security $command -s \"$service\"]"
-    user=$(/usr/bin/security $command -s "$service" 2>&1)
+    user=$(/usr/bin/security $command -s "$service")
   fi
   status=$?
   [[ $status != 0 ]] && trace "Error $status: $user" && return $status
@@ -571,22 +560,6 @@ function keychain_get_password() # {{{2
     service=${service%%/*}                            # extract host
     trace "  >> service: ${service}"
   fi # }}}4
-  if [[ $command == 'find-internet-password' ]]; then # protocol {{{4
-    trace "Key Type is internet, analyzing protocol $protocol"
-    case $protocol in
-      afp)        protocol='afp ' ;;
-      http)       protocol='http' ;;
-      https|htps) protocol='htps' ;;
-      ftp)        protocol='ftp ' ;;
-      smb|cifs)   protocol='smb ' ;;
-      ssh)        protocol='ssh ' ;;
-      '')         protocol='';;
-      *)
-        error "$FUNCNAME: Unsupported protocol \"${protocol}\""
-        return 2
-      ;;
-    esac
-  fi # }}}4
   if [[ -z "$service" ]]; then # {{{4
     error "option service cannot be empty"
     return 2
@@ -598,10 +571,17 @@ function keychain_get_password() # {{{2
   # }}}3
   trace "Searching password for $kind user $user @ $service protocol: $protocol"
   trace "Exec: [/usr/bin/security $command -r "$protocol" -s \"$service\" -a \"$user\" -w]"
-  if [[ -n "$protocol" ]]; then
-    password=$(/usr/bin/security $command -r "$protocol" -s "$service" -a "$user" -w 2>&1)
+  if [[ $command == 'find-internet-password' ]]; then
+    trace "Key Type is internet, analyzing protocol $protocol"
+    case $protocol in
+      http)            password=$(/usr/bin/security $command -r "$protocol" -s "$service" -a "$user" -w) ;;
+      https|htps)      password=$(/usr/bin/security $command -r "htps" -s "$service" -a "$user" -w) ;;
+      cifs)            password=$(/usr/bin/security $command -r "smb " -s "$service" -a "$user" -w) ;;
+      afp|ftp|smb|ssh) password=$(/usr/bin/security $command -r "$protocol " -s "$service" -a "$user" -w) ;;
+      *)               password=$(/usr/bin/security $command -s "$service" -w) ;;
+    esac
   else
-    password=$(/usr/bin/security $command -s "$service" -a "$user" -w 2>&1)
+    password=$(/usr/bin/security $command -s "$service" -w)
   fi
   status=$?
   [[ $status != 0 ]] && trace "Error $status: $password" && return $status
@@ -612,6 +592,7 @@ function keychain_get_password() # {{{2
 function keychain_set_password() # {{{2
 {
   local service
+  local path
   local protocol
   local command
   local kind
@@ -634,7 +615,20 @@ function keychain_set_password() # {{{2
         error "${FUNCNAME}: Argument for option $1 is missing"
         return 1
         ;;
-      --protocol|-p)
+      --path)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+        path=$2
+        shift 2
+        continue
+      ;;
+      --path=*?)
+        path=${1#*=} # delete everything up to =
+      ;;
+      --path=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      --protocol)
         [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
         protocol=$2
         shift 2
@@ -737,22 +731,6 @@ function keychain_set_password() # {{{2
     service=${service%%/*}                            # extract host
     trace "  >> service: ${service}"
   fi # }}}4
-  if [[ $command == 'find-internet-password' ]]; then # protocol {{{4
-    trace "Key Type is internet, analyzing protocol $protocol"
-    case $protocol in
-      afp)        protocol='afp ' ;;
-      http)       protocol='http' ;;
-      https|htps) protocol='htps' ;;
-      ftp)        protocol='ftp ' ;;
-      smb|cifs)   protocol='smb ' ;;
-      ssh)        protocol='ssh ' ;;
-      '')         protocol='';;
-      *)
-        error "$FUNCNAME: Unsupported protocol \"${protocol}\""
-        return 2
-      ;;
-    esac
-  fi # }}}4
   if [[ -z "$service" ]]; then # {{{4
     error "option service cannot be empty"
     return 2
@@ -768,8 +746,16 @@ function keychain_set_password() # {{{2
   # }}}3
   trace "Updating password for $kind user $user @ $service protocol: $protocol"
   trace "Exec: [/usr/bin/security $command -r "$protocol" -s \"$service\" -a \"$user\" -w XXXX]"
-  if [[ -n "$protocol" ]]; then
-    /usr/bin/security $command -U -r "$protocol" -s "$service" -a "$user" -w "$password"
+  if [[ $command == 'add-internet-password' ]]; then
+    trace "Key Type is internet, analyzing protocol $protocol"
+    case $protocol in
+      http)       /usr/bin/security $command -U -r "$protocol"  -s "$service" -a "$user" -w "$password" ;;
+      https|htps) /usr/bin/security $command -U -r "htps"       -s "$service" -a "$user" -w "$password" ;;
+      cifs)       /usr/bin/security $command -U -r "smb "       -s "$service" -a "$user" -w "$password" -D "network password" -p $path ;;
+      ftp|ssh)    /usr/bin/security $command -U -r "$protocol " -s "$service" -a "$user" -w "$password" ;;
+      afp|smb)    /usr/bin/security $command -U -r "$protocol " -s "$service" -a "$user" -w "$password" -D "network password" -p $path ;;
+      *)          /usr/bin/security $command -U                 -s "$service" -a "$user" -w "$password" ;;
+    esac
   else
     /usr/bin/security $command -U -s "$service" -a "$user" -w "$password"
   fi
@@ -1122,7 +1108,11 @@ function download() # {{{2
 
   # The download was a success, let's save the credentials in keychain
   if [[ $source_credentials_updated != 0 ]]; then
-    keychain_set_password --kind=internet --protocol=$source_protocol --site=$source_host --user=$source_user --password=$source_password
+    if [[ -n $source_share ]]; then
+      keychain_set_password --kind=internet --protocol=$source_protocol --site=$source_host --path="$source_share" --user=$source_user --password=$source_password
+    else
+      keychain_set_password --kind=internet --protocol=$source_protocol --site=$source_host --user=$source_user --password=$source_password
+    fi
     status=$? && [[ $status != 0 ]] && error "Could not save credentials.\nError: $status"
   fi
   return 0
