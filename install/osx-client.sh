@@ -1588,6 +1588,18 @@ function install_vmware() # {{{2
   cask_install vmware-fusion '/Applications/VMware Fusion.app/Contents/Library/vmrun'
   status=$? && [[ $status != 0 ]] && return $status
 
+  if [[ ! -d '/Applications/VMware Fusion.app' ]]; then
+    verbose "Linking VMWare Fusion in /Applications"
+    if [[ -d "$HOME/Applications/VMWare Fusion.app" ]]; then
+      vmware_root="$HOME/Applications"
+    else
+      vmware_root=$(brew cask info vagrant | awk '/^\/opt/ { print $1 }')
+    fi
+    trace "VMWare Fusion is in: $vmware_root"
+    verbose "VMWare Fusion is in: $vmware_root"
+    ln -s "$vmware_root/VMware Fusion.app"  /Applications
+  fi
+
   if [[ -n "$MODULE_VMWARE_HOME" ]]; then
     current=$(defaults read com.vmware.fusion NSNavLastRootDirectory 2> /dev/null)
     if [[ "$current" != "$MODULE_VMWARE_HOME" ]]; then
