@@ -866,7 +866,7 @@ function download() # {{{2
       if [[ "${source_user}" =~ .*:.* ]]; then        # search for password
         source_password=${source_user#*:}             # extract password
         source_user=${source_user%:*}                 # remove all after :
-	trace "  >> source_password: XXXXXXXX"
+        trace "  >> source_password: XXXXXXXX"
       fi
       if [[ "${source_user}" =~ .*\;.* ]]; then       # search for domain
         source_domain=${source_user%;*}               # extract domain
@@ -1088,12 +1088,12 @@ function download() # {{{2
           if [[ $? != 0 ]]; then
             warn "User cancelled prompt operation"
             return 0
-	  fi
+          fi
           source_password=$(prompt -s --title "Downloading $filename" "Password for ${source_user}")
           if [[ $? != 0 ]]; then
             warn "User cancelled prompt operation"
             return 0
-	  fi
+          fi
           source_credentials_updated=1
           echo
         fi
@@ -1181,12 +1181,12 @@ function vpn_start() #{{{2
     case $1 in
       --id)
         [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
-	vpn_id=$2
+        vpn_id=$2
         shift 2
         continue
       ;;
       --id=*?)
-	vpn_id=${1#*=} # delete everything up to =
+        vpn_id=${1#*=} # delete everything up to =
       ;;
       --id=)
         error "${FUNCNAME}: Argument for option $1 is missing"
@@ -1194,13 +1194,13 @@ function vpn_start() #{{{2
         ;;
       --server)
         [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
-	vpn_id=$(vpn_find_by_server "$2")
+        vpn_id=$(vpn_find_by_server "$2")
         status=$? && [[ $status != 0 ]] && return $status
         shift 2
         continue
       ;;
       --server=*?)
-	vpn_id=$(vpn_find_by_server "${1#*=}") # delete everything up to =
+        vpn_id=$(vpn_find_by_server "${1#*=}") # delete everything up to =
         status=$? && [[ $status != 0 ]] && return $status
       ;;
       --server=)
@@ -1283,12 +1283,12 @@ function vpn_stop() #{{{2
     case $1 in
       --id)
         [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
-	vpn_id=$2
+        vpn_id=$2
         shift 2
         continue
       ;;
       --id=*?)
-	vpn_id=${1#*=} # delete everything up to =
+        vpn_id=${1#*=} # delete everything up to =
       ;;
       --id=)
         error "${FUNCNAME}: Argument for option $1 is missing"
@@ -1296,13 +1296,13 @@ function vpn_stop() #{{{2
         ;;
       --server)
         [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
-	vpn_id=$(vpn_find_by_server "$2")
+        vpn_id=$(vpn_find_by_server "$2")
         status=$? && [[ $status != 0 ]] && return $status
         shift 2
         continue
       ;;
       --server=*?)
-	vpn_id=$(vpn_find_by_server "${1#*=}") # delete everything up to =
+        vpn_id=$(vpn_find_by_server "${1#*=}") # delete everything up to =
         status=$? && [[ $status != 0 ]] && return $status
       ;;
       --server=)
@@ -1902,12 +1902,12 @@ function cache_stuff() # {{{2
             source_location=$(echo "$source" | jq --raw-output '.location')
             source_url=$(echo "$source" | jq --raw-output '.url')
             source_has_resume=''
-	    [[ "$(echo "$source" | jq '.has_resume')" == 'true' ]] && source_has_resume='--has_resume'
-	    source_need_auth=''
-	    [[ "$(echo "$source" | jq '.need_auth')" == 'true' ]] && source_need_auth='--need_auth'
+            [[ "$(echo "$source" | jq '.has_resume')" == 'true' ]] && source_has_resume='--has_resume'
+            source_need_auth=''
+            [[ "$(echo "$source" | jq '.need_auth')" == 'true' ]] && source_need_auth='--need_auth'
             source_vpn="$(echo "$source" | jq --raw-output '.vpn' | grep -v null)"
             #debug   "  Matched $source_network from $ip_address at $source_location"
-	    verbose "  Downloading from $source_location"
+            verbose "  Downloading from $source_location"
             break
           fi
         done
