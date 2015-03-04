@@ -1,5 +1,20 @@
 [
   {
+    "name": "Media Server Licenses",
+    "id": "MediaServer-licenses",
+    "destination": "Licenses/MediaServer",
+    "sources":
+    [
+      {
+        "location": "Intranet",
+        "network":  ".*",
+        "need_auth": true,
+        "vpn": ".*vpn.inin.com",
+        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_0?core*_prod_vm.i3lic"
+      }
+    ]
+  },
+  {
     "name": "Windows 2012R2 Evaluation",
     "id": "Windows_2012R2",
     "checksum": { "type": "MD5", "value": "458ff91f8abc21b75cb544744bf92e6a" },
@@ -62,76 +77,6 @@
         "network":  ".*",
         "has_resume": true,
         "url": "http://www.mls-software.com/files/setupssh-6.7p1-1-v1(x64).exe"
-      }
-    ]
-  },
-  {
-    "name": "Media Server Licenses (1 core)",
-    "id": "MediaServer-licenses-01",
-    "destination": "Licenses/MediaServer",
-    "sources":
-    [
-      {
-        "location": "Intranet",
-        "network":  ".*",
-        "need_auth": true,
-        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_01core_prod_vm.i3lic"
-      }
-    ]
-  },
-  {
-    "name": "Media Server Licenses (2 cores)",
-    "id": "MediaServer-licenses-02",
-    "destination": "Licenses/MediaServer",
-    "sources":
-    [
-      {
-        "location": "Intranet",
-        "network":  ".*",
-        "need_auth": true,
-        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_02cores_prod_vm.i3lic"
-      }
-    ]
-  },
-  {
-    "name": "Media Server Licenses (4 cores)",
-    "id": "MediaServer-licenses-04",
-    "destination": "Licenses/MediaServer",
-    "sources":
-    [
-      {
-        "location": "Intranet",
-        "network":  ".*",
-        "need_auth": true,
-        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_04cores_prod_vm.i3lic"
-      }
-    ]
-  },
-  {
-    "name": "Media Server Licenses (6 cores)",
-    "id": "MediaServer-licenses-06",
-    "destination": "Licenses/MediaServer",
-    "sources":
-    [
-      {
-        "location": "Intranet",
-        "network":  ".*",
-        "need_auth": true,
-        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_06cores_prod_vm.i3lic"
-      }
-    ]
-  },
-  {
-    "name": "Media Server Licenses (8 cores)",
-    "id": "MediaServer-licenses-08",
-    "destination": "Licenses/MediaServer",
-    "sources":
-    [
-      {
-        "location": "Intranet",
-        "network":  ".*",
-        "need_auth": true,
-        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_08cores_prod_vm.i3lic"
       }
     ]
   },
