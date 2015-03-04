@@ -33,6 +33,7 @@ ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vm
 CACHE_ROOT='/var/cache/daas'
 CACHE_SOURCE='https://cdn.rawgit.com/inin-apac/puppet-me/c8795de6ad1484c9386436543cc5a0f9d3290a23/config/sources.json'
 CACHE_MOUNTS=()
+CONNECTED_VPNS=()
 
 MODULE_VMWARE_HOME=''
 MODULE_VMWARE_KEY=''
@@ -147,6 +148,11 @@ function trace_end() # {{{2
     trace --trace-member "Removing CIFS mount point: $cache_mount"
     umount $cache_mount 2>&1 > /dev/null
   done
+
+  for vpn_id in ${CONNECTED_VPNS[@]}; do
+    vpn_stop --id=$vpn_id
+  done
+
   trace --trace-member "[END]   --8<----------------------8<------------------------8<------------    [END]"
 } # }}}2
 
@@ -1131,6 +1137,197 @@ function download() # {{{2
   return 0
 } # }}}2
 
+function vpn_find_by_server() #{{{2
+{
+  trace "Looking for VPNs that match server: $1"
+  local vpn_server
+  local vpn_ids=( $(/usr/sbin/scutil --nc list | grep IPSec | awk '{print $3}') )
+
+  for vpn_id in ${vpn_ids[*]} ; do
+    trace "Checking VPN $vpn_id"
+    vpn_server=$(/usr/sbin/scutil --nc show $vpn_id | awk '/RemoteAddress/ { print $3 }')
+    if [[ $vpn_server =~ $1 ]]; then
+      trace "VPN ${vpn_id} matched $1"
+      printf -- %s "$vpn_id"
+      return 0
+    fi
+  done
+  error "No VPN has a server matching \"$1\""
+  return 1
+} # }}}2
+
+function vpn_get_name() #{{{2
+{
+  printf %s "$(/usr/sbin/scutil --nc show $1 | head -1 | sed 's/[^"]*"//' | sed 's/".*//')"
+} # }}}2
+
+function vpn_start() #{{{2
+{
+  local vpn_id
+  local user
+  local password
+
+  while :; do # Parse aguments {{{3
+    case $1 in
+      --id)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+	vpn_id=$2
+        shift 2
+        continue
+      ;;
+      --id=*?)
+	vpn_id=${1#*=} # delete everything up to =
+      ;;
+      --id=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      --server)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+	vpn_id=$(vpn_find_by_server "$2")
+        status=$? && [[ $status != 0 ]] && return $status
+        shift 2
+        continue
+      ;;
+      --server=*?)
+	vpn_id=$(vpn_find_by_server "${1#*=}") # delete everything up to =
+        status=$? && [[ $status != 0 ]] && return $status
+      ;;
+      --server=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      --user|--userid|--username|-u)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+        user=$2
+        shift 2
+        continue
+      ;;
+      --user=*?|--userid=*?|--username=*?)
+        user=${1#*=} # delete everything up to =
+      ;;
+      --user=|--userid=|--username=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      --password)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+        password=$2
+        shift 2
+        continue
+      ;;
+      --password=*?)
+        password=${1#*=} # delete everything up to =
+      ;;
+      --password=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      -?*) # Invalid options
+        warn "${FUNCTNAME}: Unknown option $1 will be ignored"
+      ;;
+      *)  # End of options
+        break
+      ;;
+    esac
+    shift
+  done # }}}3
+  # Validate Arguments {{{3
+  if [[ -z "$vpn_id" ]]; then # {{{4
+    error "At least one of these options must be given: --server, --id"
+    return 2
+  fi # }}}4
+  # }}}3
+
+  local vpn_name=$(vpn_get_name $vpn_id)
+  printf %s "Starting VPN ${vpn_name}..."
+  trace "Starting VPN ${vpn_name} [$vpn_id]"
+  /usr/sbin/scutil --nc start $vpn_id
+  status=$? && [[ $status != 0 ]] && return $status
+  loop=0
+  while :; do
+    sleep 5
+    if [[ -n $(/usr/sbin/scutil --nc status $vpn_id | grep '^Connected$') ]]; then
+      verbose "  Connected!"
+      CONNECTED_VPNS+=( $vpn_id )
+      trace "Connected VPNs: ${CONNECTED_VPNS[@]}"
+      return 0
+    fi
+    printf %s '.'
+    trace "Still nothing at loop $loop"
+    ((loop++))
+    if [[ $loop > 6 ]]; then
+      error "Timeout while connecting to VPN $vpn_name"
+      return 1
+    fi
+  done
+  error "Cannot connect to VPN $vpn_name"
+  return 1
+} # }}}2
+
+function vpn_stop() #{{{2
+{
+  local vpn_id
+
+  while :; do # Parse aguments {{{3
+    case $1 in
+      --id)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+	vpn_id=$2
+        shift 2
+        continue
+      ;;
+      --id=*?)
+	vpn_id=${1#*=} # delete everything up to =
+      ;;
+      --id=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      --server)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+	vpn_id=$(vpn_find_by_server "$2")
+        status=$? && [[ $status != 0 ]] && return $status
+        shift 2
+        continue
+      ;;
+      --server=*?)
+	vpn_id=$(vpn_find_by_server "${1#*=}") # delete everything up to =
+        status=$? && [[ $status != 0 ]] && return $status
+      ;;
+      --server=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      -?*) # Invalid options
+        warn "${FUNCTNAME}: Unknown option $1 will be ignored"
+      ;;
+      *)  # End of options
+        break
+      ;;
+    esac
+    shift
+  done # }}}3
+  # Validate Arguments {{{3
+  if [[ -z "$vpn_id" ]]; then # {{{4
+    error "At least one of these options must be given: --server, --id"
+    return 2
+  fi # }}}4
+  # }}}3
+
+  local vpn_name=$(vpn_get_name $vpn_id)
+  verbose "Stopping VPN ${vpn_name}..."
+  /usr/sbin/scutil --nc stop $vpn_id
+  status=$? && [[ $status != 0 ]] && return $status
+  i=0
+  for id in ${CONNECTED_VPNS[@]} ; do
+    if [[ $id == $vpn_id ]]; then
+      unset CONNECTED_VPNS[$i]
+      trace "Connected VPNs: ${CONNECTED_VPNS[@]}"
+    fi
+    ((i++))
+  done
+} # }}}2
 # }}}
 
 # Module: Module Installers {{{
@@ -1698,6 +1895,7 @@ function cache_stuff() # {{{2
 	    [[ "$(echo "$source" | jq '.has_resume')" == 'true' ]] && source_has_resume='--has_resume'
 	    source_need_auth=''
 	    [[ "$(echo "$source" | jq '.need_auth')" == 'true' ]] && source_need_auth='--need_auth'
+	    source_vpn="$(echo "$source" | jq --raw-output '.vpn')"
             #debug   "  Matched $source_network from $ip_address at $source_location"
 	    verbose "  Downloading from $source_location"
             break
@@ -1715,8 +1913,10 @@ function cache_stuff() # {{{2
       trace "  Destination: ${document_destination}"
       document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
       document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
+      [[ -n $source_vpn ]] && vpn_start --server="${source_vpn}"
       download $source_has_resume $source_need_auth $source_url "$document_destination" $document_checksum_type $document_checksum
       status=$? && [[ $status != 0 ]] && return $status
+      [[ -n $source_vpn ]] && vpn_stop --server="${source_vpn}"
     else
       warn "Cannot cache $( echo "$document" | jq --raw-output '.name' ), no source available"
     fi
