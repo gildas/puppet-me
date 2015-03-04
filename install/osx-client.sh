@@ -1332,7 +1332,7 @@ function install_packer() # {{{2
     verbose "  Install Packer plugin: provisioner-wait"
     download https://cdn.rawgit.com/gildas/packer-provisioner-wait/master/bin/0.1.0/darwin/packer-provisioner-wait "${packer_bindir}"
     status=$? && [[ $status != 0 ]] && return $status
-    chmod 755 "${packer_bindir}/packer-provisioner-wait
+    chmod 755 "${packer_bindir}/packer-provisioner-wait"
   fi
 
   packer_windows=${MODULE_PACKER_HOME}/packer-windows
