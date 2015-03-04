@@ -35,6 +35,7 @@ CACHE_SOURCE='https://cdn.rawgit.com/inin-apac/puppet-me/c8795de6ad1484c93864365
 CACHE_MOUNTS=()
 
 MODULE_VMWARE_HOME=''
+MODULE_VMWARE_KEY=''
 MODULE_VIRTUALBOX_HOME=''
 MODULE_PARALLELS_HOME=''
 MODULE_PACKER_HOME="$HOME/Documents/packer"
@@ -188,6 +189,18 @@ function die() # {{{2
 # }}}
 
 # Module: tools {{{
+
+function canonicalize_path() # {{{2
+{
+  local path=$1
+
+  while [ -h "$file" ]; do
+    path=$(readlink -- "$path")
+  done
+
+  local folder=$(dirname -- "$path")
+  printf -- %s "$(cd -- "$folder" && pwd -P)/$(basename -- "$path")"
+} # }}}2
 
 function capitalize() # {{{2
 {
@@ -1588,6 +1601,7 @@ function install_vmware() # {{{2
   cask_install vmware-fusion '/Applications/VMware Fusion.app/Contents/Library/vmrun'
   status=$? && [[ $status != 0 ]] && return $status
 
+  vmware_root='/Applications'
   if [[ ! -d '/Applications/VMware Fusion.app' ]]; then
     verbose "Linking VMWare Fusion in /Applications"
     if [[ -d "$HOME/Applications/VMWare Fusion.app" ]]; then
@@ -1599,11 +1613,27 @@ function install_vmware() # {{{2
     verbose "VMWare Fusion is in: $vmware_root"
     ln -s "$vmware_root/VMware Fusion.app"  /Applications
   fi
+  vmware_bin="$vmware_root/VMWare Fusion.app/Contents/Library"
+
+  if ! $("$vmware_bin"/vmrun list 2>&1 > /dev/null); then
+    verbose "Initializing VMWare Fusion..."
+    $NOOP sudo "$vmware_bin/Initialize VMware Fusion.tool" set
+    status=$? && [[ $status != 0 ]] && return $status
+    verbose "Configuring license..."
+    $NOOP sudo "$vmware_bin/licenses/vmware-licensetool" enter "$MODULE_VMWARE_KEY" '' '' '7.0' 'VMware Fusion for Mac OS' '' \
+               | grep -q '200 License operation succeeded.'
+    status=$? && [[ $status != 0 ]] && return $status
+  fi
 
   if [[ -n "$MODULE_VMWARE_HOME" ]]; then
     current=$(defaults read com.vmware.fusion NSNavLastRootDirectory 2> /dev/null)
     if [[ "$current" != "$MODULE_VMWARE_HOME" ]]; then
       verbose "Updating Virtual Machine home to ${MODULE_VMWARE_HOME}"
+      LOCATION='/Library/Preferences/VMWare Fusion/lastLocationUsed'
+      $NOOP sudo rm -f -- "$LOCATION".tmp
+      $NOOP sudo print -- %s "$(canonicalize_path $MODULE_VMWARE_HOME)" > $LOCATION.tmp
+      $NOOP sudo chmod 444 $LOCATION.tmp
+      $NOOP sudo mv -f $LOCATION.tmp $LOCATION
       $NOOP sudo defaults write com.vmware.fusion NSNavLastRootDirectory "$MODULE_VMWARE_HOME"
       status=$? && [[ $status != 0 ]] && return $status
     fi
@@ -1764,6 +1794,10 @@ function usage() # {{{2
   echo " --vmware-home *path*  "
   echo "   Contains the location virtual machine data will be stored.  "
   echo "   Default value: $HOME/Documents/Virtual Machines"
+  echo " --vmware-license *key*  "
+  echo "   Contains the license key to configure VMWare Fusion.  "
+  echo "   If not provided here and VMWare needs to be configured,  "
+  echo "   The VMWare initialization script will request it.  "
   echo " --yes, --assumeyes, -y  "
   echo "   Answers yes to any questions automatiquely."
   echo ""
@@ -1907,6 +1941,18 @@ function parse_args() # {{{2
         MODULE_VMWARE_HOME=${1#*=} # delete everything up to =
         ;;
       --vmware-home=)
+        die "Argument for option $1 is missing."
+        ;;
+      --vmware-license)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        MODULE_VMWARE_KEY=$2
+        shift 2
+        continue
+        ;;
+      --vmware-license=*?)
+        MODULE_VMWARE_KEY=${1#*=} # delete everything up to =
+        ;;
+      --vmware-license=)
         die "Argument for option $1 is missing."
         ;;
       --noop|--dry-run)

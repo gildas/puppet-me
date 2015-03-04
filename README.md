@@ -101,6 +101,10 @@ The possible options are:
 - --vmware-home *path*  
   Contains the location virtual machine data will be stored.  
   Default value: $HOME/Documents/Virtual Machines
+- --vmware-license *key*  
+  Contains the license key to configure VMWare Fusion.  
+  If not provided here and VMWare needs to be configured,  
+  The VMWare initialization script will request it.  
 - --yes, --assumeyes, -y  
   Answers yes to any questions automatically.
 
