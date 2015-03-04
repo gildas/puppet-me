@@ -1179,7 +1179,7 @@ function brew_install() # {{{2
     verbose "$app_name was manually installed \(no automatic updates possible\)"
   else
     verbose "Installing $app_name"
-    $NOOP brew install $app_binary
+    $NOOP brew install --appdir=/Applications $app_binary
     status=$? && [[ $status != 0 ]] && return $status
   fi
   return 0
