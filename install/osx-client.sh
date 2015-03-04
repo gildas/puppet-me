@@ -1024,9 +1024,19 @@ function download() # {{{2
       verbose "  ${source_share} is already mounted on ${smb_target}"
     fi
     verbose "  Copying $filename"
-    trace $sudo $CURL $has_resume --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
-    $NOOP $sudo $CURL $has_resume --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
-    $NOOP $sudo chmod 664 "${target_path}"
+    if [[ $filename =~ [\*\?] ]]; then
+      verbose "  Filename contains wildcards"
+      for _filename in ${smb_target}/${source_path}/$filename; do
+        verbose "  Copying $(basename $_filename)"
+        trace $sudo $CURL $has_resume --output "${target}/$(basename $_filename)" "file://$_filename"
+        $NOOP $sudo $CURL $has_resume --output "${target}/$(basename $_filename)" "file://$_filename"
+        $NOOP $sudo chmod 664 "${target}/$(basename $_filename)"
+      done
+    else
+      trace $sudo $CURL $has_resume --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
+      $NOOP $sudo $CURL $has_resume --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
+      $NOOP $sudo chmod 664 "${target_path}"
+    fi
   # }}}3
   elif [[ ${source_protocol} == 'file' ]]; then # {{{3
     if [[ -n "${filename_path}" ]]; then
