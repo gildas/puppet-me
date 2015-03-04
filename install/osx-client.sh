@@ -1905,7 +1905,7 @@ function cache_stuff() # {{{2
 	    [[ "$(echo "$source" | jq '.has_resume')" == 'true' ]] && source_has_resume='--has_resume'
 	    source_need_auth=''
 	    [[ "$(echo "$source" | jq '.need_auth')" == 'true' ]] && source_need_auth='--need_auth'
-	    source_vpn="$(echo "$source" | jq --raw-output '.vpn')"
+            source_vpn="$(echo "$source" | jq --raw-output '.vpn' | grep -v null)"
             #debug   "  Matched $source_network from $ip_address at $source_location"
 	    verbose "  Downloading from $source_location"
             break
