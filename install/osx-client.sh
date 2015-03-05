@@ -2007,6 +2007,8 @@ function usage() # {{{2
   echo " --vagrant-home *path*  "
   echo "   Contains the location where vagrant user work data will be stored.  "
   echo "   Default value: \$HOME/.vagrant.d"
+  echo " --vagrant-vmware-license *path*  "
+  echo "   Contains the location of the license file for the Vagrant VMWare Plugin.  "
   echo " --verbose  "
   echo "   Runs the script verbosely, that's by default."
   echo " --virtualbox-home *path*  "
