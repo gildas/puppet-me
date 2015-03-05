@@ -44,6 +44,7 @@ MODULE_PACKER_HOME="$HOME/Documents/packer"
 MODULE_VAGRANT_HOME="$HOME/.vagrant.d"
 [[ -n "$XDG_CONFIG_HOME" ]] && MODULE_VAGRANT_HOME="$XDG_CONFIG_HOME/vagrant"
 [[ -n "$VAGRANT_HOME"    ]] && MODULE_VAGRANT_HOME="$VAGRANT_HOME"
+MODULE_VAGRANT_VMWARE_LICENSE=''
 
 trap trace_end EXIT
 
@@ -1743,7 +1744,15 @@ function install_vagrant() # {{{2
     verbose "  Installing Vagrant Plugin for VMWare"
     $NOOP vagrant plugin install vagrant-vmware-fusion
     status=$? && [[ $status != 0 ]] && return $status
-    warn "  TODO: install your Vagrant for VMWare license!"
+    if [[ -n $MODULE_VAGRANT_VMWARE_LICENSE ]]; then
+      if [[ -n "$(vagrant 2>&1 | grep 'valid license.*Vagrant VMware')" ]]; then
+        $NOOP vagrant plugin license vagrant-vmware-fusion $MODULE_VAGRANT_VMWARE_LICENSE
+      else
+        verbose "Vagrant Plugin for VMWare is already licensed"
+      fi
+    else
+      warn "  TODO: install your Vagrant for VMWare license!"
+    fi
   fi
 
   if [[ $MODULE_parallels_done == 1 && -z $(vagrant plugin list | grep 'vagrant-parallels') ]]; then
@@ -2116,6 +2125,18 @@ function parse_args() # {{{2
         MODULE_VAGRANT_HOME=${1#*=} # delete everything up to =
         ;;
       --vagrant-home=)
+        die "Argument for option $1 is missing."
+        ;;
+      --vagrant-vmware-license)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        MODULE_VAGRANT_VMWARE_LICENSE=$2
+        shift 2
+        continue
+        ;;
+      --vagrant-vmware-license=*?)
+        MODULE_VAGRANT_VMWARE_LICENSE=${1#*=} # delete everything up to =
+        ;;
+      --vagrant-vmware-license=)
         die "Argument for option $1 is missing."
         ;;
       --parallels-home)

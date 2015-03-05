@@ -93,6 +93,8 @@ The possible options are:
 - --vagrant-home *path*  
   Contains the location where vagrant user work data will be stored.  
   Default value: $HOME/.vagrant.d
+- --vagrant-vmware-license *path*  
+  Contains the location of the license file for the Vagrant VMWare Plugin.
 - --verbose  
   Runs the script verbosely, that's by default.
 - --virtualbox-home *path*  
