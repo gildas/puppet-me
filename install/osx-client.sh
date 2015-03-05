@@ -1744,15 +1744,16 @@ function install_vagrant() # {{{2
     verbose "  Installing Vagrant Plugin for VMWare"
     $NOOP vagrant plugin install vagrant-vmware-fusion
     status=$? && [[ $status != 0 ]] && return $status
+  fi
+
+  if [[ -n "$(vagrant 2>&1 | grep 'valid license.*Vagrant VMware')" ]]; then
     if [[ -n $MODULE_VAGRANT_VMWARE_LICENSE ]]; then
-      if [[ -n "$(vagrant 2>&1 | grep 'valid license.*Vagrant VMware')" ]]; then
-        $NOOP vagrant plugin license vagrant-vmware-fusion $MODULE_VAGRANT_VMWARE_LICENSE
-      else
-        verbose "Vagrant Plugin for VMWare is already licensed"
-      fi
+      $NOOP vagrant plugin license vagrant-vmware-fusion $MODULE_VAGRANT_VMWARE_LICENSE
     else
       warn "  TODO: install your Vagrant for VMWare license!"
     fi
+  else
+    verbose "Vagrant Plugin for VMWare is already licensed"
   fi
 
   if [[ $MODULE_parallels_done == 1 && -z $(vagrant plugin list | grep 'vagrant-parallels') ]]; then
