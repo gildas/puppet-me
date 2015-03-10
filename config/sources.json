@@ -22,7 +22,7 @@
     [
       {
         "location": "EMEA",
-        "network":  "172.30.[0-9]+.[0-9]+/16",
+        "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
         "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
       },
@@ -60,7 +60,7 @@
     [
       {
         "location": "EMEA",
-        "network":  "172.30.[0-9]+.[0-9]+/16",
+        "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
         "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/SQLServer/2014/SQLEXPRWT_x64_ENU.exe"
       },
@@ -100,7 +100,7 @@
     [
       {
         "location": "EMEA",
-        "network":  "172.30.[0-9]+.[0-9]+/16",
+        "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
         "url": "smb://emea.inin.com/Software/ININ/CIC/2015R2/CIC_2015_R2.iso"
       },
@@ -139,7 +139,7 @@
     [
       {
         "location": "EMEA",
-        "network":  "172.30.[0-9]+.[0-9]+/16",
+        "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
         "url": "smb://emea.inin.com/Software/ININ/Dialer/2015R2/Dialer_2015_R2.iso"
       },
