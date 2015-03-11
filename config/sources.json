@@ -6,6 +6,24 @@
     "sources":
     [
       {
+        "location": "APAC",
+        "network":  "172.22.[0-9]+.[0-9]+/[0-9]+",
+        "need_auth": true,
+        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_0?core*_prod_vm.i3lic"
+      },
+      {
+        "location": "EMEA",
+        "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
+        "need_auth": true,
+        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_0?core*_prod_vm.i3lic"
+      },
+      {
+        "location": "HQ",
+        "network":  "172.17.[0-9]+.[0-9]+/[0-9]+",
+        "need_auth": true,
+        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_0?core*_prod_vm.i3lic"
+      },
+      {
         "location": "Intranet",
         "network":  ".*",
         "need_auth": true,
