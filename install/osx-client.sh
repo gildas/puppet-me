@@ -835,16 +835,25 @@ function download() # {{{2
   checksum_value=$4
 
   # Extract source components {{{3
-  if [[ "$source" =~ ^\/\/.* ]] ; then
-    trace ">> Missing protocol, assuming smb/cifs"
-    source="smb:${source}"
-  elif [[ "$source" =~ ^\/.* ]] ; then
-    trace ">> Missing protocol, assuming file"
-    source="file://${source}"
-  fi
   trace ">> source: ${source}"
   source_protocol=${source%%:*}
   trace ">> source protocol: ${source_protocol}"
+
+  if [[ $source =~ ^\/\/.* ]] ; then
+    trace ">> Missing protocol, assuming smb/cifs"
+    source="smb:${source}"
+    source_protocol="smb"
+    trace ">> source protocol: ${source_protocol}"
+  elif [[ $source_protocol == $source ]] ; then
+    trace ">> Missing protocol, assuming file and getting absolute path"
+    # no readlink -e on Mac OS!
+    source="$(cd "$(dirname "$source")" ; pwd)/$(basename ${source})"
+    trace "  Absolute path: ${source}"
+    source="file://${source/ /+}"
+    source_protocol="file"
+    trace "  with protocol: ${source}"
+    trace ">> source protocol: ${source_protocol}"
+  fi
 
   if [[ ${source_protocol} == 'file' && "${source}" =~ .*\?.* ]]; then
     # source is like: file:///path/archive.ext?filename
