@@ -60,6 +60,8 @@ The possible options are:
 - --cache-source *url*  
   Contains the URL of the configuration file for the cached sources.  
   Default: [sources.json on cdn.rawgit.com](https://cdn.rawgit.com/inin-apac/puppet-me/da22e817bcbf197e5a5454f781c79ceaf98b93af/config/sources.json)
+- --force  
+  Force all updates to happen (downloads still do not happen if already done).
 - --help  
   Prints some help on the output.
 - --macmini-parallels  

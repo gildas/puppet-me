@@ -9,6 +9,7 @@ export NOOP=
 
 ASSUMEYES=0
 VERBOSE=1
+FORCE_UPDATE=0
 LOG="$HOME/Downloads/puppet-me.log"
 tmp="tmp"
 puppet_master="puppet"
@@ -1457,7 +1458,7 @@ function install_homebrew() # {{{2
   status=$? && [[ $status != 0 ]] && return $status
 
   if which brew > /dev/null 2>&1; then
-    if [[ ! -f "/usr/local/last_updated-homebrew" || -n "$(find "/usr/local/last_updated-homebrew" -mmin +240)" ]]; then
+    if [[ $FORCE_UPDATE=1 || ! -f "/usr/local/last_updated-homebrew" || -n "$(find "/usr/local/last_updated-homebrew" -mmin +240)" ]]; then
       verbose "Homebrew is already installed, upgrading..."
       $NOOP brew update && brew upgrade && brew cleanup
       status=$? && [[ $status != 0 ]] && return $status
@@ -1983,6 +1984,8 @@ function usage() # {{{2
   echo " --cache-source *url*  "
   echo "   Contains the URL of the configuration file for the cached sources.  "
   echo "   Default value: https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/sources.json"
+  echo " --force  "
+  echo "   Force all updates to happen (downloads still do not happen if already done)." 
   echo " --help  "
   echo "   Prints some help on the output."
   echo " --macmini-parallels  "
@@ -2221,6 +2224,10 @@ function parse_args() # {{{2
       --test-keychain=)
         die "Argument for option $1 is missing."
         ;;
+      --force)
+       trace "Force updates: on"
+       FORCE_UPDATE=1
+       ;;
       -h|-\?|--help)
        trace "Showing usage"
        usage
