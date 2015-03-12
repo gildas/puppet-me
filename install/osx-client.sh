@@ -1452,17 +1452,21 @@ function install_xcode_tools() # {{{2
 
 function install_homebrew() # {{{2
 {
+  local filestamp="/usr/local/last_updated-homebrew"
   # Installing homebrew from http://brew.sh
   # prerequisites:
   install_xcode_tools
   status=$? && [[ $status != 0 ]] && return $status
 
   if which brew > /dev/null 2>&1; then
-    if [[ $FORCE_UPDATE=1 || ! -f "/usr/local/last_updated-homebrew" || -n "$(find "/usr/local/last_updated-homebrew" -mmin +240)" ]]; then
+
+    trace "Force Update: $FORCE_UPDATE"
+    trace "filestamp: $filestamp, $(stat -f "%Sm" $filestamp)"
+    if [[ $FORCE_UPDATE == "1" || ! -f $filestamp || -n "$(find "$filestamp" -mmin +240)" ]]; then
       verbose "Homebrew is already installed, upgrading..."
       $NOOP brew update && brew upgrade && brew cleanup
       status=$? && [[ $status != 0 ]] && return $status
-      touch /usr/local/last_updated-homebrew
+      touch $filestamp
     else
       verbose "Homebrew was updated less than 4 hours ago, let's give the Internet some rest..."
     fi
