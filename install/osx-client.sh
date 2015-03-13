@@ -2061,8 +2061,8 @@ function parse_args() # {{{2
       --userid=|--user=)
         die "Argument for option $1 is missing"
         ;;
-      --macmini|macmini-vmware)
-        MODULES=(noidle homebrew rubytools puppet vmware vagrant cache packer)
+      --macmini|--macmini-vmware)
+        MODULES=(noidle homebrew rubytools puppet vmware vagrant cache packer updateme)
         ;;
       --macmini-parallels)
         MODULES=(noidle homebrew rubytools puppet parallels vagrant cache packer)
