@@ -2271,6 +2271,8 @@ function main() # {{{
   trace_init "$@"
   parse_args "$@"
 
+  verbose "Welcome, $userid!"
+
   dseditgroup -o checkmember -m $userid admin &> /dev/null
   if [[ $? != 0 ]]; then
     dseditgroup -o checkmember -m $userid wheel &> /dev/null
