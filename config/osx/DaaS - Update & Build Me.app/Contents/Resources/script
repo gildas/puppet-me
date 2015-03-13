@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Make sure the PATH is set correctly
+export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- --macmini-vmware
+status=$? && [[ $status != 0 ]] && echo "Update failed with error: $status" && exit $status
+
+# TODO puppet-me should provide this
+MODULE_PACKER_HOME="$HOME/Documents/packer/packer-windows"
+
+if [[ -d $MODULE_PACKER_HOME ]]; then
+  cd $MODULE_PACKER_HOME
+  rake build:vmware:cic-2015R2
+  status=$? && [[ $status != 0 ]] && echo "Build failed with error: $status" && exit $status
+else
+  echo "Packer is not yet installed properly!"
+  echo "Please run Update Me!"
+  exit 1
+fi

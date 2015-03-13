@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# Make sure the PATH is set correctly
+export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- --macmini-vmware
