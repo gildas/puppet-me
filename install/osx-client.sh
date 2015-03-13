@@ -24,12 +24,13 @@ MODULE_puppet_done=0
 MODULE_rubytools_done=0
 MODULE_vagrant_done=0
 MODULE_parallels_done=0
+MODULE_updateme_done=0
 MODULE_virtualbox_done=0
 MODULE_vmware_done=0
 MODULE_virtualization_done=0
 
 MODULES=(homebrew puppet rubytools)
-ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels)
+ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
 CACHE_ROOT='/var/cache/daas'
 CACHE_SOURCE='https://cdn.rawgit.com/inin-apac/puppet-me/d185f7363ed1b3e0fa2c2a38cda235487ead7a8b/config/sources.json'
@@ -46,6 +47,9 @@ MODULE_VAGRANT_HOME="$HOME/.vagrant.d"
 [[ -n "$XDG_CONFIG_HOME" ]] && MODULE_VAGRANT_HOME="$XDG_CONFIG_HOME/vagrant"
 [[ -n "$VAGRANT_HOME"    ]] && MODULE_VAGRANT_HOME="$VAGRANT_HOME"
 MODULE_VAGRANT_VMWARE_LICENSE=''
+
+MODULE_updateme_root="$HOME/Desktop"
+MODULE_updateme_source='https://cdn.rawgit.com/inin-apac/puppet-me/ba3c40fff009612dd7a36634ccbc0bf0c1ef3adf/config/osx/UpdateMe.7z'
 
 trap trace_end EXIT
 
@@ -1529,6 +1533,15 @@ function install_homebrew() # {{{2
   else
     verbose "jq is already installed"
   fi
+
+  # Installing 7zip for querying json from bash
+  if [[ ! -z $(brew info p7zip | grep '^Not installed$') ]]; then
+    verbose "Installing 7-Zip..."
+    $NOOP brew install p7zip
+    status=$? && [[ $status != 0 ]] && return $status
+  else
+    verbose "7-Zip is already installed"
+  fi
   MODULE_homebrew_done=1
   return 0
 } # }}}2
@@ -1973,6 +1986,28 @@ function set_noidle() # {{{2
   return 0
 } # }}}2
 
+function install_updateme() # {{{2
+{
+  [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
+
+  [[ -d "$MODULE_updateme_root" ]] || $NOOP mkdir -p "$MODULE_updateme_root"
+  status=$? && [[ $status != 0 ]] && return $status
+  trace "Creating a temporary folder"
+  temp_dir=$(mktemp -d -t puppet-me)
+  status=$? && [[ $status != 0 ]] && return $status
+  download "$MODULE_updateme_source" $temp_dir
+  status=$? && [[ $status != 0 ]] && rm -rf $temp_dir && return $status
+
+  verbose "Unarchiving UpdateMe applications"
+  trace "Executing: [7z x -o\"${MODULE_updateme_root}\" -y \"$temp_dir/$(basename ${MODULE_updateme_source})\"]"
+  7z x -o"${MODULE_updateme_root}" -y "$temp_dir/$(basename ${MODULE_updateme_source})"
+  status=$? && [[ $status != 0 ]] && rm -rf $temp_dir && return $status
+  rm -rf $temp_dir
+
+  MODULE_updateme_done=1
+  return 0
+} # }}}2
+
 # }}}
 
 # Module: Argument parsing {{{
@@ -2065,13 +2100,13 @@ function parse_args() # {{{2
         MODULES=(noidle homebrew rubytools puppet vmware vagrant cache packer updateme)
         ;;
       --macmini-parallels)
-        MODULES=(noidle homebrew rubytools puppet parallels vagrant cache packer)
+        MODULES=(noidle homebrew rubytools puppet parallels vagrant cache packer updateme)
         ;;
       --macmini-virtualbox)
-        MODULES=(noidle homebrew rubytools puppet virtualbox vagrant cache packer)
+        MODULES=(noidle homebrew rubytools puppet virtualbox vagrant cache packer updateme)
         ;;
       --macmini-all)
-        MODULES=(noidle homebrew rubytools puppet parallels virtualbox vmware vagrant cache packer)
+        MODULES=(noidle homebrew rubytools puppet parallels virtualbox vmware vagrant cache packer updateme)
         ;;
       --modules)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing.\nIt is a comma-separated list of the possible values are: ${ALL_MODULES[*]}"
@@ -2295,6 +2330,7 @@ function main() # {{{
       vagrant)    install_vagrant ;;
       virtualbox) install_virtualbox ;;
       vmware)     install_vmware ;;
+      updateme)   install_updateme ;;
       *)          die "Unsupported Module: ${module}" ;;
     esac
     status=$? && [[ $status != 0 ]] && die "Error $status while installing module $module" $status
