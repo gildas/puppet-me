@@ -1416,7 +1416,7 @@ function cask_install() # {{{2
   if [[ -z "$(brew cask info $app_name | grep '^Not installed$')" ]]; then
     verbose "$app_name is already installed via Homebrew"
   elif which "$app_binary" > /dev/null 2>&1; then
-    verbose "$app_name was manually installed \(no automatic updates possible\)"
+    verbose "$app_name was manually installed (no automatic updates possible)"
   else
     verbose "Installing $app_name"
     $NOOP brew install "Caskroom/cask/$app_name"
