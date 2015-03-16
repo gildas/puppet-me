@@ -2008,6 +2008,14 @@ function install_updateme() # {{{2
   verbose "Configuring UpdateMe applications"
   local install_me="curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- ${MODULE_updateme_args}"
 
+  scripts=$(find $HOME/Desktop -name script -print)
+  trace "scripts: ${scripts[*]}"
+  for script in "$HOME/Desktop/DaaS - Update Me.app/Contents/Resources/script" "$HOME/Desktop/DaaS - Update & Build Me.app/Contents/Resources/script" ; do
+    trace "Updating [$script]"
+    verbose "Updating $(basename "$(dirname "$(dirname "$(dirname "$script")")")" .app)"
+    sed -i '.org' -e "s;^curl.*;${install_me};" "$script"
+  done
+
   MODULE_updateme_done=1
   return 0
 } # }}}2
