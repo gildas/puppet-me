@@ -50,6 +50,7 @@ MODULE_VAGRANT_VMWARE_LICENSE=''
 
 MODULE_updateme_root="$HOME/Desktop"
 MODULE_updateme_source='https://cdn.rawgit.com/inin-apac/puppet-me/ba3c40fff009612dd7a36634ccbc0bf0c1ef3adf/config/osx/UpdateMe.7z'
+MODULE_updateme_args="$@"
 
 trap trace_end EXIT
 
@@ -2003,6 +2004,9 @@ function install_updateme() # {{{2
   7z x -o"${MODULE_updateme_root}" -y "$temp_dir/$(basename ${MODULE_updateme_source})"
   status=$? && [[ $status != 0 ]] && rm -rf $temp_dir && return $status
   rm -rf $temp_dir
+
+  verbose "Configuring UpdateMe applications"
+  local install_me="curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- ${MODULE_updateme_args}"
 
   MODULE_updateme_done=1
   return 0
