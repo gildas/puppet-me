@@ -1979,9 +1979,11 @@ function cache_stuff() # {{{2
       document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
       document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
       [[ -n $source_vpn ]] && vpn_start --server="${source_vpn}"
+      status=$? && [[ $status != 0 ]] && return $status
       download $source_has_resume $source_need_auth $source_url "$document_destination" $document_checksum_type $document_checksum
       status=$? && [[ $status != 0 ]] && return $status
       [[ -n $source_vpn ]] && vpn_stop --server="${source_vpn}"
+      status=$? && [[ $status != 0 ]] && return $status
     else
       warn "Cannot cache $( echo "$document" | jq --raw-output '.name' ), no source available"
     fi
