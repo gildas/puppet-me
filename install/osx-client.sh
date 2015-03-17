@@ -468,7 +468,7 @@ function keychain_get_user() # {{{2
     user=$(/usr/bin/security $command -s "$service")
   fi
   status=$?
-  [[ $status != 0 ]] && trace "Error $status: $user" && return $status
+  [[ $status != 0 ]] && trace "$(/usr/bin/security error $status)" && return $status
   user=$(echo "$user" | grep acct | awk -F= '{print $2 }' | tr -d '"' | sed -e 's/^0x[0-9,A-F]*[[:space:]]*//' | sed -e 's/\\134/\\/')
   trace "Found $kind user @ $service: $user"
   printf '%s' $user
@@ -612,9 +612,27 @@ function keychain_get_password() # {{{2
     password=$(/usr/bin/security $command -s "$service" -w)
   fi
   status=$?
-  [[ $status != 0 ]] && trace "Error $status: $password" && return $status
+  [[ $status != 0 ]] && trace "$(/usr/bin/security error $status)" && return $status
   trace "Found password for $user @ $service: XXXXXX"
   printf '%s' $password
+} # }}}2
+
+function keychain_echo_credentials() # {{{2
+{
+  local status
+  local url=$1
+  local user
+  local password
+
+  user=$(keychain_get_user --kind=internet --url=${url})
+  status=$?
+  [[ $status != 0 ]] && exit $status
+  if [[ -n "$user" ]]; then
+    password=$(keychain_get_password --kind=internet --url=${url} --user=${user})
+    status=$?
+    [[ $status != 0 ]] && exit $status
+  fi
+  echo "URL: $url => user=$user, password=$password"
 } # }}}2
 
 function keychain_set_password() # {{{2
@@ -788,7 +806,7 @@ function keychain_set_password() # {{{2
     /usr/bin/security $command -U -s "$service" -a "$user" -w "$password"
   fi
   status=$?
-  [[ $status != 0 ]] && trace "Error: $status" && return $status
+  [[ $status != 0 ]] && trace "$(/usr/bin/security error $status)" && return $status
   trace "Set password for $user @ $service"
 } # }}}2
 
@@ -913,6 +931,7 @@ function download() # {{{2
     if [[ -z "$source_password" && -n "$source_user" ]]; then
       trace "  Querying keychain for password for user $source_user on site $source_host over $source_protocol"
       source_password=$(keychain_get_password --kind=internet --protocol=$source_protocol --site=$source_host --user=$source_user)
+      status=$?
       if [[ $status != 0 ]]; then
         trace "  Error $status: No password for use $source_user"
         source_password=''
@@ -2054,6 +2073,12 @@ function usage() # {{{2
   echo " --cache-source *url*  "
   echo "   Contains the URL of the configuration file for the cached sources.  "
   echo "   Default value: https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/sources.json"
+  echo " --credentials *url*  "
+  echo "   Store the credentials from the given url to the keychain.  "
+  echo "   Note the credentials have to follow RFC 3986.  "
+  echo "   Examples: ftp://myuser:s3cr3t@ftp.acme.com  "
+  echo "             smb://acme;myuser:s3cr3t@files.acme.com/share  "
+  echo "   Note: if the password contains the @ sign, it should be replaced with %40  "
   echo " --force  "
   echo "   Force all updates to happen (downloads still do not happen if already done)." 
   echo " --help  "
@@ -2115,6 +2140,19 @@ function parse_args() # {{{2
   while :; do
     trace "Analyzing option \"$1\""
     case $1 in
+      --credentials|--creds)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing"
+        keychain_set_password --kind=internet --url=$2
+        shift 2
+        continue
+      ;;
+      --credentials=*?|--creds=*?)
+        userid=${1#*=} # delete everything up to =
+        keychain_set_password --kind=internet --url=$2
+      ;;
+      --credentials=|--creds=)
+        die "Argument for option $1 is missing"
+        ;;
       --userid|--user|-u)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing"
         userid=$2
@@ -2278,18 +2316,12 @@ function parse_args() # {{{2
         ;;
       --test-keychain)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
-        user=$(keychain_get_user --kind=internet --url=$2)
-        status=$?
-        [[ $status != 0 ]] && exit $status
-        if [[ -n "$user" ]]; then
-          password=$(keychain_get_password --kind=internet --url=$2 --user=$user)
-          status=$?
-          [[ $status != 0 ]] && exit $status
-        fi
-        echo "URL: $2 => user=$user, password=$password"
+        keychain_echo_credentials $2
         exit
         ;;
       --test-keychain=*?)
+        keychain_echo_credentials $2
+        exit
         ;;
       --test-keychain=)
         die "Argument for option $1 is missing."

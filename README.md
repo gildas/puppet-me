@@ -60,6 +60,12 @@ The possible options are:
 - --cache-source *url*  
   Contains the URL of the configuration file for the cached sources.  
   Default: [sources.json on cdn.rawgit.com](https://cdn.rawgit.com/inin-apac/puppet-me/da22e817bcbf197e5a5454f781c79ceaf98b93af/config/sources.json)
+--credentials *url*  
+  Store the credentials from the given url to the keychain.  
+  Note the credentials have to follow [RFC 3986](https://tools.ietf.org/html/rfc3986).  
+  Examples: ftp://myuser:s3cr3t@ftp.acme.com  
+            smb://acme;myuser:s3cr3t@files.acme.com/share  
+  Note: if the password contains the @ sign, it should be replaced with %40  
 - --force  
   Force all updates to happen (downloads still do not happen if already done).
 - --help  
