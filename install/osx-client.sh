@@ -15,6 +15,7 @@ tmp="tmp"
 puppet_master="puppet"
 userid=$(whoami)
 
+DOWNLOAD_MAX_ATTEMPTS=5
 CURL="/usr/bin/curl --location --progress-bar "
 
 MODULE_homebrew_done=0
@@ -988,7 +989,8 @@ function download() # {{{2
     smb_target=''
     smb_creds=''
     if [[ -z "$(mount | grep -i $source_host | grep -i $source_share)" ]]; then
-      while true; do
+      local attempt=0
+      while [[ $attempt < $DOWNLOAD_MAX_ATTEMPTS ]]; do
         if [[ $need_auth == 1 ]]; then
           if [[ -z "$source_password" ]]; then
             verbose "  Requesting credentials for //${source_host}/${source_share}"
@@ -1010,7 +1012,7 @@ function download() # {{{2
         smb_mount="//${smb_creds}${source_host}/${source_share}"
         smb_target="/Volumes/WindowsShare-${source_host}-${source_share}.$$"
 
-        verbose "  Mounting ${source_share} from ${source_host} ${source_user:+as }${source_user}"
+        verbose "  Mounting ${source_share} from ${source_host} ${source_user:+as }${source_user} (attempt: ${attempt}/${DOWNLOAD_MAX_ATTEMPTS})"
         trace ">> mount -t smbfs '//${source_user/\\/;}${source_password:+:XXXXX}${source_user:+@}${source_host}/${source_share}' $smb_target"
         mkdir -p $smb_target && mount -t smbfs  "${smb_mount}" $smb_target
         status=$?
@@ -1032,10 +1034,14 @@ function download() # {{{2
           ;;
           *)
             error "  Cannot mount ${source_share} on ${source_host} as ${source_user}\nError: $status"
-            return 1
+	    ((attempt++))
           ;;
         esac
       done
+      if [[ $status != 0 ]]; then
+        error "  Cannot mount ${source_share} after $((attempt + 1)) attempts. Last Error: ${status}"
+        return $status
+      fi
     else
       smb_target=$(mount | grep -i $source_host | grep -i $source_share | awk '{print $3}')
       verbose "  ${source_share} is already mounted on ${smb_target}"
@@ -1095,8 +1101,9 @@ function download() # {{{2
     fi
   # }}}3
   else # other urls (http, https, ftp) {{{3
-    verbose "  Copying from url location"
-    while true; do
+    local attempt=0
+    while [[ $attempt < $DOWNLOAD_MAX_ATTEMPTS ]]; do
+      verbose "  Copying from url location (attempt: ${attempt}/${DOWNLOAD_MAX_ATTEMPTS})"
       curl_creds=''
       if [[ $need_auth == 1 ]]; then
         if [[ -z "$source_password" ]]; then
@@ -1133,10 +1140,14 @@ function download() # {{{2
         ;;
         *)
           error "  Unable to download from ${source}\nError: $status"
-          return 1
+	  ((attempt++))
         ;;
       esac
     done
+    if [[ $status != 0 ]]; then
+      error "  Cannot download ${source} after $((attempt + 1)) attempts. Last Error: ${status}"
+    fi
+    return $status
   fi # }}}3
 
   # Validate downloaded target checksum {{{3
