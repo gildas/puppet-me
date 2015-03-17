@@ -1376,18 +1376,18 @@ function dmg_install() # {{{2
   status=$? && [[ $status != 0 ]] && return $status
 
   verbose "    Mounting ${target}"
-  mount=$(hdiutil attach ${target} | sed -e 's/^\/.* \//\//')
+  mount=$(hdiutil attach "${target}" | sed -e 's/^\/.* \//\//')
   status=$? && [[ $status != 0 ]] && return $status
   verbose "      mounted on ${mount}"
 
   verbose "    Installing ${target}"
-  local package=$(find ${mount} -name '*.pkg' -mindepth 1 -maxdepth 1)
+  local package=$(find "${mount}" -name '*.pkg' -mindepth 1 -maxdepth 1)
   verbose "      Package: ${package}"
-  $NOOP sudo installer -pkg ${package} -target /
+  $NOOP sudo installer -pkg "${package}" -target /
   status=$? && [[ $status != 0 ]] && return $status
 
   verbose "    Unmounting ${target}"
-  hdiutil eject ${mount} > /dev/null
+  hdiutil eject "${mount}" > /dev/null
   status=$? && [[ $status != 0 ]] && return $status
 } # }}}2
 
