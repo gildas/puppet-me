@@ -50,7 +50,7 @@ MODULE_VAGRANT_HOME="$HOME/.vagrant.d"
 MODULE_VAGRANT_VMWARE_LICENSE=''
 
 MODULE_updateme_root="$HOME/Desktop"
-MODULE_updateme_source='https://cdn.rawgit.com/inin-apac/puppet-me/0ce7979af9344aa2ddcef621b6290d6d7ccc34b2/config/osx/UpdateMe.7z'
+MODULE_updateme_source='https://github.com/inin-apac/puppet-me/raw/ab0a2f58b93cace74f498c687eb053ae8c116c56/config/osx/UpdateMe.7z'
 MODULE_updateme_args="$@"
 
 trap trace_end EXIT
