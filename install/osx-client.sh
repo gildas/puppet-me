@@ -2019,7 +2019,7 @@ function install_updateme() # {{{2
   for script in "$HOME/Desktop/DaaS - Update Me.app/Contents/Resources/script" "$HOME/Desktop/DaaS - Update & Build Me.app/Contents/Resources/script" ; do
     trace "Updating [$script]"
     verbose "Updating $(basename "$(dirname "$(dirname "$(dirname "$script")")")" .app)"
-    sed -i '.org' -e "s;^curl.*;${install_me};" -e "s;^PACKER_HOME=;PACKER_HOME=\"${MODULE_PACKER_HOME}\"" -e "s;^PACKER_VIRT=.*;PACKER_VIRT=${MODULE_PACKER_VIRT};" "$script"
+    sed -i '.org' -e "s;^curl.*;${install_me};" -e "s;^PACKER_HOME=.*;PACKER_HOME=\"${MODULE_PACKER_HOME}/packer-windows\";" -e "s;^PACKER_VIRT=.*;PACKER_VIRT=${MODULE_PACKER_VIRT};" "$script"
   done
 
   MODULE_updateme_done=1
