@@ -41,6 +41,7 @@ MODULE_VMWARE_HOME=''
 MODULE_VMWARE_KEY=''
 MODULE_VIRTUALBOX_HOME=''
 MODULE_PARALLELS_HOME=''
+MODULE_PACKER_VIRT=vmware
 MODULE_PACKER_HOME="$HOME/Documents/packer"
 [[ -n "$PACKER_HOME"    ]] && MODULE_PACKER_HOME="$PACKER_HOME"
 MODULE_VAGRANT_HOME="$HOME/.vagrant.d"
@@ -49,7 +50,7 @@ MODULE_VAGRANT_HOME="$HOME/.vagrant.d"
 MODULE_VAGRANT_VMWARE_LICENSE=''
 
 MODULE_updateme_root="$HOME/Desktop"
-MODULE_updateme_source='https://cdn.rawgit.com/inin-apac/puppet-me/ba3c40fff009612dd7a36634ccbc0bf0c1ef3adf/config/osx/UpdateMe.7z'
+MODULE_updateme_source='https://cdn.rawgit.com/inin-apac/puppet-me/0ce7979af9344aa2ddcef621b6290d6d7ccc34b2/config/osx/UpdateMe.7z'
 MODULE_updateme_args="$@"
 
 trap trace_end EXIT
@@ -1591,6 +1592,11 @@ function install_packer() # {{{2
     [[ -z "$NOOP" ]] && (cd $packer_windows ; bundle install)
     status=$? && [[ $status != 0 ]] && return $status
   fi
+
+  #TODO: Make this multi-virtualization!
+  [[ $MODULE_parallels_done  == 1 ]] && MODULE_PACKER_VIRT=parallels
+  [[ $MODULE_virtualbox_done == 1 ]] && MODULE_PACKER_VIRT=virtualbox
+  [[ $MODULE_vmware_done     == 1 ]] && MODULE_PACKER_VIRT=vmware
   MODULE_packer_done=1
   return 0
 } # }}}2
@@ -2013,7 +2019,7 @@ function install_updateme() # {{{2
   for script in "$HOME/Desktop/DaaS - Update Me.app/Contents/Resources/script" "$HOME/Desktop/DaaS - Update & Build Me.app/Contents/Resources/script" ; do
     trace "Updating [$script]"
     verbose "Updating $(basename "$(dirname "$(dirname "$(dirname "$script")")")" .app)"
-    sed -i '.org' -e "s;^curl.*;${install_me};" "$script"
+    sed -i '.org' -e "s;^curl.*;${install_me};" -e "s;^PACKER_HOME=;PACKER_HOME=\"${MODULE_PACKER_HOME}\"" -e "s;^PACKER_VIRT=.*;PACKER_VIRT=${MODULE_PACKER_VIRT};" "$script"
   done
 
   MODULE_updateme_done=1

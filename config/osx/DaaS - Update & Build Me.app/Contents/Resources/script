@@ -7,11 +7,12 @@ curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- --macmini-vmware
 status=$? && [[ $status != 0 ]] && echo "Update failed with error: $status" && exit $status
 
 # TODO puppet-me should provide this
-MODULE_PACKER_HOME="$HOME/Documents/packer/packer-windows"
+PACKER_HOME="$HOME/Documents/packer/packer-windows"
+PACKER_VIRT=vmware
 
-if [[ -d $MODULE_PACKER_HOME ]]; then
-  cd $MODULE_PACKER_HOME
-  rake build:vmware:cic-2015R2
+if [[ -d $PACKER_HOME ]]; then
+  cd "$PACKER_HOME"
+  rake build:${PACKER_VIRT}:cic-2015R2
   status=$? && [[ $status != 0 ]] && echo "Build failed with error: $status" && exit $status
 else
   echo "Packer is not yet installed properly!"
