@@ -34,7 +34,7 @@ MODULES=(homebrew puppet rubytools)
 ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
 CACHE_ROOT='/var/cache/daas'
-CACHE_SOURCE='https://cdn.rawgit.com/inin-apac/puppet-me/d185f7363ed1b3e0fa2c2a38cda235487ead7a8b/config/sources.json'
+CACHE_SOURCE='https://cdn.rawgit.com/inin-apac/puppet-me/fd2c2a7e1888262a6aa2c37345f718f954aba359/config/sources.json'
 CACHE_MOUNTS=()
 CONNECTED_VPNS=()
 
@@ -1087,9 +1087,10 @@ function download() # {{{2
       verbose "Archive type: ${source_ext}"
       case $source_ext in
         iso|ISO)
+          verbose "Mounting ISO ${source}"
           mount_info=$(hdiutil mount ${source})
           if [ $? -ne 0 ]; then
-            error "Cannot mount ${source}"
+            error "Cannot mount ISO ${source}"
             return 1
           fi
           mount_path=$(echo "$mount_info" | awk '{print $2}')
