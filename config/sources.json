@@ -197,7 +197,7 @@
       {
         "location": "ISO",
         "network":  ".*",
-        "url": "file:///var/cache/daas//CIC_2015_R2.iso?Installs/ServerComponents/ICServer_2015_R2.msi"
+        "url": "file:///var/cache/daas/CIC_2015_R2.iso?Installs/ServerComponents/ICServer_2015_R2.msi"
       }
     ]
   },
