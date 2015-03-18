@@ -1384,6 +1384,8 @@ function vpn_stop() #{{{2
     fi
     ((i++))
   done
+  verbose "Stopped VPN ${vpn_name}"
+  return 0
 } # }}}2
 # }}}
 
@@ -1997,12 +1999,16 @@ function cache_stuff() # {{{2
       trace "  Destination: ${document_destination}"
       document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
       document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
-      [[ -n $source_vpn ]] && vpn_start --server="${source_vpn}"
-      status=$? && [[ $status != 0 ]] && return $status
+      if [[ -n $source_vpn ]]; then
+        vpn_start --server="${source_vpn}"
+        status=$? && [[ $status != 0 ]] && return $status
+      fi
       download $source_has_resume $source_need_auth $source_url "$document_destination" $document_checksum_type $document_checksum
       status=$? && [[ $status != 0 ]] && return $status
-      [[ -n $source_vpn ]] && vpn_stop --server="${source_vpn}"
-      status=$? && [[ $status != 0 ]] && return $status
+      if [[ -n $source_vpn ]]; then
+        vpn_stop --server="${source_vpn}"
+        status=$? && [[ $status != 0 ]] && return $status
+      fi
     else
       warn "Cannot cache $( echo "$document" | jq --raw-output '.name' ), no source available"
     fi
