@@ -63,6 +63,13 @@
         "url": "smb://tyofiles.apac.inin.com/AppShare/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
       },
       {
+        "location": "I3Guest EMEA",
+        "network":  "192.168.48.[0-9]+/24",
+        "need_auth": true,
+        "vpn": ".*vpn.inin.com",
+        "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
+      },
+      {
         "location": "Internet",
         "network":  ".*",
         "has_resume": true,
@@ -87,6 +94,13 @@
         "network":  "172.22.16.[0-9]+/23",
         "need_auth": true,
         "url": "smb://tyofiles.apac.inin.com/AppShare/Microsoft/Evaluation/SQLServer/2014/SQLEXPRWT_x64_ENU.exe"
+      },
+      {
+        "location": "I3Guest EMEA",
+        "network":  "192.168.48.[0-9]+/24",
+        "need_auth": true,
+        "vpn": ".*vpn.inin.com",
+        "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/SQLServer/2014/SQLEXPRWT_x64_ENU.exe"
       },
       {
         "location": "Internet",
@@ -141,6 +155,13 @@
         "url": "smb://tyofiles.apac.inin.com/AppShare/ININ/Interaction%20Center/2015R2/CIC_2015_R2.iso"
       },
       {
+        "location": "I3Guest EMEA",
+        "network":  "192.168.48.[0-9]+/24",
+        "need_auth": true,
+        "vpn": ".*vpn.inin.com",
+        "url": "smb://emea.inin.com/Software/ININ/CIC/2015R2/CIC_2015_R2.iso"
+      },
+      {
         "location": "Internet",
         "network":  ".*",
         "need_auth": true,
@@ -178,6 +199,13 @@
         "network":  "172.22.16.[0-9]+/23",
         "need_auth": true,
         "url": "smb://tyofiles.apac.inin.com/AppShare/ININ/Interaction%20Dialer/2015R2/Dialer_2015_R2.iso"
+      },
+      {
+        "location": "I3Guest EMEA",
+        "network":  "192.168.48.[0-9]+/24",
+        "need_auth": true,
+        "vpn": ".*vpn.inin.com",
+        "url": "smb://emea.inin.com/Software/ININ/Dialer/2015R2/Dialer_2015_R2.iso"
       },
       {
         "location": "Internet",
