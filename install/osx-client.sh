@@ -1072,12 +1072,16 @@ function download() # {{{2
         verbose "  Copying $(basename $_filename)"
         trace $sudo $CURL $has_resume --output "${target}/$(basename $_filename)" "file://$_filename"
         $NOOP $sudo $CURL $has_resume --output "${target}/$(basename $_filename)" "file://$_filename"
+        status=$? && [[ $status != 0 ]] && error "Failed to download $filename.\nError: $status"
         $NOOP $sudo chmod 664 "${target}/$(basename $_filename)"
+        status=$? && [[ $status != 0 ]] && error "Failed to set permission on $filename.\nError: $status"
       done
     else
       trace $sudo $CURL $has_resume --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
       $NOOP $sudo $CURL $has_resume --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
+      status=$? && [[ $status != 0 ]] && error "Failed to download $filename.\nError: $status"
       $NOOP $sudo chmod 664 "${target_path}"
+      status=$? && [[ $status != 0 ]] && error "Failed to set permission on $filename.\nError: $status"
     fi
   # }}}3
   elif [[ ${source_protocol} == 'file' ]]; then # {{{3
