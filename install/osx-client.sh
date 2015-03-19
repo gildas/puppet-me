@@ -1037,7 +1037,7 @@ function download() # {{{2
         status=$?
         case $status in
           0)
-            trace "Successful download"
+            trace "//${source_host}/${source_share} Successfully mounted"
             CACHE_MOUNTS+=( "//${source_user/\\/;}@${source_host}/${source_share}" )
             break
           ;;
