@@ -34,7 +34,7 @@ MODULES=(homebrew puppet rubytools)
 ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
 CACHE_ROOT='/var/cache/daas'
-CACHE_SOURCE='https://cdn.rawgit.com/inin-apac/puppet-me/d185f7363ed1b3e0fa2c2a38cda235487ead7a8b/config/sources.json'
+CACHE_SOURCE='https://cdn.rawgit.com/inin-apac/puppet-me/f608740be2aa6966420c053771016ca900c3faf5/config/sources.json'
 CACHE_MOUNTS=()
 CONNECTED_VPNS=()
 
@@ -204,6 +204,97 @@ function die() # {{{2
 # }}}
 
 # Module: tools {{{
+
+function curl_get_error() # {{{2
+{
+  local error
+
+  case $1 in
+    0) error="All fine. Proceed as usual." ;;
+    1) error="The URL you passed to libcurl used a protocol that this libcurl does not support. The support might be a compile-time option that you didn't use, it can be a misspelled protocol string or just a protocol libcurl has no code for." ;;
+    2) error="Very early initialization code failed. This is likely to be an internal error or problem, or a resource problem where something fundamental couldn't get done at init time." ;;
+    3) error="The URL was not properly formatted." ;;
+    4) error="A requested feature, protocol or option was not found built-in in this libcurl due to a build-time decision. This means that a feature or option was not enabled or explicitly disabled when libcurl was built and in order to get it to function you have to get a rebuilt libcurl." ;;
+    5) error="Couldn't resolve proxy. The given proxy host could not be resolved." ;;
+    6) error="Couldn't resolve host. The given remote host was not resolved." ;;
+    7) error="Failed to connect() to host or proxy." ;;
+    8) error="After connecting to a FTP server, libcurl expects to get a certain reply back. This error code implies that it got a strange or bad reply. The given remote server is probably not an OK FTP server." ;;
+    9) error="We were denied access to the resource given in the URL. For FTP, this occurs while trying to change to the remote directory." ;;
+    10) error="While waiting for the server to connect back when an active FTP session is used, an error code was sent over the control connection or similar." ;;
+    11) error="After having sent the FTP password to the server, libcurl expects a proper reply. This error code indicates that an unexpected code was returned." ;;
+    12) error="During an active FTP session while waiting for the server to connect, the CURLOPT_ACCEPTTIMOUT_MS(3) (or the internal default) timeout expired." ;;
+    13) error="libcurl failed to get a sensible result back from the server as a response to either a PASV or a EPSV command. The server is flawed." ;;
+    14) error="FTP servers return a 227-line as a response to a PASV command. If libcurl fails to parse that line, this return code is passed back." ;;
+    15) error="An internal failure to lookup the host used for the new connection." ;;
+    16) error="A problem was detected in the HTTP2 framing layer. This is somewhat generic and can be one out of several problems, see the error buffer for details." ;;
+    17) error="Received an error when trying to set the transfer mode to binary or ASCII." ;;
+    18) error="A file transfer was shorter or larger than expected. This happens when the server first reports an expected transfer size, and then delivers data that doesn't match the previously given size." ;;
+    19) error="This was either a weird reply to a 'RETR' command or a zero byte transfer complete." ;;
+    21) error="When sending custom "QUOTE" commands to the remote server, one of the commands returned an error code that was 400 or higher (for FTP) or otherwise indicated unsuccessful completion of the command." ;;
+    22) error="This is returned if CURLOPT_FAILONERROR is set TRUE and the HTTP server returns an error code that is >= 400." ;;
+    23) error="An error occurred when writing received data to a local file, or an error was returned to libcurl from a write callback." ;;
+    25) error="Failed starting the upload. For FTP, the server typically denied the STOR command. The error buffer usually contains the server's explanation for this." ;;
+    26) error="There was a problem reading a local file or an error returned by the read callback." ;;
+    27) error="A memory allocation request failed. This is serious badness and things are severely screwed up if this ever occurs." ;;
+    28) error="Operation timeout. The specified time-out period was reached according to the conditions." ;;
+    30) error="The FTP PORT command returned error. This mostly happens when you haven't specified a good enough address for libcurl to use. See CURLOPT_FTPPORT." ;;
+    31) error="The FTP REST command returned error. This should never happen if the server is sane." ;;
+    33) error="The server does not support or accept range requests." ;;
+    34) error="This is an odd error that mainly occurs due to internal confusion." ;;
+    35) error="A problem occurred somewhere in the SSL/TLS handshake. You really want the error buffer and read the message there as it pinpoints the problem slightly more. Could be certificates (file formats, paths, permissions), passwords, and others." ;;
+    36) error="The download could not be resumed because the specified offset was out of the file boundary." ;;
+    37) error="A file given with FILE:// couldn't be opened. Most likely because the file path doesn't identify an existing file. Did you check file permissions?" ;;
+    38) error="LDAP cannot bind. LDAP bind operation failed." ;;
+    39) error="LDAP search failed." ;;
+    41) error="Function not found. A required zlib function was not found." ;;
+    42) error="Aborted by callback. A callback returned "abort" to libcurl." ;;
+    43) error="Internal error. A function was called with a bad parameter." ;;
+    45) error="Interface error. A specified outgoing interface could not be used. Set which interface to use for outgoing connections' source IP address with CURLOPT_INTERFACE." ;;
+    47) error="Too many redirects. When following redirects, libcurl hit the maximum amount. Set your limit with CURLOPT_MAXREDIRS." ;;
+    48) error="An option passed to libcurl is not recognized/known. Refer to the appropriate documentation. This is most likely a problem in the program that uses libcurl. The error buffer might contain more specific information about which exact option it concerns." ;;
+    49) error="A telnet option string was Illegally formatted." ;;
+    51) error="The remote server's SSL certificate or SSH md5 fingerprint was deemed not OK." ;;
+    52) error="Nothing was returned from the server, and under the circumstances, getting nothing is considered an error." ;;
+    53) error="The specified crypto engine wasn't found." ;;
+    54) error="Failed setting the selected SSL crypto engine as default!" ;;
+    55) error="Failed sending network data." ;;
+    56) error="Failure with receiving network data." ;;
+    58) error="problem with the local client certificate." ;;
+    59) error="Couldn't use specified cipher." ;;
+    60) error="Peer certificate cannot be authenticated with known CA certificates." ;;
+    61) error="Unrecognized transfer encoding." ;;
+    62) error="Invalid LDAP URL." ;;
+    63) error="Maximum file size exceeded." ;;
+    64) error="Requested FTP SSL level failed." ;;
+    65) error="When doing a send operation curl had to rewind the data to retransmit, but the rewinding operation failed." ;;
+    66) error="Initiating the SSL Engine failed." ;;
+    67) error="The remote server denied curl to login (Added in 7.13.1)" ;;
+    68) error="File not found on TFTP server." ;;
+    69) error="Permission problem on TFTP server." ;;
+    70) error="Out of disk space on the server." ;;
+    71) error="Illegal TFTP operation." ;;
+    72) error="Unknown TFTP transfer ID." ;;
+    73) error="File already exists and will not be overwritten." ;;
+    74) error="This error should never be returned by a properly functioning TFTP server." ;;
+    75) error="Character conversion failed." ;;
+    76) error="Caller must register conversion callbacks." ;;
+    77) error="Problem with reading the SSL CA cert (path? access rights?)" ;;
+    78) error="The resource referenced in the URL does not exist." ;;
+    79) error="An unspecified error occurred during the SSH session." ;;
+    80) error="Failed to shut down the SSL connection." ;;
+    81) error="Socket is not ready for send/recv wait till it's ready and try again. This return code is only returned from curl_easy_recv and curl_easy_send (Added in 7.18.2)" ;;
+    82) error="Failed to load CRL file (Added in 7.19.0)" ;;
+    83) error="Issuer check failed (Added in 7.19.0)" ;;
+    84) error="The FTP server does not understand the PRET command at all or does not support the given argument. Be careful when using CURLOPT_CUSTOMREQUEST, a custom LIST command will be sent with PRET CMD before PASV as well. (Added in 7.20.0)" ;;
+    85) error="Mismatch of RTSP CSeq numbers." ;;
+    86) error="Mismatch of RTSP Session Identifiers." ;;
+    87) error="Unable to parse FTP file list (during FTP wildcard downloading)." ;;
+    88) error="Chunk callback reported error." ;;
+    89) error="(For internal use only, will never be returned by libcurl) No connection available, the session will be queued. (added in 7.30.0)" ;;
+    .*) error="Unknown error $1" ;;
+  esac
+  printf -- %s "$error"
+} # }}}2
 
 function canonicalize_path() # {{{2
 {
@@ -1037,7 +1128,7 @@ function download() # {{{2
         status=$?
         case $status in
           0)
-            trace "Successful download"
+            trace "//${source_host}/${source_share} Successfully mounted"
             CACHE_MOUNTS+=( "//${source_user/\\/;}@${source_host}/${source_share}" )
             break
           ;;
@@ -1068,16 +1159,22 @@ function download() # {{{2
     verbose "  Copying $filename"
     if [[ $filename =~ [\*\?] ]]; then
       verbose "  Filename contains wildcards"
+      errors=0
       for _filename in ${smb_target}/${source_path}/$filename; do
         verbose "  Copying $(basename $_filename)"
         trace $sudo $CURL $has_resume --output "${target}/$(basename $_filename)" "file://$_filename"
         $NOOP $sudo $CURL $has_resume --output "${target}/$(basename $_filename)" "file://$_filename"
+        status=$? && [[ $status != 0 ]] && error "Failed to download $filename.\nError $status: $(curl_get_error $status)" && ((errors++))
         $NOOP $sudo chmod 664 "${target}/$(basename $_filename)"
+        status=$? && [[ $status != 0 ]] && error "Failed to set permission on $filename.\nError: $status" && ((errors++))
       done
+      [[ errors == 1 ]] && return 1
     else
       trace $sudo $CURL $has_resume --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
       $NOOP $sudo $CURL $has_resume --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
+      status=$? && [[ $status != 0 ]] && error "Failed to download $filename.\nError $status: $(curl_get_error $status)" && return $status
       $NOOP $sudo chmod 664 "${target_path}"
+      status=$? && [[ $status != 0 ]] && error "Failed to set permission on $filename.\nError: $status" && return $status
     fi
   # }}}3
   elif [[ ${source_protocol} == 'file' ]]; then # {{{3
@@ -1087,26 +1184,19 @@ function download() # {{{2
       verbose "Archive type: ${source_ext}"
       case $source_ext in
         iso|ISO)
+          verbose "Mounting ISO ${source}"
           mount_info=$(hdiutil mount ${source})
-          if [ $? -ne 0 ]; then
-            error "Cannot mount ${source}"
-            return 1
-          fi
+          status=$? && [[ $status != 0 ]] && error "Failed to mount ISO file ${source}\nError: $status" && return $status
           mount_path=$(echo "$mount_info" | awk '{print $2}')
           trace "mount info: ${mount_info}"
           trace "mount path: ${mount_path}"
           trace $sudo $CURL $has_resume --output "${target_path}" "file://${mount_path}/${filename_path}"
           $NOOP $sudo $CURL $has_resume --output "${target_path}" "file://${mount_path}/${filename_path}"
-          if [ $? -ne 0 ]; then
-            error "Cannot copy ${mount_path}/${filename_path} to ${target_path}"
-          else
-            $NOOP $sudo chmod 664 "${target_path}"
-          fi
+          status=$? && [[ $status != 0 ]] && error "Failed to copy ${filename_path}\nError $status: $(curl_get_error $status)" && return $status
+          $NOOP $sudo chmod 664 "${target_path}"
+          status=$? && [[ $status != 0 ]] && error "Failed to set permission on ${filename_path}.\nError: $status" && return $status
           results=$(hdiutil unmount ${mount_path})
-          if [ $? -ne 0 ]; then
-            error "Cannot unmount ${source}, error: ${results}"
-            return 1
-          fi
+          status=$? && [[ $status != 0 ]] && error "Cannot unmount ${source}.\nError: $status" && return $status
         ;;
         *)
           error "Unsupported archive format in ${source}"
@@ -1116,7 +1206,9 @@ function download() # {{{2
     else
       trace $sudo $CURL $has_resume --output "${target_path}" "${source}"
       $NOOP $sudo $CURL $has_resume --output "${target_path}" "${source}"
+      status=$? && [[ $status != 0 ]] && error "Failed to copy ${source}\nError $status: $(curl_get_error $status)" && return $status
       $NOOP $sudo chmod 664 "${target_path}"
+      status=$? && [[ $status != 0 ]] && error "Failed to set permission on ${source}\nError: $status" && return $status
     fi
   # }}}3
   else # other urls (http, https, ftp) {{{3
@@ -1158,7 +1250,7 @@ function download() # {{{2
           need_auth=1
         ;;
         *)
-          error "  Unable to download from ${source}\nError: $status"
+          error "  Unable to download from ${source}\nError $status: $(curl_get_error $status)"
 	  ((attempt++))
         ;;
       esac
@@ -1385,6 +1477,8 @@ function vpn_stop() #{{{2
     fi
     ((i++))
   done
+  verbose "Stopped VPN ${vpn_name}"
+  return 0
 } # }}}2
 # }}}
 
@@ -1998,12 +2092,16 @@ function cache_stuff() # {{{2
       trace "  Destination: ${document_destination}"
       document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
       document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
-      [[ -n $source_vpn ]] && vpn_start --server="${source_vpn}"
-      status=$? && [[ $status != 0 ]] && return $status
+      if [[ -n $source_vpn ]]; then
+        vpn_start --server="${source_vpn}"
+        status=$? && [[ $status != 0 ]] && return $status
+      fi
       download $source_has_resume $source_need_auth $source_url "$document_destination" $document_checksum_type $document_checksum
       status=$? && [[ $status != 0 ]] && return $status
-      [[ -n $source_vpn ]] && vpn_stop --server="${source_vpn}"
-      status=$? && [[ $status != 0 ]] && return $status
+      if [[ -n $source_vpn ]]; then
+        vpn_stop --server="${source_vpn}"
+        status=$? && [[ $status != 0 ]] && return $status
+      fi
     else
       warn "Cannot cache $( echo "$document" | jq --raw-output '.name' ), no source available"
     fi
