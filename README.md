@@ -90,6 +90,32 @@ The possible options are:
 - --packer-home *path*  
   Contains the location where packer user work data will be stored.  
   Default value: $HOME/Documents/packer
+- --packer-build *tasks*  
+  Will tell [packer-windows](https://github.com/gildas/packer-windows) to build boxes.  
+  If the virtualization software for a build is not installed, the script will produce an error.  
+  E.g.:  
+  ```sh
+  --packer-build vmware:windows-2012R2-core-standard-eval  
+  ```
+  will build the box windows 2012R2 Core edition (evaluation license) for [VMWare Fusion](http://www.vmware.com/products/fusion).  
+  ```sh
+  --packer-build virtualbox:all  
+  ```
+  will build all boxes known to [packer-windows](https://github.com/gildas/packer-windows) for [Virtualbox](http://www.virtualbox.org).  
+  Default value: N/A  
+- --packer-load *tasks*  
+  Will tell [packer-windows](https://github.com/gildas/packer-windows) to load (and build before as needed) boxes in [Vagrant](http://vagrantup.com).  
+  If the virtualization software for a build is not installed, the script will produce an error.  
+  E.g.:  
+  ```sh
+  --packer-load vmware:windows-2012R2-core-standard-eval  
+  ```
+  will (build and) load the box windows 2012R2 Core edition (evaluation license) for [VMWare Fusion](http://www.vmware.com/products/fusion).  
+  ```sh
+  --packer-build virtualbox:all  
+  ```
+  will (build and load) all boxes known to [packer-windows](https://github.com/gildas/packer-windows) for [Virtualbox](http://www.virtualbox.org).  
+  Default value: N/A  
 - --parallels-home *path*  
   Contains the location virtual machine data will be stored.  
   Default value: $HOME/Documents/Virtual Machines
