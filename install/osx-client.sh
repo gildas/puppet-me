@@ -1389,7 +1389,6 @@ function vpn_start() #{{{2
   # }}}3
 
   local vpn_name=$(vpn_get_name $vpn_id)
-  status=$? && [[ $status != 0 ]] && error "VPN Not Found for id ${vpn_id}. Error: $status" && return $status
   printf %s "Starting VPN ${vpn_name}..."
   trace "Starting VPN ${vpn_name} [$vpn_id]"
   /usr/sbin/scutil --nc start $vpn_id
