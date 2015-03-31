@@ -45,6 +45,8 @@ MODULE_PARALLELS_HOME=''
 MODULE_PACKER_VIRT=vmware
 MODULE_PACKER_HOME="$HOME/Documents/packer"
 [[ -n "$PACKER_HOME"    ]] && MODULE_PACKER_HOME="$PACKER_HOME"
+MODULE_PACKER_BUILD=()
+MODULE_PACKER_LOAD=()
 MODULE_VAGRANT_HOME="$HOME/.vagrant.d"
 [[ -n "$XDG_CONFIG_HOME" ]] && MODULE_VAGRANT_HOME="$XDG_CONFIG_HOME/vagrant"
 [[ -n "$VAGRANT_HOME"    ]] && MODULE_VAGRANT_HOME="$VAGRANT_HOME"
@@ -2352,6 +2354,32 @@ function parse_args() # {{{2
         MODULE_PACKER_HOME=${1#*=} # delete everything up to =
         ;;
       --packer-home=)
+        die "Argument for option $1 is missing."
+        ;;
+      --packer-build)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        MODULE_PACKER_BUILD=(${2//,/ })
+        shift 2
+        continue
+        ;;
+      --packer-build=*?)
+        MODULE_PACKER_BUILD=${1#*=} # delete everything up to =
+        MODULE_PACKER_BUILD=(${MODULE_PACKER_BUILD//,/ })
+        ;;
+      --packer-build=)
+        die "Argument for option $1 is missing."
+        ;;
+      --packer-load)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        MODULE_PACKER_LOAD=(${2//,/ })
+        shift 2
+        continue
+        ;;
+      --packer-load=*?)
+        MODULE_PACKER_LOAD=${1#*=} # delete everything up to =
+        MODULE_PACKER_LOAD=(${MODULE_PACKER_LOAD//,/ })
+        ;;
+      --packer-load=)
         die "Argument for option $1 is missing."
         ;;
       --vagrant-home)
