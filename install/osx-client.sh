@@ -2264,16 +2264,16 @@ function parse_args() # {{{2
         die "Argument for option $1 is missing"
         ;;
       --macmini|--macmini-vmware)
-        MODULES=(noidle homebrew rubytools puppet vmware vagrant cache packer updateme)
+        MODULES=(noidle homebrew updateme rubytools puppet vmware vagrant cache packer)
         ;;
       --macmini-parallels)
-        MODULES=(noidle homebrew rubytools puppet parallels vagrant cache packer updateme)
+        MODULES=(noidle homebrew updateme rubytools puppet parallels vagrant cache packer)
         ;;
       --macmini-virtualbox)
-        MODULES=(noidle homebrew rubytools puppet virtualbox vagrant cache packer updateme)
+        MODULES=(noidle homebrew updateme rubytools puppet virtualbox vagrant cache packer)
         ;;
       --macmini-all)
-        MODULES=(noidle homebrew rubytools puppet parallels virtualbox vmware vagrant cache packer updateme)
+        MODULES=(noidle homebrew updateme rubytools puppet parallels virtualbox vmware vagrant cache packer)
         ;;
       --modules)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing.\nIt is a comma-separated list of the possible values are: ${ALL_MODULES[*]}"
