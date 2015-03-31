@@ -1260,8 +1260,8 @@ function download() # {{{2
     done
     if [[ $status != 0 ]]; then
       error "  Cannot download ${source} after $((attempt + 1)) attempts. Last Error: ${status}"
+      return $status
     fi
-    return $status
   fi # }}}3
 
   # Validate downloaded target checksum {{{3
