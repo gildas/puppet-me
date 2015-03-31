@@ -2161,7 +2161,7 @@ function install_updateme() # {{{2
 
   verbose "Unarchiving UpdateMe applications"
   trace "Executing: [7z x -o\"${MODULE_updateme_root}\" -y \"$temp_dir/$(basename ${MODULE_updateme_source})\"]"
-  7z x -o"${MODULE_updateme_root}" -y "$temp_dir/$(basename ${MODULE_updateme_source})"
+  7z x -o"${MODULE_updateme_root}" -y "$temp_dir/$(basename ${MODULE_updateme_source})" 2>&1 >> "$LOG"
   status=$? && [[ $status != 0 ]] && rm -rf $temp_dir && return $status
   rm -rf $temp_dir
 
