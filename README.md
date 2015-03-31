@@ -23,9 +23,7 @@ For example, if you specify the module list as "packer,homebrew", the installer 
 
 As of today, the following modules can be installed:
 
-```sh
-homebrew cache packer puppet rubytools vagrant virtualbox vmware parallels
-```
+[homebrew](http://brew.sh), cache, [packer](https://packer.io), [puppet](https://puppetlabs.com), rubytools, [vagrant](https://vagrantup.com), [virtualbox](https://www.virtualbox.org), [vmware](http://www.vmware.com/products/fusion), [parallels](http://www.parallels.com), updateme.
 
 The module list can be bundled using the special --macmini options.
 
