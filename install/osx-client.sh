@@ -1078,6 +1078,7 @@ function download() # {{{2
     else
       verbose "  Loading checksum of the file that is already cached"
       target_checksum=$(cat "${target_path}.$checksum_type")
+      trace "  cached checksum: ${target_checksum}"
     fi
     if [[ $target_checksum =~ \s*$checksum_value\s* ]]; then
       verbose "  File already cached and checksum verified"
