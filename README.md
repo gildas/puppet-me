@@ -89,7 +89,7 @@ The possible options are:
   Contains the location where packer user work data will be stored.  
   Default value: $HOME/Documents/packer
 - --packer-build *tasks*  
-  Will tell [packer-windows](https://github.com/gildas/packer-windows) to build boxes.  
+  Will tell [packer-windows](https://github.com/gildas/packer-windows) to build boxes (comma separated list).  
   If the virtualization software for a build is not installed, the script will produce an error.  
   E.g.:  
   ```sh
@@ -102,7 +102,7 @@ The possible options are:
   will build all boxes known to [packer-windows](https://github.com/gildas/packer-windows) for [Virtualbox](http://www.virtualbox.org).  
   Default value: N/A  
 - --packer-load *tasks*  
-  Will tell [packer-windows](https://github.com/gildas/packer-windows) to load (and build before as needed) boxes in [Vagrant](http://vagrantup.com).  
+  Will tell [packer-windows](https://github.com/gildas/packer-windows) to load (and build before as needed) boxes in [Vagrant](http://vagrantup.com) (comma separated list).  
   If the virtualization software for a build is not installed, the script will produce an error.  
   E.g.:  
   ```sh
