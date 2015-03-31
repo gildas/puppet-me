@@ -1719,6 +1719,26 @@ function install_packer() # {{{2
     status=$? && [[ $status != 0 ]] && return $status
   fi
 
+  if [[ ${#MODULE_PACKER_BUILD[@]} > 0 || ${#MODULE_PACKER_LOAD[@]} > 0 ]]; then
+
+    verbose "Going to packer windows"
+    pushd "$packer_windows"
+
+    for task in ${MODULE_PACKER_BUILD[@]} ; do
+      verbose "Building $task"
+      trace "Executing: rake build:$task"
+      $NOOP rake build:$task
+    done
+
+    for task in ${MODULE_PACKER_LOAD[@]} ; do
+      verbose "Loading $task"
+      trace "Executing: rake load:$task"
+      $NOOP rake load:$task
+    done
+
+    popd
+  fi
+
   #TODO: Make this multi-virtualization!
   [[ $MODULE_parallels_done  == 1 ]] && MODULE_PACKER_VIRT=parallels
   [[ $MODULE_virtualbox_done == 1 ]] && MODULE_PACKER_VIRT=virtualbox
