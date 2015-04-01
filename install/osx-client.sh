@@ -1702,12 +1702,19 @@ function install_packer() # {{{2
 
   packer_windows=${MODULE_PACKER_HOME}/packer-windows
   if [[ ! -d "$packer_windows" ]]; then
-    echo "  Installing Packer framework for building Windows machines"
+    verbose "  Installing Packer framework for building Windows machines"
     $NOOP mkdir -p $(dirname $packer_windows)
     $NOOP git clone https://github.com/gildas/packer-windows $packer_windows
     status=$? && [[ $status != 0 ]] && return $status
   else
-    echo "  Upgrading Packer framework for building Windows machines"
+    verbose "  Upgrading Packer framework for building Windows machines"
+    changes=$(git --git-dir "${packer_windows}/.git" status --porcelain)
+    status=$? && [[ $status != 0 ]] && echo "Cannot check status of packer-windows. Error: $status" && return $status
+    if [[ -n $changes ]] ; then
+      warn "Found some local changes in packer-windows, stashing your changes"
+      $NOOP git --git-dir "${packer_windows}/.git" stash save --include-untracked "Stashed by Puppet-Me $(date +'%Y%m%dT%H%M%S')" 2>&1 | tee -a $LOG
+      status=$? && [[ $status != 0 ]] && echo "Cannot stash changes in packer-windows. Error: $status" && return $status
+    fi
     $NOOP git --git-dir "${packer_windows}/.git" pull
     status=$? && [[ $status != 0 ]] && return $status
   fi
