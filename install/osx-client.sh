@@ -1725,7 +1725,7 @@ function install_packer() # {{{2
   if [[ ${#MODULE_PACKER_BUILD[@]} > 0 || ${#MODULE_PACKER_LOAD[@]} > 0 ]]; then
 
     verbose "Going to packer windows"
-    pushd "$packer_windows"
+    pushd "$packer_windows" 2>&1 > /dev/null
 
     for task in ${MODULE_PACKER_BUILD[@]} ; do
       verbose "Building $task"
@@ -1739,7 +1739,7 @@ function install_packer() # {{{2
       time $NOOP rake load:$task
     done
 
-    popd
+    popd 2>&1 > /dev/null
   fi
 
   #TODO: Make this multi-virtualization!
