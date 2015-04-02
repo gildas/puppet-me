@@ -1711,10 +1711,11 @@ function install_packer() # {{{2
     changes=$(git --git-dir "${packer_windows}/.git" status --porcelain)
     status=$? && [[ $status != 0 ]] && echo "Cannot check status of packer-windows. Error: $status" && return $status
     if [[ -n $changes ]] ; then
-      warn "Found some local changes in packer-windows, stashing your changes"
+      warn "    Found some local changes in packer-windows, stashing your changes"
       $NOOP git --git-dir "${packer_windows}/.git" stash save --include-untracked "Stashed by Puppet-Me $(date +'%Y%m%dT%H%M%S')" 2>&1 | tee -a $LOG
-      status=$? && [[ $status != 0 ]] && echo "Cannot stash changes in packer-windows. Error: $status" && return $status
+      status=$? && [[ $status != 0 ]] && echo "    Cannot stash changes in packer-windows. Error: $status" && return $status
     fi
+    trace "    pulling changes from github"
     $NOOP git --git-dir "${packer_windows}/.git" pull
     status=$? && [[ $status != 0 ]] && return $status
   fi
