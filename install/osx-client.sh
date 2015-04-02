@@ -1730,13 +1730,13 @@ function install_packer() # {{{2
     for task in ${MODULE_PACKER_BUILD[@]} ; do
       verbose "Building $task"
       trace "Executing: rake build:$task"
-      $NOOP rake build:$task
+      time $NOOP rake build:$task
     done
 
     for task in ${MODULE_PACKER_LOAD[@]} ; do
       verbose "Loading $task"
       trace "Executing: rake load:$task"
-      $NOOP rake load:$task
+      time $NOOP rake load:$task
     done
 
     popd
