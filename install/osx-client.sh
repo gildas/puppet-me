@@ -2294,8 +2294,8 @@ function parse_args() # {{{2
         continue
       ;;
       --credentials=*?|--creds=*?)
-        userid=${1#*=} # delete everything up to =
-        keychain_set_password --kind=internet --url=$2
+        credentials=${1#*=} # delete everything up to =
+        keychain_set_password --kind=internet --url=$credentials
       ;;
       --credentials=|--creds=)
         die "Argument for option $1 is missing"
