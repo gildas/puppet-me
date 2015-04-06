@@ -979,7 +979,7 @@ function download() # {{{2
   local source_path
   local source_ext
   local source_credentials_updated=0
-  local sudo
+  local _SUDO
 
   while :; do # Parse aguments {{{3
     case $1 in
@@ -1097,19 +1097,19 @@ function download() # {{{2
   # Validate target {{{3
   if [[ -e "$target" ]] ; then
     trace "  Target ${target} exists"
-    [[ -w "$target" ]] || sudo='sudo'
+    [[ -w "$target" ]] || _SUDO="$SUDO"
   else
     trace "  Target ${target} does not exists"
     verbose "Creating folder ${target}"
     # Here we are a bit lazy and choose the admin group which of the user has to be a member
     if ! mkdir -p "$target" 2>&1 > /dev/null; then
-      sudo='sudo'
-      $NOOP sudo mkdir -p "$target"
+      _SUDO="$SUD"
+      $NOOP $_SUDO mkdir -p "$target"
     fi
-    $NOOP $sudo chgrp -R admin "$target"
-    $NOOP $sudo chmod -R g+w "$target"
-    sudo=''
-    [[ -w "$target" ]] || sudo='sudo'
+    $NOOP $_SUDO chgrp -R admin "$target"
+    $NOOP $_SUDO chmod -R g+w "$target"
+    _SUDO=''
+    [[ -w "$target" ]] || _SUDO="$SUDO"
   fi # }}}3
 
   # Validate checksum  # {{{3
@@ -1127,7 +1127,7 @@ function download() # {{{2
     if [[ ! -f "${target_path}.${checksum_type}" ]]; then
       verbose "  Calculating checksum of the file that is already cached"
       target_checksum=$(bar -n "$target_path" | $checksum)
-      echo -n "$target_checksum" | $sudo tee "${target_path}.$checksum_type" > /dev/null
+      echo -n "$target_checksum" | $_SUDO tee "${target_path}.$checksum_type" > /dev/null
     else
       verbose "  Loading checksum of the file that is already cached"
       target_checksum=$(cat "${target_path}.$checksum_type")
@@ -1137,7 +1137,7 @@ function download() # {{{2
       verbose "  File already cached and checksum verified"
       return 0
     else
-      $NOOP $sudo rm -f "$target_path"
+      $NOOP $_SUDO rm -f "$target_path"
     fi
   fi # }}}3
 
@@ -1218,18 +1218,18 @@ function download() # {{{2
       errors=0
       for _filename in ${smb_target}/${source_path}/$filename; do
         verbose "  Copying $(basename $_filename)"
-        trace $sudo $CURL $has_resume --output "${target}/$(basename $_filename)" "file://$_filename"
-        $NOOP $sudo $CURL $has_resume --output "${target}/$(basename $_filename)" "file://$_filename"
+        trace $_SUDO $CURL $has_resume --output "${target}/$(basename $_filename)" "file://$_filename"
+        $NOOP $_SUDO $CURL $has_resume --output "${target}/$(basename $_filename)" "file://$_filename"
         status=$? && [[ $status != 0 ]] && error "Failed to download $filename.\nError $status: $(curl_get_error $status)" && ((errors++))
-        $NOOP $sudo chmod 664 "${target}/$(basename $_filename)"
+        $NOOP $_SUDO chmod 664 "${target}/$(basename $_filename)"
         status=$? && [[ $status != 0 ]] && error "Failed to set permission on $filename.\nError: $status" && ((errors++))
       done
       [[ errors == 1 ]] && return 1
     else
-      trace $sudo $CURL $has_resume --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
-      $NOOP $sudo $CURL $has_resume --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
+      trace $_SUDO $CURL $has_resume --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
+      $NOOP $_SUDO $CURL $has_resume --output "${target_path}" "file://${smb_target}/${source_path}/$filename"
       status=$? && [[ $status != 0 ]] && error "Failed to download $filename.\nError $status: $(curl_get_error $status)" && return $status
-      $NOOP $sudo chmod 664 "${target_path}"
+      $NOOP $_SUDO chmod 664 "${target_path}"
       status=$? && [[ $status != 0 ]] && error "Failed to set permission on $filename.\nError: $status" && return $status
     fi
   # }}}3
@@ -1246,10 +1246,10 @@ function download() # {{{2
           mount_path=$(echo "$mount_info" | awk '{print $2}')
           trace "mount info: ${mount_info}"
           trace "mount path: ${mount_path}"
-          trace $sudo $CURL $has_resume --output "${target_path}" "file://${mount_path}/${filename_path}"
-          $NOOP $sudo $CURL $has_resume --output "${target_path}" "file://${mount_path}/${filename_path}"
+          trace $_SUDO $CURL $has_resume --output "${target_path}" "file://${mount_path}/${filename_path}"
+          $NOOP $_SUDO $CURL $has_resume --output "${target_path}" "file://${mount_path}/${filename_path}"
           status=$? && [[ $status != 0 ]] && error "Failed to copy ${filename_path}\nError $status: $(curl_get_error $status)" && return $status
-          $NOOP $sudo chmod 664 "${target_path}"
+          $NOOP $_SUDO chmod 664 "${target_path}"
           status=$? && [[ $status != 0 ]] && error "Failed to set permission on ${filename_path}.\nError: $status" && return $status
           results=$(hdiutil unmount ${mount_path})
           status=$? && [[ $status != 0 ]] && error "Cannot unmount ${source}.\nError: $status" && return $status
@@ -1260,10 +1260,10 @@ function download() # {{{2
         ;;
       esac
     else
-      trace $sudo $CURL $has_resume --output "${target_path}" "${source}"
-      $NOOP $sudo $CURL $has_resume --output "${target_path}" "${source}"
+      trace $_SUDO $CURL $has_resume --output "${target_path}" "${source}"
+      $NOOP $_SUDO $CURL $has_resume --output "${target_path}" "${source}"
       status=$? && [[ $status != 0 ]] && error "Failed to copy ${source}\nError $status: $(curl_get_error $status)" && return $status
-      $NOOP $sudo chmod 664 "${target_path}"
+      $NOOP $_SUDO chmod 664 "${target_path}"
       status=$? && [[ $status != 0 ]] && error "Failed to set permission on ${source}\nError: $status" && return $status
     fi
   # }}}3
@@ -1291,13 +1291,13 @@ function download() # {{{2
         curl_creds="--user ${source_user/\\/;/}:${source_password}" # encode domain
       fi
       verbose "  Downloading..."
-      trace $sudo $CURL $has_resume ${curl_creds} --output "${target_path}" "${source}"
-      $NOOP $sudo $CURL $has_resume ${curl_creds} --output "${target_path}" "${source}"
+      trace $_SUDO $CURL $has_resume ${curl_creds} --output "${target_path}" "${source}"
+      $NOOP $_SUDO $CURL $has_resume ${curl_creds} --output "${target_path}" "${source}"
       status=$?
       case $status in
         0)
           trace "Successful download"
-          $NOOP $sudo chmod 664 "${target_path}"
+          $NOOP $_SUDO chmod 664 "${target_path}"
           break
         ;;
         67)
@@ -1324,10 +1324,10 @@ function download() # {{{2
     trace "  Downloaded checksum: ${target_checksum} (Expected: ${checksum_value})"
     if [[ ! $target_checksum =~ \s*$checksum_value\s* ]]; then
       error "Invalid ${document_checksum_type} checksum for the downloaded document"
-      $NOOP $sudo rm -f "$target_path"
+      $NOOP $_SUDO rm -f "$target_path"
       return 1
     else
-      echo -n "$target_checksum" | $sudo tee "${target_path}.$checksum_type" > /dev/null
+      echo -n "$target_checksum" | $_SUDO tee "${target_path}.$checksum_type" > /dev/null
     fi
   fi # }}}3
 
@@ -1598,7 +1598,7 @@ function dmg_install() # {{{2
   verbose "    Installing ${target}"
   local package=$(find "${mount}" -name '*.pkg' -mindepth 1 -maxdepth 1)
   verbose "      Package: ${package}"
-  $NOOP sudo installer -pkg "${package}" -target /
+  $NOOP $SUDO installer -pkg "${package}" -target /
   status=$? && [[ $status != 0 ]] && return $status
 
   verbose "    Unmounting ${target}"
@@ -1658,7 +1658,7 @@ function install_xcode_tools() # {{{2
     product=$(softwareupdate --list 2>&1 | grep "\*.*Command Line" | tail -1 | sed -e 's/^   \* //' | tr -d '\n')
     status=$? && [[ $status != 0 ]] && return $status
     verbose "  Downloading and Installing ${product}. You should get some coffee or tea as this might take a while..."
-    $NOOP sudo softwareupdate --install "$product"
+    $NOOP $SUDO softwareupdate --install "$product"
     status=$? && [[ $status != 0 ]] && return $status
   else # Older versions like Mountain Lion, Lion
     verbose "Installing XCode tools from Website"
@@ -1855,7 +1855,7 @@ function install_puppet() # {{{2
   dseditgroup -o read puppet &> /dev/null
   if [ $? -ne 0 ]; then
     verbose "  Creating group 'puppet'"
-    $NOOP sudo puppet resource group puppet ensure=present
+    $NOOP $SUDO puppet resource group puppet ensure=present
     status=$? && [[ $status != 0 ]] && return $status
   else
     verbose "  Group 'puppet' is already created"
@@ -1863,7 +1863,7 @@ function install_puppet() # {{{2
   dseditgroup -o checkmember -m puppet puppet &> /dev/null
   if [ ! $? -eq 0 ]; then
     verbose "  Adding puppet to group 'puppet'"
-    $NOOP sudo puppet resource user puppet ensure=present gid=puppet shell="/sbin/nologin"
+    $NOOP $SUDO puppet resource user puppet ensure=present gid=puppet shell="/sbin/nologin"
     status=$? && [[ $status != 0 ]] && return $status
   else
     verbose "  User 'puppet' is already a member of group 'puppet'"
@@ -1872,10 +1872,10 @@ function install_puppet() # {{{2
   verbose "Hiding the puppet user from the Login window"
   if [[ $os_min -ge 10 ]]; then # Yosemite or later
     if [[ -z $(dscl . read /Users/puppet | grep IsHidden) ]]; then
-      sudo dscl . create /Users/puppet IsHidden 1
+      $SUDO dscl . create /Users/puppet IsHidden 1
       status=$? && [[ $status != 0 ]] && return $status
     elif [[ -z $(dscl . read /Users/puppet IsHidden | grep 1) ]]; then
-      sudo dscl . create /Users/puppet IsHidden 1
+      $SUDO dscl . create /Users/puppet IsHidden 1
       status=$? && [[ $status != 0 ]] && return $status
     else
       verbose "  User puppet is already hidden from the Login window"
@@ -1884,12 +1884,12 @@ function install_puppet() # {{{2
     hidden_users=$(/usr/libexec/PlistBuddy -c "Print :HiddenUsersList" /Library/Preferences/com.apple.loginwindow.plist 2>&1)
     if [ ! $? -eq 0 ]; then
       verbose "  Adding the HiddenUsersList entry"
-      $NOOP sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList array" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
+      $NOOP $SUDO /usr/libexec/PlistBuddy -c "Add :HiddenUsersList array" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
       status=$? && [[ $status != 0 ]] && return $status
     fi
     if [[ ! ${hidden_users} =~ "puppet" ]]; then
       verbose "  Adding puppet to the hidden user list"
-      $NOOP sudo /usr/libexec/PlistBuddy -c "Add :HiddenUsersList: string puppet" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
+      $NOOP $SUDO /usr/libexec/PlistBuddy -c "Add :HiddenUsersList: string puppet" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
       status=$? && [[ $status != 0 ]] && return $status
     else
       verbose "  User puppet is already hidden from the Login window"
@@ -1897,21 +1897,21 @@ function install_puppet() # {{{2
   fi
 
   verbose "Creating folders"
-  [[ ! -d /var/log/puppet ]]       && $NOOP sudo mkdir -p /var/log/puppet       && status=$? && [[ $status != 0 ]] && return $status
-  [[ ! -d /var/lib/puppet ]]       && $NOOP sudo mkdir -p /var/lib/puppet       && status=$? && [[ $status != 0 ]] && return $status
-  [[ ! -d /var/lib/puppet/cache ]] && $NOOP sudo mkdir -p /var/lib/puppet/cache && status=$? && [[ $status != 0 ]] && return $status
-  [[ ! -d /etc/puppet/ssl ]]       && $NOOP sudo mkdir -p /etc/puppet/ssl       && status=$? && [[ $status != 0 ]] && return $status
-  $NOOP sudo chown -R puppet:puppet /var/lib/puppet
+  [[ ! -d /var/log/puppet ]]       && $NOOP $SUDO mkdir -p /var/log/puppet       && status=$? && [[ $status != 0 ]] && return $status
+  [[ ! -d /var/lib/puppet ]]       && $NOOP $SUDO mkdir -p /var/lib/puppet       && status=$? && [[ $status != 0 ]] && return $status
+  [[ ! -d /var/lib/puppet/cache ]] && $NOOP $SUDO mkdir -p /var/lib/puppet/cache && status=$? && [[ $status != 0 ]] && return $status
+  [[ ! -d /etc/puppet/ssl ]]       && $NOOP $SUDO mkdir -p /etc/puppet/ssl       && status=$? && [[ $status != 0 ]] && return $status
+  $NOOP $SUDO chown -R puppet:puppet /var/lib/puppet
   status=$? && [[ $status != 0 ]] && return $status
-  $NOOP sudo chmod 750 /var/lib/puppet
+  $NOOP $SUDO chmod 750 /var/lib/puppet
   status=$? && [[ $status != 0 ]] && return $status
-  $NOOP sudo chown -R puppet:puppet /var/log/puppet
+  $NOOP $SUDO chown -R puppet:puppet /var/log/puppet
   status=$? && [[ $status != 0 ]] && return $status
-  $NOOP sudo chmod 750 /var/log/puppet
+  $NOOP $SUDO chmod 750 /var/log/puppet
   status=$? && [[ $status != 0 ]] && return $status
-  $NOOP sudo chown -R puppet:puppet /etc/puppet
+  $NOOP $SUDO chown -R puppet:puppet /etc/puppet
   status=$? && [[ $status != 0 ]] && return $status
-  $NOOP sudo chmod 750 /etc/puppet
+  $NOOP $SUDO chmod 750 /etc/puppet
   status=$? && [[ $status != 0 ]] && return $status
 
   verbose "Configuring Puppet"
@@ -1938,7 +1938,7 @@ function install_puppet() # {{{2
   runinterval = 300
 EOF
     status=$? && [[ $status != 0 ]] && return $status
-    $NOOP sudo install -m 0644 -o puppet -g puppet ${config} /etc/puppet/puppet.conf
+    $NOOP $SUDO install -m 0644 -o puppet -g puppet ${config} /etc/puppet/puppet.conf
     status=$? && [[ $status != 0 ]] && return $status
   fi
 
@@ -1946,13 +1946,13 @@ EOF
   if [ ! -f "/Library/LaunchDaemons/com.puppetlabs.puppet.plist" ]; then
     download https://raw.github.com/inin-apac/puppet-me/master/config/osx/com.puppetlabs.puppet.plist "$HOME/Downloads"
     status=$? && [[ $status != 0 ]] && return $status
-    $NOOP sudo install -m 0644 -o root -g wheel $HOME/Downloads/com.puppetlabs.puppet.plist /Library/LaunchDaemons
+    $NOOP $SUDO install -m 0644 -o root -g wheel $HOME/Downloads/com.puppetlabs.puppet.plist /Library/LaunchDaemons
     status=$? && [[ $status != 0 ]] && return $status
-    $NOOP sudo launchctl load -w /Library/LaunchDaemons/com.puppetlabs.puppet.plist
+    $NOOP $SUDO launchctl load -w /Library/LaunchDaemons/com.puppetlabs.puppet.plist
     status=$? && [[ $status != 0 ]] && return $status
   fi
   verbose "Starting the puppet agent daemon"
-  $NOOP sudo launchctl start com.puppetlabs.puppet
+  $NOOP $SUDO launchctl start com.puppetlabs.puppet
   status=$? && [[ $status != 0 ]] && return $status
   MODULE_puppet_done=1
   return 0
@@ -1967,7 +1967,7 @@ function install_rubytools() # {{{2
   if [[ ! -z $(gem list --local | grep bundler) ]]; then
     verbose "Bundler is already installed"
   else
-    $NOOP sudo gem install bundler
+    $NOOP $SUDO gem install bundler
     status=$? && [[ $status != 0 ]] && return $status
   fi
   MODULE_rubytools_done=1
@@ -1985,7 +1985,7 @@ function install_vagrant() # {{{2
         echo "export VAGRANT_HOME=\"$MODULE_VAGRANT_HOME\"" | tee -a $HOME/.bash_profile > /dev/null
       fi
     else
-      echo "export VAGRANT_HOME=\"$MODULE_VAGRANT_HOME\"" | sudo tee /etc/profile.d/vagrant.sh > /dev/null
+      echo "export VAGRANT_HOME=\"$MODULE_VAGRANT_HOME\"" | $SUDO tee /etc/profile.d/vagrant.sh > /dev/null
     fi
   fi
   export VAGRANT_HOME="$MODULE_VAGRANT_HOME"
@@ -2043,7 +2043,7 @@ function install_parallels() # {{{2
 
   if ! which prlsrvctl > /dev/null 2>&1; then
     verbose "Initializing Parallels Desktop"
-    $NOOP sudo $HOME/Applications/Parallels\ Desktop.app/Contents/MacOS/inittool init -s
+    $NOOP $SUDO $HOME/Applications/Parallels\ Desktop.app/Contents/MacOS/inittool init -s
     status=$? && [[ $status != 0 ]] && return $status
   fi
 
@@ -2104,10 +2104,10 @@ function install_vmware() # {{{2
 
   if ! $("$vmware_bin"/vmrun list 2>&1 > /dev/null); then
     verbose "Initializing VMWare Fusion..."
-    $NOOP sudo "$vmware_bin/Initialize VMware Fusion.tool" set
+    $NOOP $SUDO "$vmware_bin/Initialize VMware Fusion.tool" set
     status=$? && [[ $status != 0 ]] && return $status
     verbose "Configuring license..."
-    $NOOP sudo "$vmware_bin/licenses/vmware-licensetool" enter "$MODULE_VMWARE_KEY" '' '' '7.0' 'VMware Fusion for Mac OS' '' \
+    $NOOP $SUDO "$vmware_bin/licenses/vmware-licensetool" enter "$MODULE_VMWARE_KEY" '' '' '7.0' 'VMware Fusion for Mac OS' '' \
                | grep -q '200 License operation succeeded.'
     status=$? && [[ $status != 0 ]] && return $status
   fi
@@ -2117,11 +2117,11 @@ function install_vmware() # {{{2
     if [[ "$current" != "$MODULE_VMWARE_HOME" ]]; then
       verbose "Updating Virtual Machine home to ${MODULE_VMWARE_HOME}"
       LOCATION='/Library/Preferences/VMWare Fusion/lastLocationUsed'
-      $NOOP sudo rm -f -- "$LOCATION".tmp
-      $NOOP sudo print -- %s "$(canonicalize_path $MODULE_VMWARE_HOME)" > $LOCATION.tmp
-      $NOOP sudo chmod 444 $LOCATION.tmp
-      $NOOP sudo mv -f $LOCATION.tmp $LOCATION
-      $NOOP sudo defaults write com.vmware.fusion NSNavLastRootDirectory "$MODULE_VMWARE_HOME"
+      $NOOP $SUDO rm -f -- "$LOCATION".tmp
+      $NOOP $SUDO print -- %s "$(canonicalize_path $MODULE_VMWARE_HOME)" > $LOCATION.tmp
+      $NOOP $SUDO chmod 444 $LOCATION.tmp
+      $NOOP $SUDO mv -f $LOCATION.tmp $LOCATION
+      $NOOP $SUDO defaults write com.vmware.fusion NSNavLastRootDirectory "$MODULE_VMWARE_HOME"
       status=$? && [[ $status != 0 ]] && return $status
     fi
   fi
@@ -2135,11 +2135,11 @@ function cache_stuff() # {{{2
   local nic_names nic_name nic_info nic_ip nic_mask ip_addresses ip_address ip_masks ip_mask
 
   verbose "Caching ISO files"
-  [[ -d "$CACHE_ROOT" ]]                          || $NOOP sudo mkdir -p "$CACHE_ROOT"
+  [[ -d "$CACHE_ROOT" ]]                          || $NOOP $SUDO mkdir -p "$CACHE_ROOT"
   status=$? && [[ $status != 0 ]] && return $status
-  [[ $(stat -f "%Sg" "$CACHE_ROOT") == 'admin' ]] || $NOOP sudo chgrp -R admin "$CACHE_ROOT"
+  [[ $(stat -f "%Sg" "$CACHE_ROOT") == 'admin' ]] || $NOOP $SUDO chgrp -R admin "$CACHE_ROOT"
   status=$? && [[ $status != 0 ]] && return $status
-  [[ -w "$CACHE_ROOT" ]]                          || $NOOP sudo chmod -R g+w "$CACHE_ROOT"
+  [[ -w "$CACHE_ROOT" ]]                          || $NOOP $SUDO chmod -R g+w "$CACHE_ROOT"
   status=$? && [[ $status != 0 ]] && return $status
   download "$CACHE_SOURCE" "${CACHE_ROOT}"
   status=$? && [[ $status != 0 ]] && return $status
@@ -2223,11 +2223,11 @@ function cache_stuff() # {{{2
 function set_noidle() # {{{2
 {
   verbose "Setting Energy Saver for Mac Mini server"
-  sudo pmset -c autorestart 1
+  $SUDO pmset -c autorestart 1
   status=$? && [[ $status != 0 ]] && return $status
-  sudo pmset -c sleep       0
+  $SUDO pmset -c sleep       0
   status=$? && [[ $status != 0 ]] && return $status
-  sudo pmset -c disksleep   0
+  $SUDO pmset -c disksleep   0
   status=$? && [[ $status != 0 ]] && return $status
 
   MODULE_noidle_done=1
