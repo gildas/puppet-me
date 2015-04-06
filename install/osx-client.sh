@@ -50,13 +50,15 @@ MODULE_PACKER_HOME="$HOME/Documents/packer"
 MODULE_PACKER_BUILD=()
 MODULE_PACKER_LOAD=()
 MODULE_VAGRANT_HOME="$HOME/.vagrant.d"
-[[ -n "$XDG_CONFIG_HOME" ]] && MODULE_VAGRANT_HOME="$XDG_CONFIG_HOME/vagrant"
-[[ -n "$VAGRANT_HOME"    ]] && MODULE_VAGRANT_HOME="$VAGRANT_HOME"
+[[ -n $XDG_CONFIG_HOME ]] && MODULE_VAGRANT_HOME="$XDG_CONFIG_HOME/vagrant"
+[[ -n $VAGRANT_HOME    ]] && MODULE_VAGRANT_HOME="$VAGRANT_HOME"
 MODULE_VAGRANT_VMWARE_LICENSE=''
 
 MODULE_updateme_root="$HOME/Desktop"
 MODULE_updateme_source='https://github.com/inin-apac/puppet-me/raw/8cb94ef0983d234c4c9be82371fb2c8b234c5823/config/osx/UpdateMe.7z'
 MODULE_updateme_args=""
+[[ $MODULE_PACKER_HOME  != "$HOME/Documents/packer" ]] && MODULE_updateme_args="${MODULE_updateme_args} --packer-home '${MODULE_PACKER_HOME}'"
+[[ $MODULE_VAGRANT_HOME != "$HOME/.vagrant.d"       ]] && MODULE_updateme_args="${MODULE_updateme_args} --vagrant-home '${MODULE_VAGRANT_HOME}'"
 
 trap trace_end EXIT
 
@@ -1981,16 +1983,18 @@ function install_vagrant() # {{{2
   [[ $MODULE_homebrew_done == 0 ]]        && install_homebrew
   [[ $MODULE_virtualization_done == 0 ]]  && die "You must install at least one virtualization kit to install vagrant"
 
-  if [[ -z "$VAGRANT_HOME" && "$MODULE_VAGRANT_HOME" != "$HOME/.vagrant.d" ]]; then
-    if [[ "$MODULE_VAGRANT_HOME" =~ $HOME ]]; then
-      if [[ -z "$(grep --no-messages VAGRANT_HOME $HOME/.bash_profile)" ]]; then
+  trace "Current Vagrant Home (if any): $VAGRANT_HOME"
+  if [[ -z $VAGRANT_HOME ]]; then
+    if [[ "$MODULE_VAGRANT_HOME" != "$HOME/.vagrant.d" ]]; then
+      if [[ -z "$(grep --recursive --no-messages VAGRANT_HOME $HOME/.bash_profile $HOME/.bashrc $HOME/.config/bash $HOME/.config/vagrant/vagrant.conf)" ]]; then
         echo "export VAGRANT_HOME=\"$MODULE_VAGRANT_HOME\"" | tee -a $HOME/.bash_profile > /dev/null
       fi
-    else
-      echo "export VAGRANT_HOME=\"$MODULE_VAGRANT_HOME\"" | $SUDO tee /etc/profile.d/vagrant.sh > /dev/null
     fi
+    export VAGRANT_HOME="$MODULE_VAGRANT_HOME"
+    trace "VAGRANT HOME (config): $VAGRANT_HOME"
+  else
+    trace "VAGRANT HOME (preset): $VAGRANT_HOME"
   fi
-  export VAGRANT_HOME="$MODULE_VAGRANT_HOME"
 
   cask_install vagrant
   status=$? && [[ $status != 0 ]] && return $status
@@ -2374,9 +2378,6 @@ function usage() # {{{2
 
 function parse_args() # {{{2
 {
-  # Reset updateme's config
-  MODULE_updateme_args=""
-
   while :; do
     trace "Analyzing option \"$1\""
     case $1 in
