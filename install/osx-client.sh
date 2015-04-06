@@ -57,7 +57,6 @@ MODULE_VAGRANT_VMWARE_LICENSE=''
 MODULE_updateme_root="$HOME/Desktop"
 MODULE_updateme_source='https://github.com/inin-apac/puppet-me/raw/8cb94ef0983d234c4c9be82371fb2c8b234c5823/config/osx/UpdateMe.7z'
 MODULE_updateme_args=""
-MODULE_updateme_load_args=""
 
 trap trace_end EXIT
 
@@ -2263,16 +2262,12 @@ function install_updateme() # {{{2
   status=$? && [[ $status != 0 ]] && rm -rf $temp_dir && return $status
   rm -rf $temp_dir
 
-  verbose "Configuring UpdateMe applications"
-  local install_me="curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- ${MODULE_updateme_args}"
-
-  scripts=$(find $HOME/Desktop -name script -print)
-  trace "scripts: ${scripts[*]}"
-  for script in "$HOME/Desktop/DaaS - Update Me.app/Contents/Resources/script" "$HOME/Desktop/DaaS - Update & Build Me.app/Contents/Resources/script" ; do
-    trace "Updating [$script]"
-    verbose "Updating $(basename "$(dirname "$(dirname "$(dirname "$script")")")" .app)"
-    sed -i '.org' -e "s;^curl.*;${install_me};" -e "s;^PACKER_HOME=.*;PACKER_HOME=\"${MODULE_PACKER_HOME}/packer-windows\";" -e "s;^PACKER_VIRT=.*;PACKER_VIRT=${MODULE_PACKER_VIRT};" "$script"
-  done
+  verbose "Configuring UpdateMe application"
+  install_me="curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- ${MODULE_updateme_args}"
+  script="$HOME/Desktop/DaaS - Update Me.app/Contents/Resources/script"
+  trace "Updating [$script]"
+  verbose "Updating $(basename "$(dirname "$(dirname "$(dirname "$script")")")" .app)"
+  sed -i '.org' -e "s;^curl.*;${install_me};" "$script"
 
   MODULE_updateme_done=1
   return 0
@@ -2379,6 +2374,9 @@ function usage() # {{{2
 
 function parse_args() # {{{2
 {
+  # Reset updateme's config
+  MODULE_updateme_args=""
+
   while :; do
     trace "Analyzing option \"$1\""
     case $1 in
@@ -2398,36 +2396,44 @@ function parse_args() # {{{2
       --userid|--user|-u)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing"
         userid=$2
+        MODULE_updateme_args="${MODULE_updateme_args} --userid=$userid"
         shift 2
         continue
       ;;
       --userid=*?|--user=*?)
         userid=${1#*=} # delete everything up to =
+        MODULE_updateme_args="${MODULE_updateme_args} --userid=$userid"
       ;;
       --userid=|--user=)
         die "Argument for option $1 is missing"
         ;;
       --macmini|--macmini-vmware)
         MODULES=(noidle homebrew updateme rubytools puppet vmware vagrant cache packer)
+        MODULE_updateme_args="${MODULE_updateme_args} --macmini-vmware"
         ;;
       --macmini-parallels)
         MODULES=(noidle homebrew updateme rubytools puppet parallels vagrant cache packer)
+        MODULE_updateme_args="${MODULE_updateme_args} --macmini-parallels"
         ;;
       --macmini-virtualbox)
         MODULES=(noidle homebrew updateme rubytools puppet virtualbox vagrant cache packer)
+        MODULE_updateme_args="${MODULE_updateme_args} --macmini-virtualbox"
         ;;
       --macmini-all)
         MODULES=(noidle homebrew updateme rubytools puppet parallels virtualbox vmware vagrant cache packer)
+        MODULE_updateme_args="${MODULE_updateme_args} --macmini-all"
         ;;
       --modules)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing.\nIt is a comma-separated list of the possible values are: ${ALL_MODULES[*]}"
         MODULES=(${2//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} --modules $2"
         shift 2
         continue
         ;;
       --modules=*?)
         MODULES=${1#*=} # delete everything up to =
         MODULES=(${MODULES//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} $1"
         ;;
       --modules=)
         die "Argument for option $1 is missing.\nIt is a comma-separated list of the possible values are: ${ALL_MODULES[*]}"
@@ -2435,11 +2441,13 @@ function parse_args() # {{{2
       --network)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         NETWORK=$2
+        MODULE_updateme_args="${MODULE_updateme_args} --network $NETWORK"
         shift 2
         continue
         ;;
       --network=*?)
         NETWORK=${1#*=} # delete everything up to =
+        MODULE_updateme_args="${MODULE_updateme_args} --network $NETWORK"
         ;;
       --network=)
         die "Argument for option $1 is missing."
@@ -2447,11 +2455,13 @@ function parse_args() # {{{2
       --cache-root)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         CACHE_ROOT=$2
+        MODULE_updateme_args="${MODULE_updateme_args} --cache-root '$CACHE_ROOT'"
         shift 2
         continue
         ;;
       --cache-root=*?)
         CACHE_ROOT=${1#*=} # delete everything up to =
+        MODULE_updateme_args="${MODULE_updateme_args} --cache-root '$CACHE_ROOT'"
         ;;
       --cache-root=)
         die "Argument for option $1 is missing."
@@ -2459,11 +2469,13 @@ function parse_args() # {{{2
       --cache-source)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         CACHE_SOURCE=$2
+        MODULE_updateme_args="${MODULE_updateme_args} --cache-source '$CACHE_SOURCE'"
         shift 2
         continue
         ;;
       --cache-source=*?)
         CACHE_SOURCE=${1#*=} # delete everything up to =
+        MODULE_updateme_args="${MODULE_updateme_args} --cache-source '$CACHE_SOURCE'"
         ;;
       --cache-source=)
         die "Argument for option $1 is missing."
@@ -2471,11 +2483,13 @@ function parse_args() # {{{2
       --packer-home)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         MODULE_PACKER_HOME=$2
+        MODULE_updateme_args="${MODULE_updateme_args} --packer-home '$MODULE_PACKER_HOME'"
         shift 2
         continue
         ;;
       --packer-home=*?)
         MODULE_PACKER_HOME=${1#*=} # delete everything up to =
+        MODULE_updateme_args="${MODULE_updateme_args} --packer-home '$MODULE_PACKER_HOME'"
         ;;
       --packer-home=)
         die "Argument for option $1 is missing."
@@ -2483,12 +2497,14 @@ function parse_args() # {{{2
       --packer-build)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         MODULE_PACKER_BUILD=(${2//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} --packer-build $2"
         shift 2
         continue
         ;;
       --packer-build=*?)
         MODULE_PACKER_BUILD=${1#*=} # delete everything up to =
         MODULE_PACKER_BUILD=(${MODULE_PACKER_BUILD//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} $1"
         ;;
       --packer-build=)
         die "Argument for option $1 is missing."
@@ -2496,12 +2512,14 @@ function parse_args() # {{{2
       --packer-load)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         MODULE_PACKER_LOAD=(${2//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} --packer-load $2"
         shift 2
         continue
         ;;
       --packer-load=*?)
         MODULE_PACKER_LOAD=${1#*=} # delete everything up to =
         MODULE_PACKER_LOAD=(${MODULE_PACKER_LOAD//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} $1"
         ;;
       --packer-load=)
         die "Argument for option $1 is missing."
@@ -2509,11 +2527,13 @@ function parse_args() # {{{2
       --vagrant-home)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         MODULE_VAGRANT_HOME=$2
+        MODULE_updateme_args="${MODULE_updateme_args} --vagrant-home '$MODULE_VAGRANT_HOME'"
         shift 2
         continue
         ;;
       --vagrant-home=*?)
         MODULE_VAGRANT_HOME=${1#*=} # delete everything up to =
+        MODULE_updateme_args="${MODULE_updateme_args} --vagrant-home '$MODULE_VAGRANT_HOME'"
         ;;
       --vagrant-home=)
         die "Argument for option $1 is missing."
@@ -2521,11 +2541,13 @@ function parse_args() # {{{2
       --vagrant-vmware-license)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         MODULE_VAGRANT_VMWARE_LICENSE=$2
+        MODULE_updateme_args="${MODULE_updateme_args} --vagrant-vmware-license '$MODULE_VAGRANT_VMWARE_LICENSE'"
         shift 2
         continue
         ;;
       --vagrant-vmware-license=*?)
         MODULE_VAGRANT_VMWARE_LICENSE=${1#*=} # delete everything up to =
+        MODULE_updateme_args="${MODULE_updateme_args} --vagrant-vmware-license '$MODULE_VAGRANT_VMWARE_LICENSE'"
         ;;
       --vagrant-vmware-license=)
         die "Argument for option $1 is missing."
@@ -2533,11 +2555,13 @@ function parse_args() # {{{2
       --parallels-home)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         MODULE_PARALLELS_HOME=$2
+        MODULE_updateme_args="${MODULE_updateme_args} --parallels-home '$MODULE_PARALLELS_HOME'"
         shift 2
         continue
         ;;
       --parallels-home=*?)
         MODULE_PARALLELS_HOME=${1#*=} # delete everything up to =
+        MODULE_updateme_args="${MODULE_updateme_args} --parallels-home '$MODULE_PARALLELS_HOME'"
         ;;
       --parallels-home=)
         die "Argument for option $1 is missing."
@@ -2545,11 +2569,13 @@ function parse_args() # {{{2
       --virtualbox-home)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         MODULE_VIRTUALBOX_HOME=$2
+        MODULE_updateme_args="${MODULE_updateme_args} --virtualbox-home '$MODULE_VIRTUALBOX_HOME'"
         shift 2
         continue
         ;;
       --virtualbox-home=*?)
         MODULE_VIRTUALBOX_HOME=${1#*=} # delete everything up to =
+        MODULE_updateme_args="${MODULE_updateme_args} --virtualbox-home '$MODULE_VIRTUALBOX_HOME'"
         ;;
       --virtualbox-home=)
         die "Argument for option $1 is missing."
@@ -2557,11 +2583,13 @@ function parse_args() # {{{2
       --vmware-home)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         MODULE_VMWARE_HOME=$2
+        MODULE_updateme_args="${MODULE_updateme_args} --vmware-home '$MODULE_VMWARE_HOME'"
         shift 2
         continue
         ;;
       --vmware-home=*?)
         MODULE_VMWARE_HOME=${1#*=} # delete everything up to =
+        MODULE_updateme_args="${MODULE_updateme_args} --vmware-home '$MODULE_VMWARE_HOME'"
         ;;
       --vmware-home=)
         die "Argument for option $1 is missing."
@@ -2569,11 +2597,13 @@ function parse_args() # {{{2
       --vmware-license)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         MODULE_VMWARE_KEY=$2
+        MODULE_updateme_args="${MODULE_updateme_args} --vmware-license '$MODULE_VMWARE_KEY'"
         shift 2
         continue
         ;;
       --vmware-license=*?)
         MODULE_VMWARE_KEY=${1#*=} # delete everything up to =
+        MODULE_updateme_args="${MODULE_updateme_args} --vmware-license '$MODULE_VMWARE_KEY'"
         ;;
       --vmware-license=)
         die "Argument for option $1 is missing."
@@ -2605,6 +2635,7 @@ function parse_args() # {{{2
       --force)
        trace "Force updates: on"
        FORCE_UPDATE=1
+       MODULE_updateme_args="${MODULE_updateme_args} --force"
        ;;
       -h|-\?|--help)
        trace "Showing usage"
@@ -2614,13 +2645,16 @@ function parse_args() # {{{2
      --quiet)
        VERBOSE=0
        trace "Verbose level: $VERBOSE"
+       MODULE_updateme_args="${MODULE_updateme_args} --quiet"
        ;;
      -v|--verbose)
        VERBOSE=$((VERBOSE + 1))
        trace "Verbose level: $VERBOSE"
+       MODULE_updateme_args="${MODULE_updateme_args} --verbose"
        ;;
      -y|--yes|--assumeyes|--assume-yes) # All questions will get a "yes"  answer automatically
        ASSUMEYES=1
+       MODULE_updateme_args="${MODULE_updateme_args} --assume-yes"
        trace "All prompts will be answered \"yes\" automatically"
        ;;
      -?*) # Invalid options
