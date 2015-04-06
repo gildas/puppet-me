@@ -1567,8 +1567,6 @@ EOF
     fi
   fi
   $SUDO -v
-  exit 0
-  
 } # }}}2
 
 # }}}
