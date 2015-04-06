@@ -55,8 +55,9 @@ MODULE_VAGRANT_HOME="$HOME/.vagrant.d"
 MODULE_VAGRANT_VMWARE_LICENSE=''
 
 MODULE_updateme_root="$HOME/Desktop"
-MODULE_updateme_source='https://github.com/inin-apac/puppet-me/raw/ab0a2f58b93cace74f498c687eb053ae8c116c56/config/osx/UpdateMe.7z'
-MODULE_updateme_args="$@"
+MODULE_updateme_source='https://github.com/inin-apac/puppet-me/raw/8cb94ef0983d234c4c9be82371fb2c8b234c5823/config/osx/UpdateMe.7z'
+MODULE_updateme_args=""
+MODULE_updateme_load_args=""
 
 trap trace_end EXIT
 
@@ -2238,6 +2239,9 @@ function set_noidle() # {{{2
 
 function install_updateme() # {{{2
 {
+  local install_me
+  local script
+
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
 
   [[ -d "$MODULE_updateme_root" ]] || $NOOP mkdir -p "$MODULE_updateme_root"
@@ -2248,7 +2252,12 @@ function install_updateme() # {{{2
   download "$MODULE_updateme_source" $temp_dir
   status=$? && [[ $status != 0 ]] && rm -rf $temp_dir && return $status
 
-  verbose "Unarchiving UpdateMe applications"
+  if [[ -d "$HOME/Desktop/DaaS - Update & Build Me.app" ]]; then
+    verbose "Removing obsolete applications"
+    rm -rf "$HOME/Desktop/DaaS - Update & Build Me.app"
+  fi
+
+  verbose "Unarchiving UpdateMe application"
   trace "Executing: [7z x -o\"${MODULE_updateme_root}\" -y \"$temp_dir/$(basename ${MODULE_updateme_source})\"]"
   7z x -o"${MODULE_updateme_root}" -y "$temp_dir/$(basename ${MODULE_updateme_source})" 2>&1 >> "$LOG"
   status=$? && [[ $status != 0 ]] && rm -rf $temp_dir && return $status
