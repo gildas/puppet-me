@@ -1827,7 +1827,11 @@ function install_packer() # {{{2
       verbose "Loading $task"
       trace "Executing: rake load:$task"
       time $NOOP rake load:$task
+      echo " "
     done
+
+    verbose "Your available vagrant boxes are now:"
+    vagrant box list
 
     popd 2>&1 > /dev/null
   fi
