@@ -66,6 +66,10 @@ The possible options are:
   Note: if the password contains the @ sign, it should be replaced with %40  
 - --force  
   Force all updates to happen (downloads still do not happen if already done).
+- --gui  
+  Force prompts to use a dialog box to query the user (whenever possible).   
+- --no-gui  
+  Force prompts to not use a dialog box to query the user.  
 - --help  
   Prints some help on the output.
 - --macmini-parallels  

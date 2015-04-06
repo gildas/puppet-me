@@ -10,6 +10,7 @@ export NOOP=
 ASSUMEYES=0
 VERBOSE=1
 FORCE_UPDATE=0
+PROMPT_USE_GUI=
 LOG="$HOME/Downloads/puppet-me.log"
 tmp="tmp"
 puppet_master="puppet"
@@ -17,6 +18,7 @@ userid=$(whoami)
 
 DOWNLOAD_MAX_ATTEMPTS=5
 CURL="/usr/bin/curl --location --progress-bar "
+SUDO="/usr/bin/sudo"
 
 MODULE_homebrew_done=0
 MODULE_cache_done=0
@@ -350,8 +352,11 @@ function urldecode() #{{{2
 function prompt() #{{{2
 {
   local title='DaaS Me!'
+  local icon='caution'
   local silent=''
   local default=''
+  local timeout='119'
+  local gui=$PROMPT_USE_GUI
   local query
   local value
 
@@ -370,9 +375,41 @@ function prompt() #{{{2
         error "$FUNCNAME: Argument for option $1 is missing"
         return 1
         ;;
-      -s|--silent)
+      --gui)
+        gui='yes'
+      ;;
+      --no-gui)
+        gui='no'
+      ;;
+      --icon)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "$FUNCNAME: Argument for option $1 is missing" && return 1
+        icon=$2
+        shift 2
+        continue
+      ;;
+      --icon=*?)
+        icon=${1#*=} # delete everything up to =
+      ;;
+      --icon=)
+        error "$FUNCNAME: Argument for option $1 is missing"
+        return 1
+        ;;
+      -s|--silent|--password)
         silent='-s'
       ;;
+      --timeout)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "$FUNCNAME: Argument for option $1 is missing" && return 1
+        timeout=$2
+        shift 2
+        continue
+      ;;
+      --timeout=*?)
+        timeout=${1#*=} # delete everything up to =
+      ;;
+      --timeout=)
+        error "$FUNCNAME: Argument for option $1 is missing"
+        return 1
+        ;;
       --title)
         [[ -z $2 || ${2:0:1} == '-' ]] && error "$FUNCNAME: Argument for option $1 is missing" && return 1
         title=$2
@@ -396,19 +433,35 @@ function prompt() #{{{2
     shift
   done # }}}3
   query=$1
-  trace "Query: ${query}, Default: ${default}, Silent: ${silent}"
-  if [[ -z "$SSH_CLIENT" ]]; then
+  trace "Query: ${query}, Default: ${default}, Silent: ${silent}, timeout: ${timeout}, icon: ${icon}"
+  case $gui in
+    yes|1) gui='1'
+           [[ -n $SSH_CLIENT ]] && warn "Cannot show gui in ssh sessions" && gui=''
+           ;;
+    no|0)  gui=''  ;;
+    *)     [[ -z $SSH_CLIENT ]] && gui='' ;;
+  esac
+  if [[ -n $gui ]]; then
     # We are on the Mac screen
     trace "Prompting with GUI"
     [[ -n $silent ]] && silent='with hidden answer'
-    script="Tell application \"System Events\" to display dialog \"${query/\\/\\\\}\" giving up after 119 with title \"${title}\" with icon 0 ${silent} default answer \"${default/\\/\\\\}\""
-    trace "OSA Script: $script"
-    value="$(osascript -e "$script" -e 'text returned of result' 2>&1)"
+    code=(             "on GetCurrentApp()")
+    code=("${code[@]}" "  Tell application \"System Events\" to get short name of first process whose frontmost is true")
+    code=("${code[@]}" "end GetCurrentApp")
+    code=("${code[@]}" "Tell application GetCurrentApp()")
+    code=("${code[@]}" "  Activate")
+    code=("${code[@]}" "  display dialog \"${query}\"  giving up after ${timeout} with title \"${title}\" with icon ${icon} ${silent} default answer \"${default}\"")
+    code=("${code[@]}" "  text returned of result")
+    code=("${code[@]}" "end tell")
+
+    script="/usr/bin/osascript"
+    for line in "${code[@]}"; do
+      trace "OSA Script: $line"
+      script="${script} -e '$line'"
+    done
+    value=$(eval "${script}" 2>&1)
     status=$?
-    if [ $status -ne 0 ]; then
-      trace " Error $status: $value"
-      return 1
-    fi
+    [ $status -ne 0 ] && error "$result" && return $status
   else
     # We are in an SSH session
     trace "Prompting within the shell"
@@ -1483,6 +1536,41 @@ function vpn_stop() #{{{2
   verbose "Stopped VPN ${vpn_name}"
   return 0
 } # }}}2
+
+function sudo_init() #{{{2
+{
+  dseditgroup -o checkmember -m $userid admin &> /dev/null
+  if [[ $? != 0 ]]; then
+    dseditgroup -o checkmember -m $userid wheel &> /dev/null
+    if [[ $? != 0 ]]; then
+      die "You must be a member of the sudoer group as this script will need to install software"
+    fi
+  fi
+  warn "You might have to enter your password to verify you can install software"
+  if [[ $PROMPT_USE_GUI == 1 || $PLATYPUS == 1 ]]; then
+    trace "We need to create a prompt dialog box for sudo"
+    SUDO="/usr/bin/sudo -A"
+    if [[ ! -x /usr/local/bin/sudo_askpass ]]; then
+      sudo_askpass=$(mktemp -t puppet-me)
+      chmod u+x ${sudo_askpass}
+      cat > ${sudo_askpass} << EOF
+#!/usr/bin/env bash
+
+result=\$(/usr/bin/osascript -e 'on GetCurrentApp()' -e '  Tell application "System Events" to get short name of first process whose frontmost is true' -e 'end GetCurrentApp' -e 'Tell application GetCurrentApp()' -e '  Activate' -e '  display dialog "Please enter your password:" giving up after 119 with title "SUDO" with icon caution with hidden answer default answer ""' -e '  text returned of result' -e 'end tell' 2>&1)
+status=\$?
+[ \$status -ne 0 ] && error "\$result" && exit \$status
+echo \$result
+EOF
+      export SUDO_ASKPASS="${sudo_askpass}"
+      $SUDO -v
+      $SUDO -n mv ${sudo_askpass} /usr/local/bin.sudo_askpass
+    fi
+  fi
+  $SUDO -v
+  exit 0
+  
+} # }}}2
+
 # }}}
 
 # Module: Module Installers {{{
@@ -2203,7 +2291,11 @@ function usage() # {{{2
   echo "             smb://acme;myuser:s3cr3t@files.acme.com/share  "
   echo "   Note: if the password contains the @ sign, it should be replaced with %40  "
   echo " --force  "
-  echo "   Force all updates to happen (downloads still do not happen if already done)." 
+  echo "   Force all updates to happen (downloads still do not happen if already done).  " 
+  echo " --gui  "
+  echo "   Force prompts to use a dialog box to query the user (whenever possible).  " 
+  echo " --no-gui  "
+  echo "   Force prompts to not use a dialog box to query the user.  " 
   echo " --help  "
   echo "   Prints some help on the output."
   echo " --macmini-parallels  "
@@ -2493,6 +2585,14 @@ function parse_args() # {{{2
       --test-keychain=)
         die "Argument for option $1 is missing."
         ;;
+      --gui)
+       trace "Force gui for prompts: on"
+       PROMPT_USE_GUI=1
+       ;;
+      --no-gui)
+       trace "Force gui for prompts: off"
+       PROMPT_USE_GUI=0
+       ;;
       --force)
        trace "Force updates: on"
        FORCE_UPDATE=1
@@ -2537,15 +2637,7 @@ function main() # {{{
   parse_args "$@"
 
   verbose "Welcome, $userid!"
-
-  dseditgroup -o checkmember -m $userid admin &> /dev/null
-  if [[ $? != 0 ]]; then
-    dseditgroup -o checkmember -m $userid wheel &> /dev/null
-    if [[ $? != 0 ]]; then
-      die "You must be a member of the sudoer group as this script will need to install software"
-    fi
-  fi
-  warn "You might have to enter your password to verify you can install software"
+  sudo_init
 
   for module in ${MODULES[*]} ; do
     trace "Installing Module ${module}"
