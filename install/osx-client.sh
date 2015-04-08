@@ -1580,6 +1580,7 @@ EOF
 function dmg_install() # {{{2
 {
   local source="$1"
+  local pkg="$2"
   local target_dir="$HOME/Downloads"
   local filename
   local target
@@ -1595,12 +1596,12 @@ function dmg_install() # {{{2
   status=$? && [[ $status != 0 ]] && return $status
 
   verbose "    Mounting ${target}"
-  mount=$(hdiutil attach "${target}" | sed -e 's/^\/.* \//\//')
+  mount=$(hdiutil attach "${target}" | grep '\/Volumes' | sed -e 's/^.*\/Volumes/\/Volumes/')
   status=$? && [[ $status != 0 ]] && return $status
   verbose "      mounted on ${mount}"
 
   verbose "    Installing ${target}"
-  local package=$(find "${mount}" -name '*.pkg' -mindepth 1 -maxdepth 1)
+  local package=$(find "${mount}" -name '${pkg:-*.pkg}')
   verbose "      Package: ${package}"
   $NOOP $SUDO installer -pkg "${package}" -target /
   status=$? && [[ $status != 0 ]] && return $status
@@ -1668,7 +1669,7 @@ function install_xcode_tools() # {{{2
     verbose "Installing XCode tools from Website"
     [[ $os_min == 7 ]] && url=http://devimages.apple.com/downloads/xcode/command_line_tools_for_xcode_os_x_lion_april_2013.dmg
     [[ $os_min == 8 ]] && url=http://devimages.apple.com/downloads/xcode/command_line_tools_for_osx_mountain_lion_april_2014.dmg
-    $NOOP dmg_install $url
+    $NOOP dmg_install $url "DeveloperToolsCLI.pkg"
     status=$? && [[ $status != 0 ]] && return $status
   fi
   return 0
