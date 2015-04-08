@@ -1601,7 +1601,12 @@ function dmg_install() # {{{2
   verbose "      mounted on ${mount}"
 
   verbose "    Installing ${target}"
-  local package=$(find "${mount}" -name '${pkg:-*.pkg}')
+  local package=$(find "${mount}" -name "${pkg:-*.pkg}")
+  if [[ -z $package ]]; then
+    error "Cannot find the package ${pkg:-*.pkg}"
+    hdiutil eject "$mount" > /dev/null
+    return 1
+  fi
   verbose "      Package: ${package}"
   $NOOP $SUDO installer -pkg "${package}" -target /
   status=$? && [[ $status != 0 ]] && return $status
