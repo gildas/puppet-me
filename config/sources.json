@@ -134,7 +134,7 @@
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/CIC/2015R2/CIC_2015_R2.iso"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R2/CIC_2015_R2.iso"
       },
       {
         "location": "Melbourne",
@@ -159,7 +159,7 @@
         "network":  "192.168.48.[0-9]+/24",
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
-        "url": "smb://emea.inin.com/Software/ININ/CIC/2015R2/CIC_2015_R2.iso"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R2/CIC_2015_R2.iso"
       },
       {
         "location": "Internet",
@@ -180,7 +180,7 @@
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Dialer/2015R2/Dialer_2015_R2.iso"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R2/Dialer_2015_R2.iso"
       },
       {
         "location": "Melbourne",
@@ -205,7 +205,7 @@
         "network":  "192.168.48.[0-9]+/24",
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
-        "url": "smb://emea.inin.com/Software/ININ/Dialer/2015R2/Dialer_2015_R2.iso"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R2/Dialer_2015_R2.iso"
       },
       {
         "location": "Internet",
