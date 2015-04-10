@@ -477,7 +477,7 @@ function prompt() #{{{2
     done
     value=$(eval "${script}" 2>&1)
     status=$?
-    [ $status -ne 0 ] && error "$result" && return $status
+    [ $status -ne 0 ] && error "status=$status, $value" && return $status
   else
     # We are in an SSH session
     trace "Prompting within the shell"
