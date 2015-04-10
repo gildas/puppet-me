@@ -1574,7 +1574,7 @@ function sudo_init() #{{{2
       cat > ${sudo_askpass} << EOF
 #!/usr/bin/env bash
 
-result=\$(/usr/bin/osascript -e 'on GetCurrentApp()' -e '  Tell application "System Events" to get short name of first process whose frontmost is true' -e 'end GetCurrentApp' -e 'Tell application GetCurrentApp()' -e '  Activate' -e '  display dialog "Please enter your password:" giving up after 119 with title "SUDO" with icon caution with hidden answer default answer ""' -e '  text returned of result' -e 'end tell' 2>&1)
+result=\$(/usr/bin/osascript -e 'on GetCurrentApp()' -e '  Tell application "System Events" to get short name of first process whose frontmost is true' -e 'end GetCurrentApp' -e 'Tell application GetCurrentApp()' -e '  Activate' -e '  display dialog "Please enter your local password:" giving up after 119 with title "SUDO" with icon caution with hidden answer default answer ""' -e '  text returned of result' -e 'end tell' 2>&1)
 status=\$?
 [ \$status -ne 0 ] && error "\$result" && exit \$status
 echo \$result
