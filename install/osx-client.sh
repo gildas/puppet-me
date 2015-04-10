@@ -481,9 +481,10 @@ function prompt() #{{{2
   else
     # We are in an SSH session
     trace "Prompting within the shell"
-    [[ -n "$default" ]] && query="${query} [${default}]"
+    [[ -n "$default" ]] && query="${query}\\n [${default}]: "
+    printf -v query "$query"
     trace "Query: $query"
-    read $silent -p "${query}: " value < /dev/tty
+    read $silent -p "$query" value < /dev/tty
   fi
   [[ -z "$value" ]] && value=$default
   if [[ -n "$silent" ]]; then
@@ -1176,7 +1177,8 @@ function download() # {{{2
         if [[ $need_auth == 1 ]]; then
           if [[ -z "$source_password" ]]; then
             verbose "  Requesting credentials for //${source_host}/${source_share}"
-            source_user=$(prompt --default="$source_user" --title "Downloading $filename" "User for mounting ${source_share} on ${source_host}")
+            query="Connecting to: ${source_host}.\\n Enter network credentials (ACME\\\\John.Doe)"
+            source_user=$(prompt --default="$source_user" --title "Windows Security" "$query")
             if [[ $? != 0 ]]; then
               warn "User cancelled prompt operation"
               return 0
