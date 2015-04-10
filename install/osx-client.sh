@@ -458,7 +458,7 @@ function prompt() #{{{2
     *)     [[ -z $SSH_CLIENT ]] && gui='' ;;
   esac
   if [[ -n $gui ]]; then
-    # We are on the Mac screen
+    # We are on the Mac screen {{{3
     trace "Prompting with GUI"
     [[ -n $silent ]] && silent='with hidden answer'
     code=(             "on GetCurrentApp()")
@@ -478,14 +478,14 @@ function prompt() #{{{2
     value=$(eval "${script}" 2>&1)
     status=$?
     [ $status -ne 0 ] && error "status=$status, $value" && return $status
-  else
-    # We are in an SSH session
+  else # }}}3
+    # We are in an SSH session {{{3
     trace "Prompting within the shell"
     [[ -n "$default" ]] && query="${query}\\n [${default}]: "
     printf -v query "$query"
     trace "Query: $query"
     read $silent -p "$query" value < /dev/tty
-  fi
+  fi # }}}3
   [[ -z "$value" ]] && value=$default
   if [[ -n "$silent" ]]; then
     trace "Results: XXXXXXXXXX"
