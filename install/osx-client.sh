@@ -1565,7 +1565,7 @@ function sudo_init() #{{{2
     fi
   fi
   warn "You might have to enter your password to verify you can install software"
-  if [[ $PROMPT_USE_GUI == 1 || $PLATYPUS == 1 ]]; then
+  if [[ $PROMPT_USE_GUI == 1 ]]; then
     trace "We need to create a prompt dialog box for sudo"
     SUDO="/usr/bin/sudo -A"
     if [[ ! -x /usr/local/bin/sudo_askpass ]]; then
@@ -2697,6 +2697,24 @@ function parse_args() # {{{2
     esac
     shift
   done
+
+  if [[ -z $PROMPT_USE_GUI ]]; then
+    trace "PROMPT_USE_GUI was not set, detecting..."
+    if [[ -n $PLATYPUS ]]; then
+      trace "Detected Platypus, Using GUI"
+      PROMPT_USE_GUI=1
+    elif [[ -n $TERM_PROGRAM ]]; then
+      trace "Detected Mac terminal: $TERM_PROGRAM, Using GUI"
+      PROMPT_USE_GUI=1
+    elif [[ -n $XTERM_VERSION ]]; then
+      trace "Detected X terminal: $XTERM_VERSION, Using GUI"
+      PROMPT_USE_GUI=1
+      #TODO: What if the xterm is running on another DISPLAY?!?
+    elif [[ -n $SSH_CLIENT ]]; then
+      trace "Detected SSH session: $SSH_CLIENT, NOT using GUI"
+      PROMPT_USE_GUI=0
+    fi
+  fi
 } # }}}2
 
 # }}}
