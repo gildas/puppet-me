@@ -1587,6 +1587,12 @@ EOF
     export SUDO_ASKPASS="/usr/local/bin.sudo_askpass"
   fi
   $SUDO -v
+
+  # Keep-alive: update existing sudo time stamp if set, otherwise do nothing.
+  # Thanks to: https://gist.github.com/cowboy/3118588
+  while true; do $SUDO -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+  # This line forks a process that will run as long as this script runs.
+  # When this script is done, kill -0 "$$" will return 0 allowing "exit" to stop the loop
 } # }}}2
 
 # }}}
