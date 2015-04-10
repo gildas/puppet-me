@@ -345,6 +345,20 @@ function mask_hex2cidr() #{{{2
    echo $(( $1 + ${#2} ))
 } # }}}2
 
+function urlencode() #{{{2
+{
+  local length="${#1}"
+
+  for (( i = 0; i < length; i++ )); do
+    local c="${1:i:1}"
+
+    case $c in
+      [a-zA-Z0-9.~_-]) printf "$c" ;;
+      *)               printf '%%%02X' "'$c"
+    esac
+  done
+} # }}}2
+
 function urldecode() #{{{2
 {
   local value=${1//+/ }         # decode + into space
@@ -1175,7 +1189,7 @@ function download() # {{{2
             source_credentials_updated=1
             echo
           fi
-          smb_creds="${source_user/\\/;}:${source_password//@/%40}@"
+          smb_creds="${source_user/\\/;}:$(urlencode "$source_password")@"
         fi
         smb_mount="//${smb_creds}${source_host}/${source_share}"
         smb_target="/Volumes/WindowsShare-${source_host}-${source_share}.$$"
