@@ -484,7 +484,7 @@ function prompt() #{{{2
     [[ -n "$default" ]] && query="${query}\\n [${default}]: "
     printf -v query "$query"
     trace "Query: $query"
-    read $silent -p "$query" value < /dev/tty
+    read $silent -r -p "$query" value < /dev/tty
   fi # }}}3
   [[ -z "$value" ]] && value=$default
   if [[ -n "$silent" ]]; then
