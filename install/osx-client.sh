@@ -2557,14 +2557,14 @@ function parse_args() # {{{2
         ;;
       --packer-build)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
-        MODULE_PACKER_BUILD=(${2//,/ })
+        MODULE_PACKER_BUILD=("${MODULE_PACKER_BUILD[@]}" ${2//,/ })
         MODULE_updateme_args="${MODULE_updateme_args} --packer-build $2"
         shift 2
         continue
         ;;
       --packer-build=*?)
-        MODULE_PACKER_BUILD=${1#*=} # delete everything up to =
-        MODULE_PACKER_BUILD=(${MODULE_PACKER_BUILD//,/ })
+        build=${1#*=} # delete everything up to =
+        MODULE_PACKER_BUILD=("${MODULE_PACKER_BUILD[@]}" ${build//,/ })
         MODULE_updateme_args="${MODULE_updateme_args} $1"
         ;;
       --packer-build=)
@@ -2572,14 +2572,14 @@ function parse_args() # {{{2
         ;;
       --packer-load)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
-        MODULE_PACKER_LOAD=(${2//,/ })
+        MODULE_PACKER_LOAD=("${MODULE_PACKER_LOAD[@]}" ${2//,/ })
         MODULE_updateme_args="${MODULE_updateme_args} --packer-load $2"
         shift 2
         continue
         ;;
       --packer-load=*?)
-        MODULE_PACKER_LOAD=${1#*=} # delete everything up to =
-        MODULE_PACKER_LOAD=(${MODULE_PACKER_LOAD//,/ })
+        load=${1#*=} # delete everything up to =
+        MODULE_PACKER_LOAD=("${MODULE_PACKER_LOAD[@]}" ${load//,/ })
         MODULE_updateme_args="${MODULE_updateme_args} $1"
         ;;
       --packer-load=)
