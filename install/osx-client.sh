@@ -49,10 +49,17 @@ MODULE_PACKER_HOME="$HOME/Documents/packer"
 [[ -n "$PACKER_HOME"    ]] && MODULE_PACKER_HOME="$PACKER_HOME"
 MODULE_PACKER_BUILD=()
 MODULE_PACKER_LOAD=()
+MODULE_PACKER_LOG_ROOT=/var/log/packer
+MODULE_PACKER_LOG_OWNER=$userid
+MODULE_PACKER_LOG_GROUP=staff
+
 MODULE_VAGRANT_HOME="$HOME/.vagrant.d"
 [[ -n $XDG_CONFIG_HOME ]] && MODULE_VAGRANT_HOME="$XDG_CONFIG_HOME/vagrant"
 [[ -n $VAGRANT_HOME    ]] && MODULE_VAGRANT_HOME="$VAGRANT_HOME"
 MODULE_VAGRANT_VMWARE_LICENSE=''
+MODULE_VAGRANT_LOG_ROOT=/var/log/vagrant
+MODULE_VAGRANT_LOG_OWNER=$userid
+MODULE_VAGRANT_LOG_GROUP=staff
 
 MODULE_updateme_root="$HOME/Desktop"
 MODULE_updateme_source='https://github.com/inin-apac/puppet-me/raw/8cb94ef0983d234c4c9be82371fb2c8b234c5823/config/osx/UpdateMe.7z'
@@ -1803,6 +1810,16 @@ function install_packer() # {{{2
   brew_install packer
   status=$? && [[ $status != 0 ]] && return $status
 
+  if [[ ! -w $MODULE_PACKER_LOG_ROOT ]]; then
+    trace "Adding the log folder in $MODULE_PACKER_LOG_ROOT"
+    MODULE_PACKER_LOG_OWNER=$userid
+    if [[ ! -d $MODULE_PACKER_LOG_ROOT ]]; then
+      $NOOP $SUDO mkdir -p "$MODULE_PACKER_LOG_ROOT"
+    fi
+    $NOOP $SUDO chown $MODULE_PACKER_LOG_OWNER:$MODULE_PACKER_LOG_GROUP "$MODULE_PACKER_LOG_ROOT"
+    $NOOP $SUDO chmod 775 "$MODULE_PACKER_LOG_ROOT"
+  fi
+
   # Installing bash completion
   if [[ ! -z $(brew info homebrew/completions/packer-completion | grep '^Not installed$') ]]; then
     verbose "Installing bash completion for Packer..."
@@ -2030,6 +2047,17 @@ function install_vagrant() # {{{2
 
   cask_install vagrant
   status=$? && [[ $status != 0 ]] && return $status
+
+  if [[ ! -w $MODULE_VAGRANT_LOG_ROOT ]]; then
+    trace "Adding the log folder in $MODULE_VAGRANT_LOG_ROOT"
+    MODULE_VAGRANT_LOG_OWNER=$userid
+    if [[ ! -d $MODULE_VAGRANT_LOG_ROOT ]]; then
+      $NOOP $SUDO mkdir -p "$MODULE_VAGRANT_LOG_ROOT"
+    fi
+    $NOOP $SUDO chown $MODULE_VAGRANT_LOG_OWNER:$MODULE_VAGRANT_LOG_GROUP "$MODULE_VAGRANT_LOG_ROOT"
+    $NOOP $SUDO chmod 775 "$MODULE_VAGRANT_LOG_ROOT"
+  fi
+
   verbose "Updating installed Vagrant plugins..."
   $NOOP vagrant plugin update
   status=$? && [[ $status != 0 ]] && return $status
