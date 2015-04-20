@@ -1588,6 +1588,7 @@ echo \$result
 EOF
       export SUDO_ASKPASS="${sudo_askpass}"
       $SUDO -v
+      [[ ! -d /usr/local/bin ]] && $SUDO mkdir -p /usr/local/bin
       $SUDO -n mv ${sudo_askpass} /usr/local/bin/sudo_askpass
       status=$? && [[ $status != 0 ]] && error "Cannot move sudo script to its location" && return $status
     fi
