@@ -1638,7 +1638,7 @@ function dmg_install() # {{{2
     return 1
   fi
   verbose "      Package: ${package}"
-  $NOOP $SUDO installer -pkg "${package}" -target /
+  $NOOP $SUDO installer -allowUntrusted -pkg "${package}" -target /
   status=$? && [[ $status != 0 ]] && return $status
 
   verbose "    Unmounting ${target}"
