@@ -1845,7 +1845,7 @@ function install_packer() # {{{2
   else
     verbose "  Upgrading Packer framework for building Windows machines"
     trace "    pulling changes from github"
-    $NOOP git --git-dir "${packer_windows}/.git" pull
+    $NOOP git -C "${packer_windows}" pull
     status=$? && [[ $status != 0 ]] && return $status
   fi
 
