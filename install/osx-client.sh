@@ -16,7 +16,7 @@ tmp="tmp"
 puppet_master="puppet"
 userid=$(whoami)
 
-DOWNLOAD_MAX_ATTEMPTS=5
+DOWNLOAD_MAX_ATTEMPTS=10
 CURL="/usr/bin/curl --location --progress-bar "
 SUDO="/usr/bin/sudo"
 
