@@ -90,7 +90,7 @@ function trace() # {{{2
     shift
   done
 
-  echo -e "[$(date +'%Y%m%dT%H%M%S')]${BASH_SOURCE[$caller_index]}::${FUNCNAME[$caller_index]}@${BASH_LINENO[(($caller_index - 1))]}: $@" >> $LOG
+  echo -e "[$(date +'%Y%m%dT%H%M%S')]${BASH_SOURCE[$caller_index]}::${FUNCNAME[$caller_index]}@${BASH_LINENO[(($caller_index - 1))]}: $@" >> "$LOG"
 } # }}}2
 
 function trace_init() # {{{2
@@ -176,6 +176,11 @@ function trace_end() # {{{2
   done
 
   trace --trace-member "[END]   --8<----------------------8<------------------------8<------------    [END]"
+} # }}}2
+
+function trace_output() ## {{{2
+{
+  tee -a "$LOG"
 } # }}}2
 
 function verbose() ## {{{2
@@ -1875,7 +1880,7 @@ function install_packer() # {{{2
   fi
 
   if [[ -f "$packer_windows/Gemfile" ]]; then
-    [[ -z "$NOOP" ]] && (cd $packer_windows ; bundle install)
+    [[ -z "$NOOP" ]] && (cd $packer_windows ; bundle install | grep -v '^Using' | trace_output )
     status=$? && [[ $status != 0 ]] && return $status
   fi
 
