@@ -1706,6 +1706,7 @@ function install_xcode_tools() # {{{2
     $NOOP $SUDO softwareupdate --install "$product"
     status=$? && [[ $status != 0 ]] && return $status
   else # Older versions like Mountain Lion, Lion
+    die "The version $(sw_vers -productVersion) of $(sw_vers -productName) is not supported anymore, please upgrade to at least Mac OS X 10.9 (Mavericks)" 22 # EINVAL
     verbose "Installing XCode tools from Website"
     [[ $os_min == 7 ]] && url=http://devimages.apple.com/downloads/xcode/command_line_tools_for_xcode_os_x_lion_april_2013.dmg
     [[ $os_min == 8 ]] && url=http://devimages.apple.com/downloads/xcode/command_line_tools_for_osx_mountain_lion_april_2014.dmg
