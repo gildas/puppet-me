@@ -1828,12 +1828,33 @@ function install_packer() # {{{2
     status=$? && [[ $status != 0 ]] && return $status
   fi
 
+  #Installing Packer plugins (no brew at the moment)
   packer_bindir=$(dirname $(which packer))
   if [[ ! -x $packer_bindir/packer-provisioner-wait ]]; then
     verbose "  Install Packer plugin: provisioner-wait"
     download https://cdn.rawgit.com/gildas/packer-provisioner-wait/master/bin/0.1.0/darwin/packer-provisioner-wait "${packer_bindir}"
     status=$? && [[ $status != 0 ]] && return $status
     chmod 755 "${packer_bindir}/packer-provisioner-wait"
+  fi
+
+  if [[ -x $packer_bindir/packer-builder-vmware-windows-iso ]]; then
+    source_checksum="8febd9ab3a23174223aa7ea969a133ef"
+    target_checksum=$(bar -n "$packer_bindir/packer-builder-vmware-windows-iso" | md5)
+    if [[ $target_checksum =~ \s*$source_checksum\s* ]]; then
+      verbose "  Install Packer plugin: packer-windows builders/provisioners is up-to-date"
+    else
+      verbose "  Install Packer plugin: updating packer-windows builders/provisioners"
+      download https://github.com/packer-community/packer-windows-plugins/releases/download/v1.0.0-rc/darwin_amd64.zip "${HOME}/Downloads"
+      status=$? && [[ $status != 0 ]] && return $status
+      unzip $HOME/Downloads/darwin_amd64.zip -d "${packer_bindir}"
+      status=$? && [[ $status != 0 ]] && error "Failed to extract archive, error: $status" && return $status
+    fi
+  else
+    verbose "  Install Packer plugin: installing packer-windows builders/provisioners"
+    download https://github.com/packer-community/packer-windows-plugins/releases/download/v1.0.0-rc/darwin_amd64.zip "${HOME}/Downloads"
+    status=$? && [[ $status != 0 ]] && return $status
+    unzip $HOME/Downloads/darwin_amd64.zip -d "${packer_bindir}"
+    status=$? && [[ $status != 0 ]] && error "Failed to extract archive, error: $status" && return $status
   fi
 
   packer_windows=${MODULE_PACKER_HOME}/packer-windows
