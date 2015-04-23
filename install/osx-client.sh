@@ -1694,17 +1694,24 @@ function install_xcode_tools() # {{{2
   local url
   local mount
 
-  if xcode-select -p > /dev/null 2>&1; then
-    echo "XCode tools are already installed"
-  elif [[ $os_min -ge 9 ]]; then # Mavericks or later
-    verbose "Installing CLI tools via Software Update"
-    verbose "  Finding proper version"
-    touch /tmp/.com.apple.dt.CommandLinetools.installondemand.in-progress
-    product=$(softwareupdate --list 2>&1 | grep "\*.*Command Line" | tail -1 | sed -e 's/^   \* //' | tr -d '\n')
-    status=$? && [[ $status != 0 ]] && return $status
+  if [[ $os_min -ge 9 ]]; then # Mavericks or later
+    if xcode-select -p > /dev/null 2>&1; then
+      verbose "XCode Command Line tools are already installed"
+      verbose "  Checking for updates"
+      product=$(softwareupdate --list 2>&1 | grep "\*.*Command Line" | tail -1 | sed -e 's/^   \* //' | tr -d '\n')
+      status=$? && [[ $status != 0 ]] && error "Cannot contact Apple Software Update. Error: $status" && return $status
+      [[ -z $product ]] && verbose "All is well in AppleLand, tools are up-to-date!" && return 0
+      verbose "  Upgrading via Software Update"
+    else
+      verbose "  Installing via Software Update"
+      touch /tmp/.com.apple.dt.CommandLinetools.installondemand.in-progress
+      verbose "  Finding proper version"
+      product=$(softwareupdate --list 2>&1 | grep "\*.*Command Line" | tail -1 | sed -e 's/^   \* //' | tr -d '\n')
+      status=$? && [[ $status != 0 ]] && error "Cannot contact Apple Software Update. Error: $status" && return $status
+    fi
     verbose "  Downloading and Installing ${product}. You should get some coffee or tea as this might take a while..."
     $NOOP $SUDO softwareupdate --install "$product"
-    status=$? && [[ $status != 0 ]] && return $status
+    status=$? && [[ $status != 0 ]] && error "Apple Software Update failed. Error: $status" && return $status
   else # Older versions like Mountain Lion, Lion
     die "The version $(sw_vers -productVersion) of $(sw_vers -productName) is not supported anymore, please upgrade to at least Mac OS X 10.9 (Mavericks)" 22 # EINVAL
     verbose "Installing XCode tools from Website"
