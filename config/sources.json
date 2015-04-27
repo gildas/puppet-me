@@ -146,19 +146,19 @@
         "location": "Melbourne",
         "network":  "172.22.40.[0-9]+/21",
         "need_auth": true,
-        "url": "smb://melfiles01.apac.inin.com/software/ININ/Interaction%20Center/2015R1/CIC_2015_R1.iso"
+        "url": "smb://melfiles01.apac.inin.com/software/ININ/Interaction%20Center/2015R2/CIC_2015_R2.iso"
       },
       {
         "location": "Sydney",
         "network":  "172.22.80.[0-9]+/23",
         "need_auth": true,
-        "url": "smb://sydfiles01.apac.inin.com/software/ININ/Interaction%20Center/2015R1/CIC_2015_R1.iso"
+        "url": "smb://sydfiles01.apac.inin.com/software/ININ/Interaction%20Center/2015R2/CIC_2015_R2.iso"
       },
       {
         "location": "Sydney VPN",
         "network":  "172.22.81.[0-9]+/23",
         "need_auth": true,
-        "url": "smb://sydfiles01.apac.inin.com/software/ININ/Interaction%20Center/2015R1/CIC_2015_R1.iso"
+        "url": "smb://sydfiles01.apac.inin.com/software/ININ/Interaction%20Center/2015R2/CIC_2015_R2.iso"
       },
       {
         "location": "Japan",
@@ -198,19 +198,19 @@
         "location": "Melbourne",
         "network":  "172.22.40.[0-9]+/21",
         "need_auth": true,
-        "url": "smb://melfiles01.apac.inin.com/software/ININ/Interaction%20Dialer/2015R1/Dialer_2015_R1.iso"
+        "url": "smb://melfiles01.apac.inin.com/software/ININ/Interaction%20Dialer/2015R2/Dialer_2015_R2.iso"
       },
       {
         "location": "Sydney",
         "network":  "172.22.80.[0-9]+/23",
         "need_auth": true,
-        "url": "smb://sydfiles01.apac.inin.com/software/ININ/Interaction%20Dialer/2015R1/Dialer_2015_R1.iso"
+        "url": "smb://sydfiles01.apac.inin.com/software/ININ/Interaction%20Dialer/2015R2/Dialer_2015_R2.iso"
       },
       {
         "location": "Sydney VPN",
         "network":  "172.22.81.[0-9]+/23",
         "need_auth": true,
-        "url": "smb://sydfiles01.apac.inin.com/software/ININ/Interaction%20Dialer/2015R1/Dialer_2015_R1.iso"
+        "url": "smb://sydfiles01.apac.inin.com/software/ININ/Interaction%20Dialer/2015R2/Dialer_2015_R2.iso"
       },
       {
         "location": "Japan",
