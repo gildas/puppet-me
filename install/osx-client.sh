@@ -1679,7 +1679,7 @@ function cask_install() # {{{2
     verbose "$app_name was manually installed (no automatic updates possible)"
   else
     verbose "Installing $app_name"
-    $NOOP brew install "Caskroom/cask/$app_name"
+    $NOOP brew cask install --appdir=/Applications "$app_name"
     status=$? && [[ $status != 0 ]] && return $status
   fi
   return 0
@@ -2137,14 +2137,17 @@ function install_vagrant() # {{{2
 
 function install_parallels() # {{{2
 {
+  local parallels_tools_root
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
 
   cask_install parallels-desktop
   status=$? && [[ $status != 0 ]] && return $status
 
+  [[ -d "/Applications/Parallels Desktop.app/Contents/MacOS"      ]] && parallels_tools_root="/Applications/Parallels Desktop.app/Contents/MacOS"
+  [[ -d "$HOME/Applications/Parallels Desktop.app/Contents/MacOS" ]] && parallels_tools_root="$HOME/Applications/Parallels Desktop.app/Contents/MacOS"
   if ! which prlsrvctl > /dev/null 2>&1; then
     verbose "Initializing Parallels Desktop"
-    $NOOP $SUDO $HOME/Applications/Parallels\ Desktop.app/Contents/MacOS/inittool init -s
+    $NOOP $SUDO "${parallels_tools_root}/inittool" init -s
     status=$? && [[ $status != 0 ]] && return $status
   fi
 
