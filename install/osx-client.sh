@@ -1737,7 +1737,7 @@ function install_homebrew() # {{{2
     [[ -f $filestamp ]] && trace "filestamp: $filestamp, $(stat -f "%Sm" $filestamp)"
     if [[ $FORCE_UPDATE == "1" || ! -f $filestamp || -n "$(find "$filestamp" -mmin +240)" ]]; then
       verbose "Homebrew is already installed, upgrading..."
-      $NOOP brew update && brew upgrade && brew cleanup
+      $NOOP brew update && brew upgrade --all && brew cleanup
       status=$? && [[ $status != 0 ]] && return $status
       touch $filestamp
     else
