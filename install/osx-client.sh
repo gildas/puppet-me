@@ -44,6 +44,7 @@ MODULE_VMWARE_HOME=''
 MODULE_VMWARE_KEY=''
 MODULE_VIRTUALBOX_HOME=''
 MODULE_PARALLELS_HOME=''
+MODULE_PARALLELS_LICENSE=''
 MODULE_PACKER_VIRT=vmware
 MODULE_PACKER_HOME="$HOME/Documents/packer"
 [[ -n "$PACKER_HOME"    ]] && MODULE_PACKER_HOME="$PACKER_HOME"
@@ -2151,6 +2152,15 @@ function install_parallels() # {{{2
     status=$? && [[ $status != 0 ]] && return $status
   fi
 
+  if [[ -z "$(prlsrvctl info | grep "^License: state='valid'.*")" ]]; then
+    if [[ -n $MODULE_PARALLELS_LICENSE ]]; then
+      verbose "Configuring license..."
+      prlsrvctl install-license --key $MODULE_PARALLELS_LICENSE
+    else
+      warn "Do not forget to configure your Parallels Desktop license"
+    fi
+  fi
+
   if [[ -n "$MODULE_PARALLELS_HOME" ]]; then
     current=$(prlsrvctl user list 2> /dev/null | grep "$whoami" | awk '{ print $3 }')
     if [[ "$current" != "$MODULE_PARALLELS_HOME" ]]; then
@@ -2663,6 +2673,20 @@ function parse_args() # {{{2
         MODULE_updateme_args="${MODULE_updateme_args} --parallels-home '$MODULE_PARALLELS_HOME'"
         ;;
       --parallels-home=)
+        die "Argument for option $1 is missing."
+        ;;
+      --parallels-license)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        MODULE_PARALLELS_LICENSE=$2
+        MODULE_updateme_args="${MODULE_updateme_args} --parallels-license $MODULE_PARALLELS_LICENSE"
+        shift 2
+        continue
+        ;;
+      --parallels-license=*?)
+        MODULE_PARALLELS_LICENSE=${1#*=} # delete everything up to =
+        MODULE_updateme_args="${MODULE_updateme_args} --parallels-home $MODULE_PARALLELS_LICENSE"
+        ;;
+      --parallels-license=)
         die "Argument for option $1 is missing."
         ;;
       --virtualbox-home)
