@@ -1779,6 +1779,11 @@ function install_homebrew() # {{{2
     status=$? && [[ $status != 0 ]] && return $status
   fi
 
+  if [[ -z $(brew tap | grep 'caskroom/versions') ]]; then
+    brew tap caskroom/versions
+    status=$? && [[ $status != 0 ]] && return $status
+  fi
+
   if [[ ! -z $(brew info brew-cask | grep '^Not installed$') ]]; then
     verbose "Installing Homebrew Cask..."
     $NOOP brew install brew-cask
