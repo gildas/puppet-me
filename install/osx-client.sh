@@ -1686,6 +1686,16 @@ function cask_install() # {{{2
   return 0
 } # }}}2
 
+function cask_uninstall() # {{{2
+{
+  local app_name=$1
+
+  verbose "Uninstalling $app_name"
+  $NOOP brew cask uninstall "$app_name"
+  status=$? && [[ $status != 0 ]] && return $status
+  return 0
+} # }}}2
+
 function install_xcode_tools() # {{{2
 {
   local downloaded=0
@@ -2086,8 +2096,31 @@ function install_vagrant() # {{{2
     trace "VAGRANT HOME (preset): $VAGRANT_HOME"
   fi
 
-  cask_install vagrant
-  status=$? && [[ $status != 0 ]] && return $status
+  if which vagrant > /dev/null 2>&1; then
+    verbose "vagrant is already installed"
+    version=$(vagrant --version | awk '{print $2}')
+    verbose "  current version: ${version}"
+    if [[ $version == "1.7.2" ]]; then
+      warn "this version has some issues with Windows, we need to uninstall it"
+      if [[ -z "$(brew cask info vagrant | grep '^Not installed$')" ]]; then
+        verbose "  uninstalling vagrant manually"
+        $NOOP $SUDO rm -rf /opt/vagrant
+        status=$? && [[ $status != 0 ]] && error "Error $status while removing /opt/vagrant" && return $status
+        $NOOP $SUDO rm -f /usr/bin/vagrant
+        status=$? && [[ $status != 0 ]] && error "Error $status while removing /usr/bin/vagrant" && return $status
+      else
+        $NOOP cask_uninstall vagrant
+        status=$? && [[ $status != 0 ]] && error "Error $status while uninstalling vagrant" && return $status
+      fi
+      verbose "  installing vagrant 1.6.5 (the last version know to work well)"
+      $NOOP cask_install vagrant165
+      status=$? && [[ $status != 0 ]] && error "Error $status while installing vagrant 1.6.5" && return $status
+    fi
+  else
+    verbose "installing vagrant 1.6.5 (the last version know to work well)"
+    $NOOP cask_install vagrant165
+    status=$? && [[ $status != 0 ]] && error "Error $status while installing vagrant 1.6.5" && return $status
+  fi
 
   if [[ ! -w $MODULE_VAGRANT_LOG_ROOT ]]; then
     trace "Adding the log folder in $MODULE_VAGRANT_LOG_ROOT"
@@ -2101,7 +2134,7 @@ function install_vagrant() # {{{2
 
   verbose "Updating installed Vagrant plugins..."
   $NOOP vagrant plugin update
-  status=$? && [[ $status != 0 ]] && return $status
+  status=$? && [[ $status != 0 ]] && error "Error $status while updating vagrant plugins" && return $status
 
   # Installing bash completion
   if [[ ! -z $(brew info homebrew/completions/vagrant-completion | grep '^Not installed$') ]]; then
