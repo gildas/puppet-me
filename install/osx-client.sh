@@ -1708,6 +1708,7 @@ function install_xcode_tools() # {{{2
   if [[ $os_min -ge 9 ]]; then # Mavericks or later
     if xcode-select -p > /dev/null 2>&1; then
       verbose "XCode Command Line tools are already installed"
+      [[ -n ${NO_UPDATES[xcode]} ]] && echo "Not updating" && return 0
       verbose "  Checking for updates"
       product=$(softwareupdate --list 2>&1 | grep "\*.*Command Line" | tail -1 | sed -e 's/^   \* //' | tr -d '\n')
       status=$? && [[ $status != 0 ]] && error "Cannot contact Apple Software Update. Error: $status" && return $status
@@ -1743,16 +1744,19 @@ function install_homebrew() # {{{2
   status=$? && [[ $status != 0 ]] && return $status
 
   if which brew > /dev/null 2>&1; then
-
-    trace "Force Update: $FORCE_UPDATE"
-    [[ -f $filestamp ]] && trace "filestamp: $filestamp, $(stat -f "%Sm" $filestamp)"
-    if [[ $FORCE_UPDATE == "1" || ! -f $filestamp || -n "$(find "$filestamp" -mmin +240)" ]]; then
-      verbose "Homebrew is already installed, upgrading..."
-      $NOOP brew update && brew upgrade --all && brew cleanup
-      status=$? && [[ $status != 0 ]] && return $status
-      touch $filestamp
+    verbose "Homebrew is already installed."
+    if [[ -n ${NO_UPDATES[homebrew]} ]]; then
+      echo "Not updating"
     else
-      verbose "Homebrew was updated less than 4 hours ago, let's give the Internet some rest..."
+      [[ -f $filestamp ]] && trace "filestamp: $filestamp, $(stat -f "%Sm" $filestamp)"
+      if [[ $FORCE_UPDATE == "1" || ! -f $filestamp || -n "$(find "$filestamp" -mmin +240)" ]]; then
+        verbose "Updating..."
+        $NOOP brew update && brew upgrade --all && brew cleanup
+        status=$? && [[ $status != 0 ]] && return $status
+        touch $filestamp
+      else
+        verbose "Homebrew was updated less than 4 hours ago, let's give the Internet some rest..."
+      fi
     fi
   else
     verbose "Installing Homebrew..."
@@ -2467,6 +2471,9 @@ function usage() # {{{2
   echo "   can be used to force the script to believe it is run in a given network.  "
   echo "   Both an ip address and a network (in the cidr form) must be given.  "
   echo "   Default: N/A."
+  echo " --no-updates *module_list*  "
+  echo "   contains a comma-separated list of modules to not update.  "
+  echo "   Default: N/A.  "
   echo " --noop, --dry-run  "
   echo "   Do not execute instructions that would make changes to the system (write files, install software, etc)."
   echo " --packer-home *path*  "
@@ -2598,6 +2605,16 @@ function parse_args() # {{{2
         ;;
       --network=)
         die "Argument for option $1 is missing."
+        ;;
+      --no-updates)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        NO_UPDATES=(${2//,/ })
+        shift 2
+        continue
+        ;;
+      --no-updates=*?)
+        NO_UPDATES=${1#*=} # delete everything up to =
+        NO_UPDATES=(${MODULES//,/ })
         ;;
       --cache-root)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
