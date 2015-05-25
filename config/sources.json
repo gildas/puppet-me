@@ -183,6 +183,58 @@
     ]
   },
   {
+    "name": "CIC 2015R2 Patch 8",
+    "id": "CIC_2015R2_P8",
+    "checksum": { "type": "MD5", "value": "4de6e4bdf935122b92d7155c1b134500" },
+    "sources":
+    [
+      {
+        "location": "EMEA",
+        "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
+        "need_auth": true,
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R2/CIC_2015_R2_Patch8.iso"
+      },
+      {
+        "location": "Melbourne",
+        "network":  "172.22.40.[0-9]+/21",
+        "need_auth": true,
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R2/CIC_2015_R2_Patch8.iso"
+      },
+      {
+        "location": "Sydney",
+        "network":  "172.22.80.[0-9]+/23",
+        "need_auth": true,
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R2/CIC_2015_R2_Patch8.iso"
+      },
+      {
+        "location": "Sydney VPN",
+        "network":  "172.22.81.[0-9]+/23",
+        "need_auth": true,
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R2/CIC_2015_R2_Patch8.iso"
+      },
+      {
+        "location": "Japan",
+        "network":  "172.22.16.[0-9]+/23",
+        "need_auth": true,
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R2/CIC_2015_R2_Patch8.iso"
+      },
+      {
+        "location": "I3Guest EMEA",
+        "network":  "192.168.48.[0-9]+/24",
+        "need_auth": true,
+        "vpn": ".*vpn.inin.com",
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R2/CIC_2015_R2_Patch8.iso"
+      },
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "need_auth": true,
+        "has_resume": true,
+        "url": "ftp://ftp.inin.com/Download/CIC2015R2/CIC/CIC_2015_R2_Patch8.iso"
+      }
+    ]
+  },
+  {
     "name": "Dialer 2015R2",
     "id": "Dialer_2015R2",
     "checksum": { "type": "MD5", "value": "c69d2b72712c84d12e5d6ebe518a3ad2" },
