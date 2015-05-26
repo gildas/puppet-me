@@ -37,7 +37,7 @@ MODULES=(homebrew puppet rubytools)
 ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
 CACHE_ROOT='/var/cache/daas'
-CACHE_SOURCE='https://cdn.rawgit.com/inin-apac/puppet-me/fc66c2a57ffb8221792221579611d7e7ae3db5d6/config/sources.json'
+CACHE_CONFIG='https://cdn.rawgit.com/inin-apac/puppet-me/fc66c2a57ffb8221792221579611d7e7ae3db5d6/config/sources.json'
 CACHE_MOUNTS=()
 CONNECTED_VPNS=()
 
@@ -2298,7 +2298,7 @@ function cache_stuff() # {{{2
   status=$? && [[ $status != 0 ]] && return $status
   [[ -w "$CACHE_ROOT" ]]                          || $NOOP $SUDO chmod -R g+w "$CACHE_ROOT"
   status=$? && [[ $status != 0 ]] && return $status
-  download "$CACHE_SOURCE" "${CACHE_ROOT}"
+  download "$CACHE_CONFIG" "${CACHE_ROOT}"
   status=$? && [[ $status != 0 ]] && return $status
   document_catalog="${CACHE_ROOT}/sources.json"
 
@@ -2475,7 +2475,7 @@ function usage() # {{{2
   echo " --cache-root *path*  "
   echo "   Contains the location of the cache for ISO, MSI, etc files.  "
   echo "   Default /var/cache/daas"
-  echo " --cache-source *url*  "
+  echo " --cache-config *url*  "
   echo "   Contains the URL of the configuration file for the cached sources.  "
   echo "   Default value: https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/sources.json"
   echo " --credentials *url*  "
@@ -2666,18 +2666,18 @@ function parse_args() # {{{2
       --cache-root=)
         die "Argument for option $1 is missing."
         ;;
-      --cache-source)
+      --cache-config)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
-        CACHE_SOURCE=$2
-        MODULE_updateme_args="${MODULE_updateme_args} --cache-source '$CACHE_SOURCE'"
+        CACHE_CONFIG=$2
+        MODULE_updateme_args="${MODULE_updateme_args} --cache-config '$CACHE_CONFIG'"
         shift 2
         continue
         ;;
-      --cache-source=*?)
-        CACHE_SOURCE=${1#*=} # delete everything up to =
-        MODULE_updateme_args="${MODULE_updateme_args} --cache-source '$CACHE_SOURCE'"
+      --cache-config=*?)
+        CACHE_CONFIG=${1#*=} # delete everything up to =
+        MODULE_updateme_args="${MODULE_updateme_args} --cache-config '$CACHE_CONFIG'"
         ;;
-      --cache-source=)
+      --cache-config=)
         die "Argument for option $1 is missing."
         ;;
       --packer-home)

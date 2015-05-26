@@ -55,7 +55,7 @@ The possible options are:
 - --cache-root *path*  
   Contains the location of the cache for ISO, MSI, etc files.  
   Default: /var/cache/daas
-- --cache-source *url*  
+- --cache-config *url*  
   Contains the URL of the configuration file for the cached sources.  
   Default: [sources.json on cdn.rawgit.com](https://cdn.rawgit.com/inin-apac/puppet-me/da22e817bcbf197e5a5454f781c79ceaf98b93af/config/sources.json)
 --credentials *url*  
