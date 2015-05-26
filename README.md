@@ -43,6 +43,11 @@ For example, the following line will install the default macmini list:
 curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- --macmini
 ```
 
+The following line will install the default macmini list and will try to use a local folder for the files to cache (like a mounted USB disk), then a network share (ftp, smb, or afp), then whatever is matched in the cache configuration file:
+```sh
+curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- --macmini --cache-source /Volumes/JetDrive/ISO --cache-source afp://nas/public/ISO
+```
+
 There are some useful options to change the default behavior:
 
 You can always get help with:
@@ -57,7 +62,14 @@ The possible options are:
   Default: /var/cache/daas
 - --cache-config *url*  
   Contains the URL of the configuration file for the cached sources.  
-  Default: [sources.json on cdn.rawgit.com](https://cdn.rawgit.com/inin-apac/puppet-me/da22e817bcbf197e5a5454f781c79ceaf98b93af/config/sources.json)
+  Default: [sources.json on cdn.rawgit.com](https://cdn.rawgit.com/inin-apac/puppet-me/f74d7ec3242afce03a29e061eb93ed36cca1e9ee/config/sources.json)
+- --cache-sources *urls*  
+  Contains the URL of the configuration file for the cached sources.  
+- --cache-source *path_or_url*  
+  Contains the URL or the path where the sources can be downloaded before the configuration.  
+  This option can be repeated.  
+- --cache-source *path_or_url*  
+  Contains a comma separated list of URsL or paths where the sources can be downloaded before the configuration.  
 --credentials *url*  
   Store the credentials from the given url to the keychain.  
   Note the credentials have to follow [RFC 3986](https://tools.ietf.org/html/rfc3986).  
