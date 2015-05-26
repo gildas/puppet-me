@@ -2650,7 +2650,7 @@ function parse_args() # {{{2
         ;;
       --no-updates=*?)
         NO_UPDATES=${1#*=} # delete everything up to =
-        NO_UPDATES=(${MODULES//,/ })
+        NO_UPDATES=(${NO_UPDATES//,/ })
         ;;
       --cache-root)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
