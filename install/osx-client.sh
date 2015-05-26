@@ -19,6 +19,7 @@ userid=$(whoami)
 DOWNLOAD_MAX_ATTEMPTS=10
 CURL="/usr/bin/curl --location --progress-bar "
 SUDO="/usr/bin/sudo"
+RM="rm -rf"
 
 MODULE_homebrew_done=0
 MODULE_cache_done=0
@@ -2325,6 +2326,13 @@ function cache_stuff() # {{{2
     document=$(jq ".[] | select(.id == $document_id)" "$document_catalog")
     document_name=$(echo "$document" | jq --raw-output '.name')
     verbose "Caching $document_name"
+
+    document_destination=$(echo "$document" | jq --raw-output '.destination')
+    trace "  Destination: ${document_destination}"
+    [[ -z "$document_destination" || "$document_destination" == 'null' ]] && document_destination=$CACHE_ROOT
+    [[ ! "$document_destination" =~ ^\/.* ]]                              && document_destination="${CACHE_ROOT}/${document_destination}"
+    trace "  Destination: ${document_destination}"
+
     sources_size=$( echo $document | jq '.sources | length' )
     source_location=''
     source_url=''
@@ -2350,27 +2358,42 @@ function cache_stuff() # {{{2
       done
     fi
 
-    if [[ ! -z "$source_location" ]]; then
-      document_destination=$(echo "$document" | jq --raw-output '.destination')
-      trace "  Destination: ${document_destination}"
-      [[ -z "$document_destination" || "$document_destination" == 'null' ]] && document_destination=$CACHE_ROOT
-      [[ ! "$document_destination" =~ ^\/.* ]]                              && document_destination="${CACHE_ROOT}/${document_destination}"
-      trace "  Destination: ${document_destination}"
-      document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
-      document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
-      if [[ -n $source_vpn ]]; then
-        vpn_start --server="${source_vpn}"
-        status=$? && [[ $status != 0 ]] && return $status
-      fi
-      download $source_has_resume $source_need_auth $source_url "$document_destination" $document_checksum_type $document_checksum
-      status=$? && [[ $status != 0 ]] && return $status
-      if [[ -n $source_vpn ]]; then
-        vpn_stop --server="${source_vpn}"
-        status=$? && [[ $status != 0 ]] && return $status
-      fi
-    else
-      warn "Cannot cache $( echo "$document" | jq --raw-output '.name' ), no source available"
-    fi
+    document_action=$(echo "$document" | jq --raw-output '.action')
+    [[ -z "$document_action" || "$document_action" == 'null' ]] && document_action='download'
+    verbose "Action: $document_action"
+    case $document_acion in
+      delete)
+        if [[ -n "$document_destination" ]]; then
+          verbose "Deleting ${document_name}"
+          $NOOP $RM "$document_destination"
+          if [[ $? != 0 ]]; then
+            trace "Cannot delete as a standard user, trying as a sudoer..."
+            $NOOP $SUDO $RM "$document_destination"
+            status=$? && [[ $status != 0 ]] && error "Error $status: cannot delete $document_destination" && return $status
+          fi
+        else
+          warn "Cannot delete ${document_name}, no destination available"
+        fi
+        ;;
+      *)
+        if [[ -n "$source_location" ]]; then
+          document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
+          document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
+          if [[ -n $source_vpn ]]; then
+            vpn_start --server="${source_vpn}"
+            status=$? && [[ $status != 0 ]] && return $status
+          fi
+          download $source_has_resume $source_need_auth $source_url "$document_destination" $document_checksum_type $document_checksum
+          status=$? && [[ $status != 0 ]] && return $status
+          if [[ -n $source_vpn ]]; then
+            vpn_stop --server="${source_vpn}"
+            status=$? && [[ $status != 0 ]] && return $status
+          fi
+        else
+          warn "Cannot cache ${document_name}, no source available"
+        fi
+       ;;
+    esac
   done
   MODULE_cache_done=1
   return 0
