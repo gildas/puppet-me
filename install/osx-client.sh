@@ -1356,7 +1356,7 @@ function download() # {{{2
     trace "  Downloaded checksum: ${target_checksum} (Expected: ${checksum_value})"
     if [[ ! $target_checksum =~ \s*$checksum_value\s* ]]; then
       error "Invalid ${document_checksum_type} checksum for the downloaded document"
-      $NOOP $_SUDO rm -f "$target_path"
+      $NOOP $_SUDO $RM "$target_path"
       return 1
     else
       echo -n "$target_checksum" | $_SUDO tee "${target_path}.$checksum_type" > /dev/null
@@ -2320,8 +2320,9 @@ function cache_stuff() # {{{2
   done
   verbose "IP Addresses: ${ip_addresses[*]}"
 
+  failures=()
+  successes=()
   document_ids=( $(jq '.[] | .id' "$document_catalog") )
-  
   for document_id in ${document_ids[*]}; do
     document=$(jq ".[] | select(.id == $document_id)" "$document_catalog")
     document_name=$(echo "$document" | jq --raw-output '.name')
@@ -2360,41 +2361,53 @@ function cache_stuff() # {{{2
 
     document_action=$(echo "$document" | jq --raw-output '.action')
     [[ -z "$document_action" || "$document_action" == 'null' ]] && document_action='download'
-    verbose "Action: $document_action"
-    case $document_acion in
-      delete)
+    trace "Action: \"$document_action\""
+    case $document_action in
+      'delete')
         if [[ -n "$document_destination" ]]; then
-          verbose "Deleting ${document_name}"
-          $NOOP $RM "$document_destination"
+          verbose "  Deleting ${document_name}"
+          trace "$RM $document_destination"
+          $NOOP $RM $document_destination
           if [[ $? != 0 ]]; then
             trace "Cannot delete as a standard user, trying as a sudoer..."
-            $NOOP $SUDO $RM "$document_destination"
-            status=$? && [[ $status != 0 ]] && error "Error $status: cannot delete $document_destination" && return $status
+          trace "$SUDO $RM $document_destination"
+            $NOOP $SUDO $RM $document_destination
+            status=$? && [[ $status != 0 ]] && error "  Error $status: cannot delete $document_destination" && failures+=( "${document_action}|${status}|${document_destination}" )
           fi
+          verbose "  Deleted."
         else
-          warn "Cannot delete ${document_name}, no destination available"
+          warn "  Cannot delete ${document_name}, destination has been deleted already"
         fi
         ;;
-      *)
+      'download')
         if [[ -n "$source_location" ]]; then
           document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
           document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
           if [[ -n $source_vpn ]]; then
             vpn_start --server="${source_vpn}"
-            status=$? && [[ $status != 0 ]] && return $status
+            status=$? && [[ $status != 0 ]] && error "  Error $status: cannot start vpn $source_vpn" && failures+=( "start_vpn|${status}|${source_vpn}" ) && continue
           fi
           download $source_has_resume $source_need_auth $source_url "$document_destination" $document_checksum_type $document_checksum
-          status=$? && [[ $status != 0 ]] && return $status
+          status=$? && [[ $status != 0 ]] && error "  Error $status: cannot $document_action $document_name" && failures+=( "${document_action}|${status}|${document_name}|${source_url}" )
           if [[ -n $source_vpn ]]; then
             vpn_stop --server="${source_vpn}"
-            status=$? && [[ $status != 0 ]] && return $status
+            status=$? && [[ $status != 0 ]] && error "  Error $status: cannot stop vpn $source_vpn" && failures+=( "stop_vpn|${status}|${source_vpn}" ) && continue
           fi
         else
-          warn "Cannot cache ${document_name}, no source available"
+          warn "  Cannot cache ${document_name}, no source available"
         fi
+       ;;
+     *)
+       warn "  Invalid cache action: ${document_action}, ignoring"
        ;;
     esac
   done
+  trace "Successes: [ ${successes[@]} ]"
+  trace "failures:  [ ${failures[@]} ]"
+  if [[ ${#failures[@]} > 0 ]]; then
+    error "${#failures[@]} failures while caching"
+    return 1
+  fi
   MODULE_cache_done=1
   return 0
 } # }}}2
