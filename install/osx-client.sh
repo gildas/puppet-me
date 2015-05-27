@@ -38,6 +38,7 @@ ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vm
 
 CACHE_ROOT='/var/cache/daas'
 CACHE_CONFIG='https://cdn.rawgit.com/inin-apac/puppet-me/f74d7ec3242afce03a29e061eb93ed36cca1e9ee/config/sources.json'
+CACHE_SOURCES=()
 CACHE_MOUNTS=()
 CONNECTED_VPNS=()
 
@@ -2327,37 +2328,13 @@ function cache_stuff() # {{{2
     document=$(jq ".[] | select(.id == $document_id)" "$document_catalog")
     document_name=$(echo "$document" | jq --raw-output '.name')
     verbose "Caching $document_name"
+    trace "processing: $document"
 
     document_destination=$(echo "$document" | jq --raw-output '.destination')
     trace "  Destination: ${document_destination}"
     [[ -z "$document_destination" || "$document_destination" == 'null' ]] && document_destination=$CACHE_ROOT
     [[ ! "$document_destination" =~ ^\/.* ]]                              && document_destination="${CACHE_ROOT}/${document_destination}"
     trace "  Destination: ${document_destination}"
-
-    sources_size=$( echo $document | jq '.sources | length' )
-    source_location=''
-    source_url=''
-    if [[ $sources_size > 0 ]]; then
-      for ip_address in ${ip_addresses[*]}; do
-        for (( i=0; i < $sources_size; i++ )); do
-          source=$( echo "$document" | jq ".sources[$i]" )
-          source_network=$( echo "$source" | jq '.network' )
-          if [[ \"$ip_address\" =~ $source_network  ]]; then
-            source_location=$(echo "$source" | jq --raw-output '.location')
-            source_url=$(echo "$source" | jq --raw-output '.url')
-            source_has_resume=''
-            [[ "$(echo "$source" | jq '.has_resume')" == 'true' ]] && source_has_resume='--has_resume'
-            source_need_auth=''
-            [[ "$(echo "$source" | jq '.need_auth')" == 'true' ]] && source_need_auth='--need_auth'
-            source_vpn="$(echo "$source" | jq --raw-output '.vpn' | grep -v null)"
-            #debug   "  Matched $source_network from $ip_address at $source_location"
-            verbose "  Downloading from $source_location"
-            break
-          fi
-        done
-        [[ ! -z "$source_location" ]] && break
-      done
-    fi
 
     document_action=$(echo "$document" | jq --raw-output '.action')
     [[ -z "$document_action" || "$document_action" == 'null' ]] && document_action='download'
@@ -2380,21 +2357,69 @@ function cache_stuff() # {{{2
         fi
         ;;
       'download')
-        if [[ -n "$source_location" ]]; then
-          document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
-          document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
-          if [[ -n $source_vpn ]]; then
-            vpn_start --server="${source_vpn}"
-            status=$? && [[ $status != 0 ]] && error "  Error $status: cannot start vpn $source_vpn" && failures+=( "start_vpn|${status}|${source_vpn}" ) && continue
+        source_filename=$(echo "$document" | jq --raw-output '.filename')
+
+        trace "First cache repositories to try: [ ${CACHE_SOURCES[@]} ]"
+        sources=( )
+        for source in ${CACHE_SOURCES[@]}; do
+          trace "Adding $source"
+          location="{ \"location\": \"Local\", \"url\": \"$source\" }"
+          sources+=( "$location" )
+        done
+
+        locations_size=$( echo "$document" | jq '.locations | length' )
+        trace "configuration contains $locations_size location(s) for $document_name"
+        if [[ $locations_size > 0 ]]; then
+          for ip_address in ${ip_addresses[*]}; do
+            trace "Checking IP address: ${ip_address}..."
+            for (( i=0; i < $locations_size; i++ )); do
+              location=$( echo "$document" | jq ".locations[$i]" )
+              location_network=$( echo "$location" | jq '.network' )
+              trace "  against network: $location_network"
+              if [[ \"$ip_address\" =~ $location_network ]]; then
+                trace "  Match!!!!"
+                trace "  Adding location: $location"
+                sources+=( "$location" )
+              fi
+            done
+          done
+        fi
+
+        trace "${#sources[@]} Source candidates: [ ${sources[@]} ]"
+        success=0
+        failure=''
+        for location in "${sources[@]}"; do
+          trace "Analyzing location: $location"
+          source_location=$(echo "$location" | jq --raw-output '.location')
+          source_url="$(echo "$location" | jq --raw-output '.url')"
+          source_url="${source_url%%/}/${source_filename}"
+          source_has_resume=''
+          [[ "$(echo "$location" | jq '.has_resume')" == 'true' ]] && source_has_resume='--has_resume'
+          source_need_auth=''
+          [[ "$(echo "$location" | jq '.need_auth')" == 'true' ]] && source_need_auth='--need_auth'
+          source_vpn="$(echo "$location" | jq --raw-output '.vpn' | grep -v null)"
+          verbose "  Downloading from $source_location"
+          trace   "  Source URL: $source_url"
+          if [[ -n "$source_location" ]]; then
+            document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
+            document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
+            if [[ -n $source_vpn ]]; then
+              vpn_start --server="${source_vpn}"
+              status=$? && [[ $status != 0 ]] && failure=( "start_vpn|${status}|${source_vpn}" ) && continue
+            fi
+            download $source_has_resume $source_need_auth $source_url "$document_destination" $document_checksum_type $document_checksum
+            status=$? && [[ $status != 0 ]] && failure=( "${document_action}|${status}|${document_name}|${source_url}" ) && continue
+            if [[ -n $source_vpn ]]; then
+              vpn_stop --server="${source_vpn}"
+              status=$? && [[ $status != 0 ]] && warn "  Warning $status: cannot stop vpn $source_vpn"
+            fi
+            success=1
+            break
           fi
-          download $source_has_resume $source_need_auth $source_url "$document_destination" $document_checksum_type $document_checksum
-          status=$? && [[ $status != 0 ]] && error "  Error $status: cannot $document_action $document_name" && failures+=( "${document_action}|${status}|${document_name}|${source_url}" )
-          if [[ -n $source_vpn ]]; then
-            vpn_stop --server="${source_vpn}"
-            status=$? && [[ $status != 0 ]] && error "  Error $status: cannot stop vpn $source_vpn" && failures+=( "stop_vpn|${status}|${source_vpn}" ) && continue
-          fi
-        else
+        done
+        if [[ $success == 0 ]]; then
           warn "  Cannot cache ${document_name}, no source available"
+          failures+=( "$failure" )
         fi
        ;;
      *)
@@ -2478,6 +2503,13 @@ function usage() # {{{2
   echo " --cache-config *url*  "
   echo "   Contains the URL of the configuration file for the cached sources.  "
   echo "   Default value: https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/sources.json"
+  echo " --cache-sources *urls*  "
+  echo "   Contains the URL of the configuration file for the cached sources.  "
+  echo " --cache-source *path_or_url*  "
+  echo "   Contains the URL or the path where the sources can be downloaded before the configuration.  "
+  echo "   This option can be repeated.  "
+  echo " --cache-source *path_or_url*  "
+  echo "   Contains a comma separated list of URsL or paths where the sources can be downloaded before the configuration.  "
   echo " --credentials *url*  "
   echo "   Store the credentials from the given url to the keychain.  "
   echo "   Note the credentials have to follow RFC 3986.  "
@@ -2678,6 +2710,35 @@ function parse_args() # {{{2
         MODULE_updateme_args="${MODULE_updateme_args} --cache-config '$CACHE_CONFIG'"
         ;;
       --cache-config=)
+        die "Argument for option $1 is missing."
+        ;;
+      --cache-sources)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        CACHE_SOURCES=(${2//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} --cache-sources $2"
+        shift 2
+        continue
+        ;;
+      --cache-sources=*?)
+        CACHE_SOURCES=${1#*=} # delete everything up to =
+        CACHE_SOURCES=(${CACHE_SOURCES//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} $1"
+        ;;
+      --cache-sources=)
+        die "Argument for option $1 is missing."
+        ;;
+      --cache-source)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
+        CACHE_SOURCES+=( "$2" )
+        MODULE_updateme_args="${MODULE_updateme_args} --cache-source '$2'"
+        shift 2
+        continue
+        ;;
+      --cache-source=*?)
+        CACHE_SOURCES+=( "${1#*=}" ) # delete everything up to =
+        MODULE_updateme_args="${MODULE_updateme_args} --cache-source '$1'"
+        ;;
+      --cache-source=)
         die "Argument for option $1 is missing."
         ;;
       --packer-home)
