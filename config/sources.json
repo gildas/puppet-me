@@ -3,32 +3,33 @@
     "name": "Media Server Licenses",
     "id": "MediaServer-licenses",
     "destination": "Licenses/MediaServer",
-    "sources":
+    "filename": "mediaservertest_40_0?core*_prod_vm.i3lic",
+    "locations":
     [
       {
         "location": "APAC",
         "network":  "172.22.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_0?core*_prod_vm.i3lic"
+        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/"
       },
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_0?core*_prod_vm.i3lic"
+        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/"
       },
       {
         "location": "HQ",
         "network":  "172.17.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_0?core*_prod_vm.i3lic"
+        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/"
       },
       {
         "location": "Intranet",
         "network":  ".*",
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
-        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/mediaservertest_40_0?core*_prod_vm.i3lic"
+        "url": "smb://indytestfiles/Testlab_Software/MediaServerTestLicenses/production_license_with_vm_feature_enabled/"
       }
     ]
   },
@@ -36,50 +37,51 @@
     "name": "Windows 2012R2 Evaluation",
     "id": "Windows_2012R2",
     "checksum": { "type": "MD5", "value": "458ff91f8abc21b75cb544744bf92e6a" },
-    "sources":
+    "filename": "9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO",
+    "locations":
     [
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
+        "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/"
       },
       {
         "location": "Melbourne",
         "network":  "172.22.40.[0-9]+/21",
         "need_auth": true,
-        "url": "smb://melfiles01.apac.inin.com/software/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
+        "url": "smb://apac.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/"
       },
       {
         "location": "Sydney",
         "network":  "172.22.80.[0-9]+/23",
         "need_auth": true,
-        "url": "smb://sydfiles01.apac.inin.com/software/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
+        "url": "smb://apac.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/"
       },
       {
         "location": "Sydney VPN",
         "network":  "172.22.81.[0-9]+/23",
         "need_auth": true,
-        "url": "smb://sydfiles01.apac.inin.com/software/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
+        "url": "smb://apac.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/"
       },
       {
         "location": "Japan",
         "network":  "172.22.16.[0-9]+/23",
         "need_auth": true,
-        "url": "smb://tyofiles.apac.inin.com/AppShare/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
+        "url": "smb://apac.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/"
       },
       {
         "location": "I3Guest EMEA",
         "network":  "192.168.48.[0-9]+/24",
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
-        "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
+        "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/"
       },
       {
         "location": "Internet",
         "network":  ".*",
         "has_resume": true,
-        "url": "http://download.microsoft.com/download/6/2/A/62A76ABB-9990-4EFC-A4FE-C7D698DAEB96/9600.16384.WINBLUE_RTM.130821-1623_X64FRE_SERVER_EVAL_EN-US-IRM_SSS_X64FREE_EN-US_DV5.ISO"
+        "url": "http://download.microsoft.com/download/6/2/A/62A76ABB-9990-4EFC-A4FE-C7D698DAEB96/"
       }
     ]
   },
@@ -87,32 +89,33 @@
     "name": "SQL 2014 Express",
     "id": "SQL_2014",
     "checksum": { "type": "MD5", "value": "3bb7d34aaf063b73ac92d31aad896ba6" },
-    "sources":
+    "filename": "SQLEXPRWT_x64_ENU.exe",
+    "locations":
     [
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/SQLServer/2014/SQLEXPRWT_x64_ENU.exe"
+        "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/SQLServer/2014/"
       },
       {
         "location": "Japan",
         "network":  "172.22.16.[0-9]+/23",
         "need_auth": true,
-        "url": "smb://tyofiles.apac.inin.com/AppShare/Microsoft/Evaluation/SQLServer/2014/SQLEXPRWT_x64_ENU.exe"
+        "url": "smb://apac.inin.com/Software/Microsoft/Evaluation/SQLServer/2014/"
       },
       {
         "location": "I3Guest EMEA",
         "network":  "192.168.48.[0-9]+/24",
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
-        "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/SQLServer/2014/SQLEXPRWT_x64_ENU.exe"
+        "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/SQLServer/2014/"
       },
       {
         "location": "Internet",
         "network":  ".*",
         "has_resume": true,
-        "url": "http://download.microsoft.com/download/E/A/E/EAE6F7FC-767A-4038-A954-49B8B05D04EB/ExpressAndTools%2064BIT/SQLEXPRWT_x64_ENU.exe"
+        "url": "http://download.microsoft.com/download/E/A/E/EAE6F7FC-767A-4038-A954-49B8B05D04EB/ExpressAndTools%2064BIT/"
       }
     ]
   },
@@ -120,45 +123,46 @@
     "name": "CIC 2015R3",
     "id": "CIC_2015R3",
     "checksum": { "type": "MD5", "value": "ae047963db82e11024d62c9daf704fd0" },
-    "sources":
+    "filename": "CIC_2015_R3.iso",
+    "locations":
     [
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/CIC_2015_R3.iso"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/"
       },
       {
         "location": "I3Guest EMEA",
         "network":  "192.168.48.[0-9]+/24",
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/CIC_2015_R3.iso"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/"
       },
       {
         "location": "Melbourne",
         "network":  "172.22.40.[0-9]+/21",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R3/CIC_2015_R3.iso"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R3/"
       },
       {
         "location": "Sydney",
         "network":  "172.22.8[0-1].[0-9]+/23",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R3/CIC_2015_R3.iso"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R3/"
       },
       {
         "location": "Japan",
         "network":  "172.22.16.[0-9]+/23",
         "need_auth": true,
-        "url": "smb://apac.inin.com/AppShare/ININ/Interaction%20Center/2015R3/CIC_2015_R3.iso"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R3/"
       },
       {
         "location": "Internet",
         "network":  ".*",
         "need_auth": true,
         "has_resume": true,
-        "url": "ftp://ftp.inin.com/Download/CIC2015R3/CIC/CIC_2015_R3.iso"
+        "url": "ftp://ftp.inin.com/Download/CIC2015R3/CIC/"
       }
     ]
   },
@@ -166,45 +170,46 @@
     "name": "CIC 2015R3 Patch 2",
     "id": "CIC_2015R3_Patch2",
     "checksum": { "type": "MD5", "value": "c6cca6bbf0bbd4b782414e5f5ca7126f" },
-    "sources":
+    "filename": "CIC_2015_R3_Patch2.iso",
+    "locations":
     [
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/CIC_2015_R3_Patch2.iso"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/"
       },
       {
         "location": "I3Guest EMEA",
         "network":  "192.168.48.[0-9]+/24",
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/CIC_2015_R3_Patch2.iso"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/"
       },
       {
         "location": "Melbourne",
         "network":  "172.22.40.[0-9]+/21",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R3/CIC_2015_R3_Patch2.iso"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R3/"
       },
       {
         "location": "Sydney",
         "network":  "172.22.8[0-1].[0-9]+/23",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R3/CIC_2015_R3_Patch2.iso"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R3/"
       },
       {
         "location": "Japan",
         "network":  "172.22.16.[0-9]+/23",
         "need_auth": true,
-        "url": "smb://apac.inin.com/AppShare/ININ/Interaction%20Center/2015R3/CIC_2015_R3_Patch2.iso"
+        "url": "smb://apac.inin.com/AppShare/ININ/Interaction%20Center/2015R3/"
       },
       {
         "location": "Internet",
         "network":  ".*",
         "need_auth": true,
         "has_resume": true,
-        "url": "ftp://ftp.inin.com/Download/CIC2015R3/CIC/CIC_2015_R3_Patch2.iso"
+        "url": "ftp://ftp.inin.com/Download/CIC2015R3/CIC/"
       }
     ]
   },
@@ -224,45 +229,46 @@
     "name": "Dialer 2015R3",
     "id": "Dialer_2015R3",
     "checksum": { "type": "MD5", "value": "5d67f744dd7a596c80a92a852ff4e1fc" },
-    "sources":
+    "filename": "Dialer_2015_R3.iso",
+    "locations":
     [
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/Dialer_2015_R3.iso"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
       },
       {
         "location": "I3Guest EMEA",
         "network":  "192.168.48.[0-9]+/24",
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/Dialer_2015_R3.iso"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
       },
       {
         "location": "Melbourne",
         "network":  "172.22.40.[0-9]+/21",
         "need_auth": true,
-        "url": "smb://apac.inin.comSsoftware/ININ/Interaction%20Dialer/2015R3/Dialer_2015_R3.iso"
+        "url": "smb://apac.inin.comSsoftware/ININ/Interaction%20Dialer/2015R3/"
       },
       {
         "location": "Sydney",
         "network":  "172.22.8[0-1].[0-9]+/23",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2015R3/Dialer_2015_R3.iso"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
       },
       {
         "location": "Japan",
         "network":  "172.22.16.[0-9]+/23",
         "need_auth": true,
-        "url": "smb://tyofiles.apac.inin.com/AppShare/ININ/Interaction%20Dialer/2015R3/Dialer_2015_R3.iso"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
       },
       {
         "location": "Internet",
         "network":  ".*",
         "need_auth": true,
         "has_resume": true,
-        "url": "ftp://ftp.inin.com/Download/CIC2015R3/Dialer/Dialer_2015_R3.iso"
+        "url": "ftp://ftp.inin.com/Download/CIC2015R3/Dialer/"
       }
     ]
   },
@@ -270,45 +276,46 @@
     "name": "Dialer 2015R3 Patch 2",
     "id": "Dialer_2015R3_Patch2",
     "checksum": { "type": "MD5", "value": "c69d2b72712c84d12e5d6ebe518a3ad2" },
-    "sources":
+    "filename": "Dialer_2015_R3_Patch2.iso",
+    "locations":
     [
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/Dialer_2015_R3_Patch2.iso"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
       },
       {
         "location": "I3Guest EMEA",
         "network":  "192.168.48.[0-9]+/24",
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/Dialer_2015_R3_Patch2.iso"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
       },
       {
         "location": "Melbourne",
         "network":  "172.22.40.[0-9]+/21",
         "need_auth": true,
-        "url": "smb://apac.inin.comSsoftware/ININ/Interaction%20Dialer/2015R3/Dialer_2015_R3_Patch2.iso"
+        "url": "smb://apac.inin.comSsoftware/ININ/Interaction%20Dialer/2015R3/"
       },
       {
         "location": "Sydney",
         "network":  "172.22.8[0-1].[0-9]+/23",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2015R3/Dialer_2015_R3_Patch2.iso"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
       },
       {
         "location": "Japan",
         "network":  "172.22.16.[0-9]+/23",
         "need_auth": true,
-        "url": "smb://tyofiles.apac.inin.com/AppShare/ININ/Interaction%20Dialer/2015R3/Dialer_2015_R3_Patch2.iso"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
       },
       {
         "location": "Internet",
         "network":  ".*",
         "need_auth": true,
         "has_resume": true,
-        "url": "ftp://ftp.inin.com/Download/CIC2015R3/Dialer/Dialer_2015_R3_Patch2.iso"
+        "url": "ftp://ftp.inin.com/Download/CIC2015R3/Dialer/"
       }
     ]
   },
