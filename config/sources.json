@@ -194,7 +194,7 @@
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/21|3",
         "need_auth": true,
-        "url": "smb://apac.inin.comSsoftware/ININ/Interaction%20Dialer/2015R3/"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
       },
       {
         "location": "EMEA",
@@ -229,7 +229,7 @@
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/21|3",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Ssoftware/ININ/Interaction%20Dialer/2015R3/"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
       },
       {
         "location": "EMEA",
