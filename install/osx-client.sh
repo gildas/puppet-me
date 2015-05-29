@@ -2327,7 +2327,6 @@ function cache_stuff() # {{{2
   for document_id in ${document_ids[*]}; do
     document=$(jq ".[] | select(.id == $document_id)" "$document_catalog")
     document_name=$(echo "$document" | jq --raw-output '.name')
-    verbose "Caching $document_name"
     trace "processing: $document"
 
     document_destination=$(echo "$document" | jq --raw-output '.destination')
@@ -2341,8 +2340,8 @@ function cache_stuff() # {{{2
     trace "Action: \"$document_action\""
     case $document_action in
       'delete')
-        if [[ -n "$document_destination" ]]; then
-          verbose "  Deleting ${document_name}"
+        if [[ -n "$document_destination" && -f "$document_destination" ]]; then
+          verbose "Deleting ${document_name}"
           trace "$RM $document_destination"
           $NOOP $RM $document_destination
           if [[ $? != 0 ]]; then
@@ -2352,11 +2351,10 @@ function cache_stuff() # {{{2
             status=$? && [[ $status != 0 ]] && error "  Error $status: cannot delete $document_destination" && failures+=( "${document_action}|${status}|${document_destination}" )
           fi
           verbose "  Deleted."
-        else
-          warn "  Cannot delete ${document_name}, destination has been deleted already"
         fi
         ;;
       'download')
+       verbose "Caching $document_name"
         source_filename=$(echo "$document" | jq --raw-output '.filename')
 
         trace "First cache repositories to try: [ ${CACHE_SOURCES[@]} ]"
