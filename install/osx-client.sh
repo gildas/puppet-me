@@ -37,7 +37,7 @@ MODULES=(homebrew puppet rubytools)
 ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
 CACHE_ROOT='/var/cache/daas'
-CACHE_CONFIG='https://cdn.rawgit.com/inin-apac/puppet-me/f74d7ec3242afce03a29e061eb93ed36cca1e9ee/config/sources.json'
+CACHE_CONFIG='https://cdn.rawgit.com/inin-apac/puppet-me/28507d3aea61782f6163e7593b626b6459e6b809/config/sources.json'
 CACHE_SOURCES=()
 CACHE_MOUNTS=()
 CONNECTED_VPNS=()
