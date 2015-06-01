@@ -126,13 +126,6 @@
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
         "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/"
-      },
-      {
-        "location": "Internet",
-        "network":  ".*",
-        "need_auth": true,
-        "has_resume": true,
-        "url": "ftp://ftp.inin.com/Download/CIC2015R3/CIC/"
       }
     ]
   },
@@ -161,13 +154,6 @@
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
         "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/"
-      },
-      {
-        "location": "Internet",
-        "network":  ".*",
-        "need_auth": true,
-        "has_resume": true,
-        "url": "ftp://ftp.inin.com/Download/CIC2015R3/CIC/"
       }
     ]
   },
@@ -208,13 +194,6 @@
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
         "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
-      },
-      {
-        "location": "Internet",
-        "network":  ".*",
-        "need_auth": true,
-        "has_resume": true,
-        "url": "ftp://ftp.inin.com/Download/CIC2015R3/Dialer/"
       }
     ]
   },
@@ -243,13 +222,6 @@
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
         "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
-      },
-      {
-        "location": "Internet",
-        "network":  ".*",
-        "need_auth": true,
-        "has_resume": true,
-        "url": "ftp://ftp.inin.com/Download/CIC2015R3/Dialer/"
       }
     ]
   },
