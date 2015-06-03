@@ -1,0 +1,18 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "windows-2012R2-full-standard-eval"
+  config.vm.box_check_update = false
+
+  config.vm.guest             = :windows
+  config.windows.halt_timeout = 15
+  config.vm.communicator      = 'winrm'
+
+  config.winrm.username = 'vagrant'
+  config.winrm.password = 'vagrant'
+
+  config.vm.synced_folder "../../config",  "/config"
+  config.vm.synced_folder "../../install", "/scripts"
+  config.vm.synced_folder "../../tmp",     "/data-tmp"
+end
