@@ -6,6 +6,7 @@ Vagrant.configure(2) do |config|
   config.vm.box = "darwin-yosemite"
   config.vm.box_check_update = false
 
+  config.vm.hostname    = 'puppet-me'
   config.ssh.insert_key = false
 
   FileUtils.mkdir_p '../../tmp' unless Dir.exist? '../../tmp'
