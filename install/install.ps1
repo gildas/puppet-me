@@ -247,3 +247,12 @@ else
     Write-Error "Could not set the runinterval"
   }
 }
+
+# TODO:
+# chocolatey
+# git
+# vagrant 1.6.5
+# packer
+# virtualbox
+# vmware, vagrant-vmware
+# folders
