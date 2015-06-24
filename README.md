@@ -133,6 +133,8 @@ The possible options are:
 - --parallels-home *path*  
   Contains the location virtual machine data will be stored.  
   Default value: $HOME/Documents/Virtual Machines
+- --parallels-license *key*  
+  Contains the license key to configure Parallels Desktop.  
 - --quiet  
   Runs the script without any message.
 - --userid *value*  

@@ -2566,6 +2566,8 @@ function usage() # {{{2
   echo " --parallels-home *path*  "
   echo "   Contains the location virtual machine data will be stored.  "
   echo "   Default: \$HOME/Documents/Virtual Machines"
+  echo " --parallels-license *key*  "
+  echo "   Contains the license key to configure Parallels Desktop.  "
   echo " --quiet  "
   echo "   Runs the script without any message."
   echo " --userid *value*  "
