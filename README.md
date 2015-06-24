@@ -135,6 +135,9 @@ The possible options are:
   Default value: $HOME/Documents/Virtual Machines
 - --parallels-license *key*  
   Contains the license key to configure Parallels Desktop.  
+- --password *password*  
+  Contains the sudo password for elevated tasks.  
+  Warning: The password will be viewable in your shell history as well as on the current command line.  
 - --quiet  
   Runs the script without any message.
 - --userid *value*  

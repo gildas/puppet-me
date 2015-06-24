@@ -15,6 +15,7 @@ LOG="$HOME/Downloads/puppet-me.log"
 tmp="tmp"
 puppet_master="puppet"
 userid=$(whoami)
+SUDO_PASSWORD=""
 
 DOWNLOAD_MAX_ATTEMPTS=10
 CURL="/usr/bin/curl --location --progress-bar "
@@ -1580,9 +1581,14 @@ function sudo_init() #{{{2
     fi
   fi
   warn "You might have to enter your password to verify you can install software"
+  if [[ -n $SUDO_PASSWORD ]]; then
+    echo "$SUDO_PASSWORD" | /usr/bin/sudo -S -p "." -v
+    status=$? && [[ $status != 0 ]] && die "Invalid sudo password" $status
+  fi
+
   if [[ $PROMPT_USE_GUI == 1 ]]; then
     trace "We need to create a prompt dialog box for sudo"
-    SUDO="/usr/bin/sudo -A"
+    export SUDO="/usr/bin/sudo -A"
     if [[ ! -x /usr/local/bin/sudo_askpass ]]; then
       sudo_askpass=$(mktemp -t puppet-me)
       chmod u+x ${sudo_askpass}
@@ -2570,6 +2576,9 @@ function usage() # {{{2
   echo "   Default: \$HOME/Documents/Virtual Machines"
   echo " --parallels-license *key*  "
   echo "   Contains the license key to configure Parallels Desktop.  "
+  echo " --password *password*  "
+  echo "   Contains the sudo password for elevated tasks.  "
+  echo "   Warning: The password will be viewable in your shell history as well as on the current command line.  "
   echo " --quiet  "
   echo "   Runs the script without any message."
   echo " --userid *value*  "
@@ -2629,6 +2638,18 @@ function parse_args() # {{{2
         MODULE_updateme_args="${MODULE_updateme_args} --userid=$userid"
       ;;
       --userid=|--user=)
+        die "Argument for option $1 is missing"
+        ;;
+      --password|-u)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing"
+        SUDO_PASSWORD=$2
+        shift 2
+        continue
+      ;;
+      --password=*?)
+        SUDO_PASSWORD=${1#*=} # delete everything up to =
+      ;;
+      --password=)
         die "Argument for option $1 is missing"
         ;;
       --macmini|--macmini-vmware)
