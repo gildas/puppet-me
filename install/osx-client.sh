@@ -2264,10 +2264,12 @@ function install_vmware() # {{{2
     verbose "Initializing VMWare Fusion..."
     $NOOP $SUDO "$vmware_bin/Initialize VMware Fusion.tool" set
     status=$? && [[ $status != 0 ]] && return $status
-    verbose "Configuring license..."
-    $NOOP $SUDO "$vmware_bin/licenses/vmware-licensetool" enter "$MODULE_VMWARE_KEY" '' '' '7.0' 'VMware Fusion for Mac OS' '' \
-               | grep -q '200 License operation succeeded.'
-    status=$? && [[ $status != 0 ]] && return $status
+    if [[ -n $MODULE_VMWARE_KEY ]]; then
+      verbose "Configuring license..."
+      $NOOP $SUDO "$vmware_bin/licenses/vmware-licensetool" enter "$MODULE_VMWARE_KEY" '' '' '7.0' 'VMware Fusion for Mac OS' '' \
+                  | grep -q '200 License operation succeeded.'
+      status=$? && [[ $status != 0 ]] && return $status
+    fi
   fi
 
   if [[ -n "$MODULE_VMWARE_HOME" ]]; then
