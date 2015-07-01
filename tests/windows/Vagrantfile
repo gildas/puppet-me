@@ -3,7 +3,7 @@
 require 'fileutils'
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "windows-2012R2-full-standard-eval"
+  config.vm.box = "windows-7-enterprise-eval"
   config.vm.box_check_update = false
 
   config.vm.guest             = :windows
