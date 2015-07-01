@@ -1,11 +1,13 @@
 param(
-  [Parameter(Mandatory=$True)][string]  $PuppetMaster,
-  [Parameter(Mandatory=$False)][string] $CertServer = $PuppetMaster,
-  [Parameter(Mandatory=$True)][string]  $Certname,
-  [Parameter(Mandatory=$False)][string] $Environment='production'
+  [Parameter(Mandatory=$True)[string[]] $Modules
+
+#  [Parameter(Mandatory=$True)][string]  $PuppetMaster,
+#  [Parameter(Mandatory=$False)][string] $CertServer = $PuppetMaster,
+#  [Parameter(Mandatory=$True)][string]  $Certname,
+#  [Parameter(Mandatory=$False)][string] $Environment='production'
 )
 
-function Start-ProcessAsAdmin(
+function Start-ProcessAsAdmin( # {{{2
   [string] $FilePath,
   [string] $Arguments)
 {
@@ -45,9 +47,9 @@ function Start-ProcessAsAdmin(
   {
     Write-Error "Cannot start process"
   }
-}
+} # }}}2
 
-function Read-HostEx(
+function Read-HostEx( # {{{2
   [string] $Prompt,
   [string] $CurrentValue,
   [string] $Default,
@@ -65,9 +67,9 @@ function Read-HostEx(
     return $result
   }
   return $CurrentValue
-}
+} # }}}2
 
-function Get-Info(
+function Get-Info( # {{{2
   [string] $Module,
   [string] $Version,
   [string] $Source)
@@ -92,9 +94,9 @@ function Get-Info(
   {
     $null
   }
-}
+} # }}}2
 
-function Download-File(
+function Download-File( # {{{2
   [string] $Target,
   [string] $Source,
   [switch] $Force)
@@ -110,8 +112,10 @@ function Download-File(
   {
     Write-Debug "[Download-File]: Already downloaded"
   }
-}
+} # }}}2
 
+function PuppetStuff() # {{{2
+{
 $PuppetConfig = 'C:/ProgramData/PuppetLabs/puppet/etc/puppet.conf'
 $info = Get-Info -Module 'puppet' -Version "*" -Source "http://downloads.puppetlabs.com/windows"
 Write-Host "Checking if puppet version $($info.version) is installed already"
@@ -247,12 +251,27 @@ else
     Write-Error "Could not set the runinterval"
   }
 }
+} # }}}2
+Function Install-Chocolatey() # {{{2
+{
+  Start-ProcessAsAdmin 'powershell' "iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))"
+} # }}}2
 
+process
+{
+  $Modules = 'chocolatey'
+
+  Install-Chocolatey
+}
 # TODO:
 # chocolatey
 # git
+# 7zip
+# md5
+# ruby
+# imdisk
 # vagrant 1.6.5
-# packer
+# packer, packer-windows-plugins
 # virtualbox
 # vmware, vagrant-vmware
 # folders
