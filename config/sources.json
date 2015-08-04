@@ -126,6 +126,12 @@
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
         "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/"
+      },
+      {
+        "location": "Indianapolis VPN",
+        "network":  "172.17.[0-9]+.[0-9]+/21",
+        "need_auth": true,
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/"
       }
     ]
   },
@@ -153,6 +159,12 @@
         "network":  "192.168.48.[0-9]+/24",
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/"
+      },
+      {
+        "location": "Indianapolis VPN",
+        "network":  "172.17.[0-9]+.[0-9]+/21",
+        "need_auth": true,
         "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/"
       }
     ]
@@ -194,6 +206,12 @@
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
         "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
+      },
+      {
+        "location": "Indianapolis VPN",
+        "network":  "172.17.[0-9]+.[0-9]+/21",
+        "need_auth": true,
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
       }
     ]
   },
@@ -221,6 +239,12 @@
         "network":  "192.168.48.[0-9]+/24",
         "need_auth": true,
         "vpn": ".*vpn.inin.com",
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
+      },
+      {
+        "location": "Indianapolis VPN",
+        "network":  "172.17.[0-9]+.[0-9]+/21",
+        "need_auth": true,
         "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
       }
     ]
