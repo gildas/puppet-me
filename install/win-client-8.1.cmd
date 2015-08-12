@@ -12,6 +12,7 @@ goto main
 echo Downloading %~1 into %~2
 for /f "useback tokens=* delims=/" %%a in ("%~1") do set filename=%%a
 echo Filename: %filename%
+::%systemroot%\System32\WindowsPowerShell\v1.0\powershell -NoLogo -Command "Invoke-WebRequest -Uri https://raw.github.com/cloudbase/unattended-setup-scripts/master/DeployTools.ps1 -OutFile C:\Windows\Temp\DeployTools.ps1"
 ::%systemroot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy ByPass -Command "((new-object net.webclient).DownloadFile('https://chocolatey.org/install.ps1', '%TEMP%\install.ps1'))"
 
 goto :EOF
