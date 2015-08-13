@@ -119,7 +119,7 @@ if /I "%virtual_kit%" EQU "VMWare" (
   if errorlevel 1 goto :error
 )
 
-call :ChocolateyInstall packer 0.7.5
+call :ChocolateyInstall packer
 if errorlevel 1 goto :error
 
 call :ChocolateyInstall vagrant 1.6.5
