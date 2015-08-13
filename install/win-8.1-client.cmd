@@ -164,3 +164,4 @@ title error!
 if %ERRORLEVEL% GTR 0 echo Error: %ERRORLEVEL%
 echo Your computer is not ready
 goto :EOF
+:: vim:fileformat=dos
