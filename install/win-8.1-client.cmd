@@ -107,10 +107,10 @@ call :ChocolateyInstall ruby
 if errorlevel 1 goto :error
 
 if /I "%virtual_kit%" EQU "Virtualbox" (
-  call :ChocolateyInstall virtualbox 4.3.28
+  call :ChocolateyInstall virtualbox
   if errorlevel 1 goto :error
 
-  call :ChocolateyInstall virtualbox.extensionpack 4.3.28.100309
+  call :ChocolateyInstall virtualbox.extensionpack
   if errorlevel 1 goto :error
 )
 
