@@ -122,7 +122,7 @@ if /I "%virtual_kit%" EQU "VMWare" (
 call :ChocolateyInstall packer
 if errorlevel 1 goto :error
 
-call :ChocolateyInstall vagrant 1.6.5
+call :ChocolateyInstall vagrant
 if errorlevel 1 goto :error
 
 C:\HashiCorp\Vagrant\bin\vagrant.exe plugin update
