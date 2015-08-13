@@ -7,6 +7,7 @@ setlocal EnableDelayedExpansion EnableExtensions
 set CURRENT_DIR=%~dp0%
 set posh=%systemroot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile
 
+set MODULE_PACKER_HOME=%USERPROFILE%\Documents\packer
 goto main
 
 :: functions {{{
@@ -26,7 +27,7 @@ goto :EOF
 :InstallChocolatey
 where.exe /q chocolatey.exe
 if %ERRORLEVEL% EQU 0 goto InstallChocolateyOK
-if EXIST %ALLUSERSPROFILE%\chocolatey\bin\chocolatey.exe (
+if exist %ALLUSERSPROFILE%\chocolatey\bin\chocolatey.exe (
   SET PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin
   goto InstallChocolateyOK
 )
@@ -125,7 +126,7 @@ if errorlevel 1 goto :error
 call :ChocolateyInstall vagrant
 if errorlevel 1 goto :error
 
-C:\HashiCorp\Vagrant\bin\vagrant.exe plugin update
+::C:\HashiCorp\Vagrant\bin\vagrant.exe plugin update
 if errorlevel 1 goto :error
 
 call :VagrantPluginInstall vagrant-host-shell
@@ -138,6 +139,17 @@ if /I "%virtual_kit%" EQU "VMWare" (
 
 ::Create sources folder
 ::Download sources
+
+:: Installing the Packer Windows project
+set packer_windows=%MODULE_PACKER_HOME%\packer-windows
+if not exist "%MODULE_PACKER_HOME%" mkdir "%MODULE_PACKER_HOME%"
+if not exist "%packer_windows%"     mkdir "%packer_windows%"
+if not exist "%packer_windows%\.git" (
+  "%ProgramFiles(x86)%\Git\cmd\git.exe" clone https://github.com/gildas/packer-windows.git "%packer_windows%"
+) else (
+  "%ProgramFiles(x86)%\Git\cmd\git.exe" -C "%packer_windows%" pull
+)
+
 goto success
 
 :success
