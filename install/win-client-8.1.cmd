@@ -88,37 +88,49 @@ echo Valid values are: VMWare, Virtualbox
 goto :error
 :OptionVirtualizationOK
 
-
 call :InstallChocolatey
 if errorlevel 1 goto :error
+
 call :ChocolateyInstall md5
 if errorlevel 1 goto :error
+
 call :ChocolateyInstall 7zip
 if errorlevel 1 goto :error
+
 call :ChocolateyInstall git
 if errorlevel 1 goto :error
+
 call :ChocolateyInstall imdisk
 if errorlevel 1 goto :error
+
 call :ChocolateyInstall ruby
 if errorlevel 1 goto :error
+
 if /I "%virtual_kit%" EQU "Virtualbox" (
   call :ChocolateyInstall virtualbox 4.3.28
   if errorlevel 1 goto :error
+
   call :ChocolateyInstall virtualbox.extensionpack 4.3.28.100309
   if errorlevel 1 goto :error
 )
+
 if /I "%virtual_kit%" EQU "VMWare" (
   call :ChocolateyInstall vmwareworkstation
   if errorlevel 1 goto :error
 )
+
 call :ChocolateyInstall packer 0.7.5
 if errorlevel 1 goto :error
+
 call :ChocolateyInstall vagrant 1.6.5
 if errorlevel 1 goto :error
+
 C:\HashiCorp\Vagrant\bin\vagrant.exe plugin update
 if errorlevel 1 goto :error
+
 call :VagrantPluginInstall vagrant-host-shell
 if errorlevel 1 goto :error
+
 if /I "%virtual_kit%" EQU "VMWare" (
   call :VagrantPluginInstall vagrant-vmware-workstation
   if errorlevel 1 goto :error
