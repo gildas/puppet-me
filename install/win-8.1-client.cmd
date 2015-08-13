@@ -2,7 +2,7 @@
 setlocal EnableDelayedExpansion EnableExtensions
 
 :: Installation:
-:: bitsadmin /transfer puppet-me /download /priority normal https://raw.githubusercontent.com/inin-apac/puppet-me/windows/install/win-8.1-client.cmd %TEMP%\win-client-8.1.cmd && %TEMP%\win-client-8.1.cmd Virtualization
+:: bitsadmin /transfer puppet-me /download /priority normal https://raw.githubusercontent.com/inin-apac/puppet-me/windows/install/win-8.1-client.cmd %TEMP%\win-8.1-client.cmd && %TEMP%\win-8.1-client.cmd Virtualization
 
 set CURRENT_DIR=%~dp0%
 set posh=%systemroot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile
