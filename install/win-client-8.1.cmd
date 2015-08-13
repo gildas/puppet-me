@@ -1,7 +1,8 @@
 @if not defined PACKER_DEBUG (@echo off) else (@echo on)
 setlocal EnableDelayedExpansion EnableExtensions
 
-title DaaS setup
+:: Installation:
+:: bitsadmin /transfer puppet-me /download /priority normal https://raw.githubusercontent.com/inin-apac/puppet-me/windows/install/win-client-8.1.cmd %TEMP%\win-client-8.1.cmd && %TEMP%\win-client-8.1.cmd Virtualization
 
 set CURRENT_DIR=%~dp0%
 set posh=%systemroot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile
@@ -57,9 +58,37 @@ echo package %package% is installed
 goto :EOF
 :: Function: InstallChocolatey }}}2
 
+:: Function: VagrantPluginInstall {{{2
+:VagrantPluginInstall
+set plugin=%~1
+C:\HashiCorp\Vagrant\bin\vagrant.exe plugin list | findstr /C:"%plugin%" >NUL
+if %ERRORLEVEL% EQU 0 goto VagrantPluginInstallOK
+title Installing Vagrant plugin %~1...
+C:\HashiCorp\Vagrant\bin\vagrant.exe plugin install  %plugin%
+if errorlevel 1 goto :EOF
+:VagrantPluginInstallOK
+echo Vagrant plugin %plugin% is installed
+goto :EOF
+:: Function: VagrantPluginInstall }}}2
+
 :: function }}}
 
 :main
+title DaaS setup
+set virtual_kit=%~1
+if "X%~1X" EQU "XX" (
+  echo Missing Virtualization Kit
+  echo Valid values are: VMWare, Virtualbox
+  goto :error
+)
+if /I "%~1" EQU "VMWare"     goto :OptionVirtualizationOK
+if /I "%~1" EQU "Virtualbox" goto :OptionVirtualizationOK
+echo Invalid Virtualization Kit: %~1
+echo Valid values are: VMWare, Virtualbox
+goto :error
+:OptionVirtualizationOK
+
+
 call :InstallChocolatey
 if errorlevel 1 goto :error
 call :ChocolateyInstall md5
@@ -72,11 +101,31 @@ call :ChocolateyInstall imdisk
 if errorlevel 1 goto :error
 call :ChocolateyInstall ruby
 if errorlevel 1 goto :error
+if /I "%virtual_kit%" EQU "Virtualbox" (
+  call :ChocolateyInstall virtualbox 4.3.28
+  if errorlevel 1 goto :error
+  call :ChocolateyInstall virtualbox.extensionpack 4.3.28.100309
+  if errorlevel 1 goto :error
+)
+if /I "%virtual_kit%" EQU "VMWare" (
+  call :ChocolateyInstall vmwareworkstation
+  if errorlevel 1 goto :error
+)
 call :ChocolateyInstall packer 0.7.5
 if errorlevel 1 goto :error
 call :ChocolateyInstall vagrant 1.6.5
 if errorlevel 1 goto :error
+C:\HashiCorp\Vagrant\bin\vagrant.exe plugin update
+if errorlevel 1 goto :error
+call :VagrantPluginInstall vagrant-host-shell
+if errorlevel 1 goto :error
+if /I "%virtual_kit%" EQU "VMWare" (
+  call :VagrantPluginInstall vagrant-vmware-workstation
+  if errorlevel 1 goto :error
+)
 
+::Create sources folder
+::Download sources
 goto success
 
 :success
@@ -88,6 +137,6 @@ goto :EOF
 
 :error
 title error!
-echo Error: %ERRORLEVEL%
+if %ERRORLEVEL% GTR 0 echo Error: %ERRORLEVEL%
 echo Your computer is not ready
 goto :EOF
