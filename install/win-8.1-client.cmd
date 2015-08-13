@@ -164,8 +164,19 @@ if not exist "%MODULE_PACKER_HOME%" mkdir "%MODULE_PACKER_HOME%"
 if not exist "%packer_windows%"     mkdir "%packer_windows%"
 if not exist "%packer_windows%\.git" (
   "%ProgramFiles(x86)%\Git\cmd\git.exe" clone https://github.com/gildas/packer-windows.git "%packer_windows%"
+  if errorlevel 1 goto :error
 ) else (
   "%ProgramFiles(x86)%\Git\cmd\git.exe" -C "%packer_windows%" pull
+  if errorlevel 1 goto :error
+)
+if exist "%packer_windows%\Gemfile" (
+  pushd "%packer_windows%"
+  C:\tools\ruby21\bin\bundle.bat install
+  if errorlevel 1 (
+    popd
+    goto :error
+  )
+  popd
 )
 
 goto success
