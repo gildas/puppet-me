@@ -68,7 +68,7 @@ title Installing Ruby gem %~1...
 gem install  %gem%
 if errorlevel 1 goto :EOF
 :GemInstallOK
-echo Ruby gem %plugin% is installed
+echo Ruby gem %gem% is installed
 goto :EOF
 :: Function: GemInstall }}}2
 
