@@ -48,7 +48,7 @@ goto :EOF
 set package=%~1
 set version=
 if "X%~2X" NEQ "XX" ( set version=-version %~2 )
-choco list -l | findstr /C:"%package%" >NUL
+choco list -l | findstr /I /C:"%package%" >NUL
 if %ERRORLEVEL% EQU 0 goto ChocolateyInstallOK
 title Installing %~1...
 choco install --limitoutput --yes %package% %version%
