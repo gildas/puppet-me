@@ -59,6 +59,19 @@ echo package %package% is installed
 goto :EOF
 :: Function: InstallChocolatey }}}2
 
+:: Function: GemInstall {{{2
+:GemInstall
+set gem=%~1
+gem list --local | findstr /C:"%gem%" >NUL
+if %ERRORLEVEL% EQU 0 goto GemInstallOK
+title Installing Ruby gem %~1...
+gem install  %gem%
+if errorlevel 1 goto :EOF
+:GemInstallOK
+echo Ruby gem %plugin% is installed
+goto :EOF
+:: Function: GemInstall }}}2
+
 :: Function: VagrantPluginInstall {{{2
 :VagrantPluginInstall
 set plugin=%~1
@@ -105,6 +118,11 @@ call :ChocolateyInstall imdisk
 if errorlevel 1 goto :error
 
 call :ChocolateyInstall ruby
+if errorlevel 1 goto :error
+
+SET PATH=%PATH%;C:\tools\ruby21\bin
+
+call :GemInstall bundler
 if errorlevel 1 goto :error
 
 if /I "%virtual_kit%" EQU "Virtualbox" (
