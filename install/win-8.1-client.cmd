@@ -7,6 +7,8 @@ setlocal EnableDelayedExpansion EnableExtensions
 set CURRENT_DIR=%~dp0%
 set posh=%systemroot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile
 
+set CACHE_ROOT=%ProgramData%\DaaS\cache
+set CACHE_CONFIG=https://cdn.rawgit.com/inin-apac/puppet-me/608341359a0ad4c0bd335f80bcaac7b9b7c411a1/config/sources.json
 set MODULE_PACKER_HOME=%USERPROFILE%\Documents\packer
 goto main
 
@@ -155,13 +157,15 @@ if /I "%virtual_kit%" EQU "VMWare" (
   if errorlevel 1 goto :error
 )
 
-::Create sources folder
 ::Download sources
+if not exist "%CACHE_ROOT%" mkdir "%CACHE_ROOT%"
+echo Downloading DaaS cache sources configuration...
+call :Download "%CACHE_CONFIG%" %TEMP%
+if errorlevel 1 goto :EOF
 
 :: Installing the Packer Windows project
 set packer_windows=%MODULE_PACKER_HOME%\packer-windows
-if not exist "%MODULE_PACKER_HOME%" mkdir "%MODULE_PACKER_HOME%"
-if not exist "%packer_windows%"     mkdir "%packer_windows%"
+if not exist "%packer_windows%" mkdir "%packer_windows%"
 if not exist "%packer_windows%\.git" (
   "%ProgramFiles(x86)%\Git\cmd\git.exe" clone https://github.com/gildas/packer-windows.git "%packer_windows%"
   if errorlevel 1 goto :error
@@ -179,7 +183,9 @@ if exist "%packer_windows%\Gemfile" (
   popd
 )
 
-goto success
+:: Load CIC box
+
+goto :success
 
 :success
 title _
