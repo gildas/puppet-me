@@ -13,6 +13,11 @@ set MODULE_PACKER_HOME=%USERPROFILE%\Documents\packer
 goto main
 
 :: functions {{{
+:: Function: SetErrorLevel {{{2
+:SetErrorLevel    
+exit /b %~1
+:: Function: SetErrorLevel }}}2
+
 :: Function: Download(url, dest_path) {{{2
 :Download    
 set URL=%~1
