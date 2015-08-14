@@ -2,8 +2,10 @@
 setlocal EnableDelayedExpansion EnableExtensions
 
 :: Installation:
-:: bitsadmin /transfer puppet-me /download /priority normal https://raw.githubusercontent.com/inin-apac/puppet-me/windows/install/win-8.1-client.cmd %TEMP%\win-8.1-client.cmd && %TEMP%\win-8.1-client.cmd Virtualization
-
+:: bitsadmin /transfer puppet-me /download /priority normal https://raw.githubusercontent.com/inin-apac/puppet-me/windows/install/win-8.1-client.cmd %TEMP%\zz.cmd && type %TEMP%\zz.cmd | more /p > %TEMP%\win-8.1-client.cmd && %TEMP%\win-8.1-client.cmd Virtualization
+:::: bitsadmin will take care of the download.
+:::: Using type+more allows to change CR (unix) into CRLF (dos). Executing cmd files in unix mode leads to heisenbugs.
+:::: [Virtualization] should be one of the following (case insensitive) values: Virtualbox, VMWare
 set CURRENT_DIR=%~dp0%
 set posh=%systemroot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile
 
