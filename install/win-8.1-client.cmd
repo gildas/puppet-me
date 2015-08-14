@@ -142,6 +142,7 @@ if errorlevel 1 goto :error
 
 call :ChocolateyInstall ruby
 if errorlevel 1 goto :error
+:: TODO: Allow ruby through the firewall?
 
 SET PATH=%PATH%;C:\tools\ruby21\bin
 
