@@ -1662,18 +1662,64 @@ function dmg_install() # {{{2
 
 function brew_install() # {{{2
 {
+  local pin
+  local version
+
+  while :; do # Parse aguments {{{3
+    case $1 in
+      --pin)
+        pin="YES"
+      ;;
+      --version)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "Argument for option $1 is missing" && return 1
+        version=$2
+        shift 2
+        continue
+      ;;
+      --version=*?)
+        version=${1#*=} # delete everything up to =
+      ;;
+      --version=)
+        error "Argument for option $1 is missing" && return 1
+      ;;
+      -?*) # Invalid options
+        warn "Unknown option $1 will be ignored"
+      ;;
+      *)  # End of options
+        break
+      ;;
+    esac
+    shift
+  done # }}}3
   local app_name=$1
   local app_binary=${2:-$1}
 
   if [[ -z "$(brew info $app_name | grep '^Not installed$')" ]]; then
     verbose "$app_name is already installed via Homebrew"
+    if [[ -n $version ]]; then
+      current=$(brew info $app_name | awk '/^${app_name}: .* \(bottled\)$/ {print $3}')
+      if [[ $current != $version ]]; then
+        verbose "  Current version is $current and we want version $version"
+        installed=$(brew info packer | grep '^\/usr\/local\/Cellar/' | sed 's/\/usr\/local\/Cellar\/${app_name}\///' | cut -d' ' -f1)
+        if [[ -n $(echo "${installed}" | grep $version) ]]; then
+          verbose "  switching to version $version"
+          $NOOP brew switch $app_name $version
+        else
+          verbose "  upgrading to version $version"
+          $NOOP brew upgrade $app_name 
+        fi
+      fi
+    fi
   elif which "$app_binary" > /dev/null 2>&1; then
     verbose "$app_name was manually installed \(no automatic updates possible\)"
+    return 0
   else
     verbose "Installing $app_name"
     $NOOP brew install --appdir=/Applications $app_binary
     status=$? && [[ $status != 0 ]] && return $status
   fi
+  # Do we want to pin this version?
+  [[ -n $pin ]] && brew pin $app_name
   return 0
 } # }}}2
 
