@@ -1805,7 +1805,7 @@ function install_homebrew() # {{{2
       [[ -f $filestamp ]] && trace "filestamp: $filestamp, $(stat -f "%Sm" $filestamp)"
       if [[ $FORCE_UPDATE == "1" || ! -f $filestamp || -n "$(find "$filestamp" -mmin +240)" ]]; then
         verbose "Updating..."
-        $NOOP brew update && brew upgrade --all && brew cleanup
+        $NOOP brew update
         status=$? && [[ $status != 0 ]] && return $status
         touch $filestamp
       else
@@ -3062,5 +3062,8 @@ function main() # {{{
     esac
     status=$? && [[ $status != 0 ]] && die "Error $status while installing module $module" $status
   done
+  if which brew > /dev/null 2>&1; then
+    $NOOP brew cleanup
+  fi
 } # }}}
 main "$@"
