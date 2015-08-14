@@ -1,13 +1,28 @@
-
-$url="http://download.virtualbox.org/virtualbox"
 $vboxManage=Join-Path $env:VBOX_MSI_INSTALL_PATH 'VBoxManage.Exe'
 
 $vboxVersion= & $vboxManage --version
-$vboxExtensionPack="Oracle_VM_VirtualBox_Extension_Pack-$($vboxVersion -replace 'r','-').vbox-extpack"
-$url="${url}/$($vboxVersion -replace 'r.*','')/${vboxExtensionPack}"
+if (! $?) { return $LastExitCode }
 
-Write-Output "Downloading $url"
-Invoke-webRequest -Uri $url -OutFile (Join-Path $env:TEMP $vboxExtensionPack)
+$vboxExtensionPackInfo = & $vboxManage list extpacks | % { if ($_ -match "(.*)\s*:\s+(.*)") { @{ $matches[1]=$matches[2]; } } }
 
-Write-Output "Installing Extension pack version ${vboxVersion}"
-& $vboxManage extpack install --replace (Join-Path $env:TEMP $vboxExtensionPack) 2>&1
+if ($vboxVersion -ne "$($vboxExtensionPackInfo.Version)r$($vboxExtensionPackInfo.Revision)")
+{
+  $vboxExtensionPack="Oracle_VM_VirtualBox_Extension_Pack-$($vboxVersion -replace 'r','-').vbox-extpack"
+  $url="http://download.virtualbox.org/virtualbox/$($vboxVersion -replace 'r.*','')/${vboxExtensionPack}"
+
+  Write-Output "Downloading $url"
+  Invoke-webRequest -Uri $url -OutFile (Join-Path $env:TEMP $vboxExtensionPack)
+  if (! $?) { return $LastExitCode }
+
+  Write-Output "Installing Extension pack version ${vboxVersion}"
+  & $vboxManage extpack install --replace (Join-Path $env:TEMP $vboxExtensionPack)
+  if (! $?)
+  {
+    $lec = $LastExitCode
+    return $lec
+  }
+}
+else
+{
+  Write-Output "Virtualbox Extension Pack $vboxVersion is already installed"
+}
