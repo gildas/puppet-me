@@ -9,6 +9,7 @@ setlocal EnableDelayedExpansion EnableExtensions
 set CURRENT_DIR=%~dp0%
 set posh=%systemroot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile
 
+set GITHUB_ROOT=https://raw.githubusercontent.com/inin-apac/puppet-me/windows
 set CACHE_ROOT=%ProgramData%\DaaS\cache
 set CACHE_CONFIG=https://cdn.rawgit.com/inin-apac/puppet-me/608341359a0ad4c0bd335f80bcaac7b9b7c411a1/config/sources.json
 set MODULE_PACKER_HOME=%USERPROFILE%\Documents\packer
@@ -108,6 +109,23 @@ echo Vagrant plugin %plugin% is installed
 goto :EOF
 :: Function: VagrantPluginInstall }}}2
 
+:: Function: InstallVirtualBox {{{2
+:InstallVirtualBox    
+  call :ChocolateyInstall virtualbox
+  if errorlevel 1 goto :error
+
+  ::The chocolatey package is broken at the moment
+  ::  if Virtualbox is not installed in %ProgramFiles% the package fails
+  ::call :ChocolateyInstall virtualbox.extensionpack
+  ::if errorlevel 1 goto :error
+  call :Download "%GITHUB_ROOT%/install/Install-VirtualboxExtensionPack.ps1" %TEMP%
+  if errorlevel 1 goto :EOF
+  %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-VirtualboxExtensionPack.ps1'"
+  if errorlevel 1 goto :EOF
+:InstallVirtualBoxOK    
+goto :EOF
+:: Function: InstallVirtualBox }}}2
+
 :: functions }}}
 
 :main
@@ -150,10 +168,7 @@ call :GemInstall bundler
 if errorlevel 1 goto :error
 
 if /I "%virtual_kit%" EQU "Virtualbox" (
-  call :ChocolateyInstall virtualbox
-  if errorlevel 1 goto :error
-
-  call :ChocolateyInstall virtualbox.extensionpack
+  call :InstallVirtualBox
   if errorlevel 1 goto :error
 )
 
