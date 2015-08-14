@@ -1847,6 +1847,11 @@ function install_homebrew() # {{{2
     status=$? && [[ $status != 0 ]] && return $status
   fi
 
+  if [[ -z $(brew tap | grep 'homebrew/versions') ]]; then
+    brew tap homebrew/versions
+    status=$? && [[ $status != 0 ]] && return $status
+  fi
+
   if [[ -z $(brew tap | grep 'caskroom/versions') ]]; then
     brew tap caskroom/versions
     status=$? && [[ $status != 0 ]] && return $status
