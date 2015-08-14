@@ -108,7 +108,7 @@ echo Vagrant plugin %plugin% is installed
 goto :EOF
 :: Function: VagrantPluginInstall }}}2
 
-:: function }}}
+:: functions }}}
 
 :main
 title DaaS setup
