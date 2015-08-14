@@ -134,6 +134,18 @@ goto :EOF
 goto :EOF
 :: Function: InstallVMWare }}}2
 
+:: Function: CacheStuff {{{2
+:CacheStuff    
+set root=%~1
+set source=%~2
+
+call :Download "%GITHUB_ROOT%/install/Install-Cache.ps1" %TEMP%
+if errorlevel 1 goto :EOF
+%posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-VirtualboxExtensionPack.ps1' -Uri %source% -CacheRoot '%root%' -Verbose"
+:CacheStuffOK    
+goto :EOF
+:: Function: CacheStuff }}}2
+
 :: functions }}}
 
 :main
@@ -202,12 +214,6 @@ if /I "%virtual_kit%" EQU "VMWare" (
   if errorlevel 1 goto :error
 )
 
-::Download sources
-if not exist "%CACHE_ROOT%" mkdir "%CACHE_ROOT%"
-echo Downloading DaaS cache sources configuration...
-call :Download "%CACHE_CONFIG%" %TEMP%
-if errorlevel 1 goto :EOF
-
 :: Installing the Packer Windows project
 set packer_windows=%MODULE_PACKER_HOME%\packer-windows
 if not exist "%packer_windows%" mkdir "%packer_windows%"
@@ -227,6 +233,10 @@ if exist "%packer_windows%\Gemfile" (
   )
   popd
 )
+
+::Download sources
+call :CacheStuff "%CACHE_ROOT%" "%CACHE_CONFIG%"
+if errorlevel 1 goto :EOF
 
 :: Load CIC box
 
