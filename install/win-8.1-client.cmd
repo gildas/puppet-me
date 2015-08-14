@@ -126,6 +126,14 @@ goto :EOF
 goto :EOF
 :: Function: InstallVirtualBox }}}2
 
+:: Function: InstallVMWare {{{2
+:InstallVMWare    
+  call :ChocolateyInstall vmwareworkstation
+  if errorlevel 1 goto :error
+:InstallVMWareOK    
+goto :EOF
+:: Function: InstallVMWare }}}2
+
 :: functions }}}
 
 :main
@@ -173,7 +181,7 @@ if /I "%virtual_kit%" EQU "Virtualbox" (
 )
 
 if /I "%virtual_kit%" EQU "VMWare" (
-  call :ChocolateyInstall vmwareworkstation
+  call :InstallVMWare
   if errorlevel 1 goto :error
 )
 
