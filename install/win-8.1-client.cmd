@@ -80,13 +80,27 @@ goto :EOF
 :: Function: GemInstall }}}2
 
 :: Function: VagrantPluginInstall {{{2
+:: See http://www.dostips.com/forum/viewtopic.php?f=3&t=3487 for explanation about while/for/goto
+:: We have to try the install severak times as it can fail from time
+::   to time for no real good reason!!!
 :VagrantPluginInstall    
 set plugin=%~1
 C:\HashiCorp\Vagrant\bin\vagrant.exe plugin list | findstr /C:"%plugin%" >NUL
 if %ERRORLEVEL% EQU 0 goto VagrantPluginInstallOK
 title Installing Vagrant plugin %~1...
-C:\HashiCorp\Vagrant\bin\vagrant.exe plugin install  %plugin%
-if errorlevel 1 goto :EOF
+set try_index=0
+:While_VPI
+  if %try_index% geq 5 goto :EndWhile_VPI
+  C:\HashiCorp\Vagrant\bin\vagrant.exe plugin install  %plugin%
+  if %ERRORLEVEL% EQU 0 goto :VagrantPluginInstallOK
+  set STASH_ERRORLEVEL=%ERRORLEVEL%
+  echo Trying again...
+  set /A try_index+=1
+  goto :While_VPI
+:EndWhile_VPI
+echo Vagrant plugin %plugin% failed 5 times... giving up
+call :SetErrorLevel %STASH_ERRORLEVEL%
+goto :EOF
 :VagrantPluginInstallOK    
 echo Vagrant plugin %plugin% is installed
 goto :EOF
