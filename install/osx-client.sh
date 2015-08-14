@@ -22,6 +22,8 @@ CURL="/usr/bin/curl --location --progress-bar "
 SUDO="/usr/bin/sudo"
 RM="rm -rf"
 
+PACKER_VERSION=0.8.5
+
 MODULE_homebrew_done=0
 MODULE_cache_done=0
 MODULE_packer_done=0
@@ -1900,6 +1902,29 @@ function install_packer() # {{{2
   [[ $MODULE_rubytools_done == 0 ]] && install_rubytools
   [[ $MODULE_vagrant_done   == 0 ]] && install_vagrant
 
+  # Check if packer has already been installed and remove the ugly old packer plugins manually
+  if [[ -z "$(brew info packer | grep '^Not installed$')" ]]; then
+    installed=$(brew info packer | grep '^\/usr\/local\/Cellar/' | sed 's/\/usr\/local\/Cellar\/${app_name}\///' | cut -d' ' -f1)
+    if [[ -n $(echo "${installed}" | grep 0.7.5) ]]; then
+      verbose "Removing packer 0.7.5 plugins"
+      packer_bindir=/usr/local/bin
+
+      [[ -f $packer_bindir/packer-builder-amazon-windows-ebs ]]     && $NOOP rm -f $packer_bindir/packer-builder-amazon-windows-ebs
+      [[ -f $packer_bindir/packer-builder-parallels-windows-iso ]]  && $NOOP rm -f $packer_bindir/packer-builder-parallels-windows-iso
+      [[ -f $packer_bindir/packer-builder-parallels-windows-pvm ]]  && $NOOP rm -f $packer_bindir/packer-builder-parallels-windows-pvm
+      [[ -f $packer_bindir/packer-builder-virtualbox-windows-iso ]] && $NOOP rm -f $packer_bindir/packer-builder-virtualbox-windows-iso
+      [[ -f $packer_bindir/packer-builder-virtualbox-windows-ovf ]] && $NOOP rm -f $packer_bindir/packer-builder-virtualbox-windows-ovf
+      [[ -f $packer_bindir/packer-builder-vmware-windows-iso ]]     && $NOOP rm -f $packer_bindir/packer-builder-vmware-windows-iso
+      [[ -f $packer_bindir/packer-builder-vmware-windows-vmx ]]     && $NOOP rm -f $packer_bindir/packer-builder-vmware-windows-vmx
+      [[ -f $packer_bindir/packer-provisioner-restart-windows ]]    && $NOOP rm -f $packer_bindir/packer-provisioner-restart-windows
+#      [[ -f $packer_bindir/packer-provisioner-wait ]]               && $NOOP rm -f $packer_bindir/packer-provisioner-wait
+      [[ -f $packer_bindir/packer-communicator-winrm        && ! -L $packer_bindir/packer-communicator-winrm        ]] && $NOOP rm -f $packer_bindir/packer-communicator-winrm
+      [[ -f $packer_bindir/packer-provisioner-powershell    && ! -L $packer_bindir/packer-provisioner-powershell    ]] && $NOOP rm -f $packer_bindir/packer-provisioner-powershell
+      [[ -f $packer_bindir/packer-provisioner-windows-shell && ! -L $packer_bindir/packer-provisioner-windows-shell ]] && $NOOP rm -f $packer_bindir/packer-provisioner-windows-shell
+
+      brew uninstall packer
+    fi
+  fi
   brew_install packer
   status=$? && [[ $status != 0 ]] && return $status
 
@@ -1918,35 +1943,6 @@ function install_packer() # {{{2
     verbose "Installing bash completion for Packer..."
     $NOOP brew install homebrew/completions/packer-completion
     status=$? && [[ $status != 0 ]] && return $status
-  fi
-
-  #Installing Packer plugins (no brew at the moment)
-  packer_bindir=$(dirname $(which packer))
-  if [[ ! -x $packer_bindir/packer-provisioner-wait ]]; then
-    verbose "  Install Packer plugin: provisioner-wait"
-    download https://cdn.rawgit.com/gildas/packer-provisioner-wait/master/bin/0.1.0/darwin/packer-provisioner-wait "${packer_bindir}"
-    status=$? && [[ $status != 0 ]] && return $status
-    chmod 755 "${packer_bindir}/packer-provisioner-wait"
-  fi
-
-  if [[ -x $packer_bindir/packer-builder-vmware-windows-iso ]]; then
-    source_checksum="8febd9ab3a23174223aa7ea969a133ef"
-    target_checksum=$(bar -n "$packer_bindir/packer-builder-vmware-windows-iso" | md5)
-    if [[ $target_checksum =~ \s*$source_checksum\s* ]]; then
-      verbose "  Install Packer plugin: packer-windows builders/provisioners is up-to-date"
-    else
-      verbose "  Install Packer plugin: updating packer-windows builders/provisioners"
-      download https://github.com/packer-community/packer-windows-plugins/releases/download/v1.0.0-rc/darwin_amd64.zip "${HOME}/Downloads"
-      status=$? && [[ $status != 0 ]] && return $status
-      unzip $HOME/Downloads/darwin_amd64.zip -d "${packer_bindir}"
-      status=$? && [[ $status != 0 ]] && error "Failed to extract archive, error: $status" && return $status
-    fi
-  else
-    verbose "  Install Packer plugin: installing packer-windows builders/provisioners"
-    download https://github.com/packer-community/packer-windows-plugins/releases/download/v1.0.0-rc/darwin_amd64.zip "${HOME}/Downloads"
-    status=$? && [[ $status != 0 ]] && return $status
-    unzip $HOME/Downloads/darwin_amd64.zip -d "${packer_bindir}"
-    status=$? && [[ $status != 0 ]] && error "Failed to extract archive, error: $status" && return $status
   fi
 
   packer_windows=${MODULE_PACKER_HOME}/packer-windows
