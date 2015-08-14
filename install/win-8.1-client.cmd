@@ -88,7 +88,7 @@ goto :EOF
 ::   to time for no real good reason!!!
 :VagrantPluginInstall    
 set plugin=%~1
-C:\HashiCorp\Vagrant\bin\vagrant.exe plugin list | findstr /C:"%plugin%" >NUL
+C:\HashiCorp\Vagrant\bin\vagrant.exe plugin list | findstr /C:"%plugin%"
 if %ERRORLEVEL% EQU 0 goto VagrantPluginInstallOK
 title Installing Vagrant plugin %~1...
 set try_index=0
