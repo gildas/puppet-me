@@ -29,7 +29,7 @@ set zz=%URL%z
 for /f "tokens=* delims=/" %%f in ("%zz:~0,-1%") do set filename=%%~nxf
 set DEST=%DEST%\%filename%
 echo Downloading %URL% into %DEST%
-%posh% -Command "Invoke-WebRequest -Uri %URL% -OutFile '%DEST%'"
+%posh% -Command "Start-BitsTransfer -Source %URL% -Destination '%DEST%'"
 goto :EOF
 :: Function: Download }}}2
 
