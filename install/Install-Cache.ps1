@@ -15,7 +15,13 @@ if (! (Test-Path $CacheRoot))
   if (! $?) { return $LastExitCode }
 }
 
-Invoke-WebRequest -Uri $Uri -OutFile (Join-Path $CacheRoot 'config.json') -Verbose:$false
+#$request = New-Object System.Net.Webclient
+#$passwd = ConvertTo-SecureString "**" -AsPlainText -Force
+#$request.Credentials = New-Object System.Management.Automation.PSCredential ("**", $passwd)
+#$request.Downloadstring("https://my full target url") 
+
+#Start-BitsTransfer -Source $Uri -Destination (Join-Path $CacheRoot 'config.json') -Verbose:$false
+(New-Object System.Net.Webclient).DownloadFile($Uri, (Join-Path $CacheRoot 'config.json'))
 if (! $?) { return $LastExitCode }
 
 $sources = (Get-Content -Raw -Path (Join-Path $CacheRoot 'config.json') | ConvertFrom-Json)
@@ -80,9 +86,9 @@ foreach ($source in $sources)
         if (($location.need_auth -ne $null) -and $location.need_auth)
         {
           Write-Verbose "Collecting credential"
-          $request_args['Credential'] = Get-Credential
+          $request_args['Authentication'] = Get-Credential
         }
-        Invoke-WebRequest -Uri $source_url -Outfile $destination @request_args
+        Start-BitsTransfer -Source $source_url -Destination $destination @request_args
       }
       else
       {
