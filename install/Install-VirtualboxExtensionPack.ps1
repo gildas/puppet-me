@@ -12,7 +12,7 @@ if ($vboxVersion -ne "$($vboxExtensionPackInfo.Version)r$($vboxExtensionPackInfo
   $url="http://download.virtualbox.org/virtualbox/$($vboxVersion -replace 'r.*','')/${vboxExtensionPack}"
 
   Write-Output "Downloading $url"
-  Invoke-webRequest -Uri $url -OutFile (Join-Path $env:TEMP $vboxExtensionPack)
+  Start-BitsTransfer -Source $url -Destination (Join-Path $env:TEMP $vboxExtensionPack) -Verbose:$false
   if (! $?) { return $LastExitCode }
 
   Write-Output "Installing Extension pack version ${vboxVersion}"
