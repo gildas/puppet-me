@@ -212,6 +212,10 @@ if /I "%virtual_kit%" EQU "VMWare" (
 call :ChocolateyInstall packer
 if errorlevel 1 goto :error
 
+echo Installing Packer Provisioner Wait
+%posh% -Command "(New-Object System.Net.WebClient).DownloadFile('https://cdn.rawgit.com/gildas/packer-provisioner-wait/master/bin/0.1.0/windows/packer-provisioner-wait.exe', 'C:/HashiCorp/packer/packer-provisioner-wait.exe')"
+if errorlevel 1 goto :error
+
 call :ChocolateyInstall vagrant
 if errorlevel 1 goto :error
 
