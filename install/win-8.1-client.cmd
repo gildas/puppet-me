@@ -153,7 +153,7 @@ set source=%~2
 
 call :Download "%GITHUB_ROOT%/install/Install-Cache.ps1" %TEMP%
 if errorlevel 1 goto :EOF
-%posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-VirtualboxExtensionPack.ps1' -Uri %source% -CacheRoot '%root%' -Verbose"
+%posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-Cache.ps1' -Uri %source% -CacheRoot '%root%' -Verbose"
 :CacheStuffOK    
 goto :EOF
 :: Function: CacheStuff }}}2
