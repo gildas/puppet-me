@@ -97,6 +97,10 @@ process
         }
         if ($location -ne $null)
         {
+          if ($location.vpn -ne $null)
+          {
+            Write-Verbose "Starting VPN $($location.vpn)"
+          }
           Write-Output  "Downloading $($source.Name)..."
           Write-Output  "  From $($location.location)"
           $source_url="$($location.url)$($source.filename)"
