@@ -190,7 +190,7 @@ if errorlevel 1 goto :error
 call :ChocolateyInstall imdisk
 if errorlevel 1 goto :error
 
-call :ChocolateyInstall ruby
+call :ChocolateyInstall ruby --upgrade
 if errorlevel 1 goto :error
 :: TODO: Allow ruby through the firewall?
 
