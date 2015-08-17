@@ -2169,6 +2169,7 @@ function install_vagrant() # {{{2
     verbose "  current version: ${version}"
     latest=$(brew cask info vagrant | awk '/^vagrant: / { print $2; }')
     if [[ $version != $latest ]]; then # TODO: We should actually compare with the version we support
+      verbose "Vagrant ${latest} is available"
       if [[ -n "$(brew cask info vagrant${version//\./} | grep '^Not installed$')" ]]; then
         verbose "  uninstalling vagrant manually"
         $NOOP $SUDO rm -rf /opt/vagrant
