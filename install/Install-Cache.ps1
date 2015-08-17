@@ -69,6 +69,7 @@ process
         {
           $destination = Join-Path $CacheRoot $source.destination
         }
+        New-Item -Path $destination -ItemType Directory
         if (($source.filename -notlike '*`**') -and ($source.filename -notlike '*`?*'))
         {
           $destination = Join-Path $destination $source.filename
