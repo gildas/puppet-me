@@ -2281,10 +2281,10 @@ function install_virtualbox() # {{{2
   status=$? && [[ $status != 0 ]] && return $status
 
   if [[ -n "$MODULE_VIRTUALBOX_HOME" ]]; then
-    current=$(/usr/bin/VBoxManage list systemproperties | grep 'Default machine folder' | cut -d: -f2 | sed -e 's/^ *//')
+    current=$(VBoxManage list systemproperties | grep 'Default machine folder' | cut -d: -f2 | sed -e 's/^ *//')
     if [[ "$current" != "$MODULE_VIRTUALBOX_HOME" ]]; then
       verbose "Updating Virtual Machine home to ${MODULE_VIRTUALBOX_HOME}"
-      $NOOP /usr/bin/VBoxManage setproperty machinefolder "$MODULE_VIRTUALBOX_HOME"
+      $NOOP VBoxManage setproperty machinefolder "$MODULE_VIRTUALBOX_HOME"
       status=$? && [[ $status != 0 ]] && return $status
     fi
   fi
