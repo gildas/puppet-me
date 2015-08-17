@@ -227,18 +227,22 @@ if /I "%virtual_kit%" EQU "VMWare" (
 )
 
 :: Installing the Packer Windows project
+echo Installing packer windows...
 set packer_windows=%MODULE_PACKER_HOME%\packer-windows
 if not exist "%packer_windows%" mkdir "%packer_windows%"
 if not exist "%packer_windows%\.git" (
+  echo   Cloning repository
   "%ProgramFiles(x86)%\Git\cmd\git.exe" clone https://github.com/gildas/packer-windows.git "%packer_windows%"
   if errorlevel 1 goto :error
 ) else (
+   echo Updating repository
   "%ProgramFiles(x86)%\Git\cmd\git.exe" -C "%packer_windows%" pull
   if errorlevel 1 goto :error
 )
 if exist "%packer_windows%\Gemfile" (
   pushd "%packer_windows%"
-  call C:\tools\ruby21\bin\bundle.bat install
+  echo   Installing Ruby Gem
+  call bundle install
   if errorlevel 1 (
     popd
     goto :error
@@ -247,6 +251,7 @@ if exist "%packer_windows%\Gemfile" (
 )
 
 ::Download sources
+echo Preparing the DaaS cache 
 call :CacheStuff "%CACHE_ROOT%" "%CACHE_CONFIG%"
 if errorlevel 1 goto :EOF
 
