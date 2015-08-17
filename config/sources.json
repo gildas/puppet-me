@@ -53,13 +53,6 @@
         "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/"
       },
       {
-        "location": "I3Guest EMEA",
-        "network":  "192.168.48.[0-9]+/24",
-        "need_auth": true,
-        "vpn": ".*vpn.inin.com",
-        "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/"
-      },
-      {
         "location": "Internet",
         "network":  ".*",
         "has_resume": true,
@@ -84,13 +77,6 @@
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/SQLServer/2014/"
-      },
-      {
-        "location": "I3Guest EMEA",
-        "network":  "192.168.48.[0-9]+/24",
-        "need_auth": true,
-        "vpn": ".*vpn.inin.com",
         "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/SQLServer/2014/"
       },
       {
@@ -121,11 +107,12 @@
         "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/"
       },
       {
-        "location": "I3Guest EMEA",
-        "network":  "192.168.48.[0-9]+/24",
+        "location": "Internet",
+        "network":  ".*",
+        "has_resume": true,
         "need_auth": true,
-        "vpn": ".*vpn.inin.com",
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/"
+        "type": "akamai",
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2015r3/P00/"
       }
     ]
   },
@@ -149,11 +136,12 @@
         "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/"
       },
       {
-        "location": "I3Guest EMEA",
-        "network":  "192.168.48.[0-9]+/24",
+        "location": "Internet",
+        "network":  ".*",
+        "has_resume": true,
         "need_auth": true,
-        "vpn": ".*vpn.inin.com",
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/"
+        "type": "akamai",
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2015r3/P02/"
       }
     ]
   },
@@ -189,11 +177,12 @@
         "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
       },
       {
-        "location": "I3Guest EMEA",
-        "network":  "192.168.48.[0-9]+/24",
+        "location": "Internet",
+        "network":  ".*",
+        "has_resume": true,
         "need_auth": true,
-        "vpn": ".*vpn.inin.com",
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
+        "type": "akamai",
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2015r3/P00/"
       }
     ]
   },
@@ -217,11 +206,12 @@
         "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
       },
       {
-        "location": "I3Guest EMEA",
-        "network":  "192.168.48.[0-9]+/24",
+        "location": "Internet",
+        "network":  ".*",
+        "has_resume": true,
         "need_auth": true,
-        "vpn": ".*vpn.inin.com",
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
+        "type": "akamai",
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2015r3/P02/"
       }
     ]
   },
