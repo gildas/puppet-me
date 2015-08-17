@@ -125,7 +125,7 @@ process
                 Write-Verbose "Collecting credential"
                 if ($PSCmdlet.ShouldProcess($source_url, "Getting credential for "))
                 {
-                  $request_args['Authentication'] = Get-Credential
+                  $request_args['Credential'] = Get-Credential
                 }
               }
               Start-BitsTransfer -Source $source_url -Destination $destination @request_args
