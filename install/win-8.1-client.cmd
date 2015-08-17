@@ -56,15 +56,27 @@ goto :EOF
 
 :: Function: ChocolateyInstall {{{2
 :ChocolateyInstall    
-set package=%~1
+set conmmand=install
+set package=
 set version=
-if "X%~2X" NEQ "XX" ( set version=-version %~2 )
+:CI_Getopts
+  set arg=%1
+  if /I %arg% == --version set version=-version %~2 shift
+  if /I %arg% == --upgrade set command=upgrade
+  shift
+if %arg:~0,1%  == "-" goto :CI_Getopts
+set package=%arg%
 choco list -l | findstr /I /C:"%package%" >NUL
-if %ERRORLEVEL% EQU 0 goto ChocolateyInstallOK
-title Installing %~1...
+if %ERRORLEVEL% EQU 0 goto :CI_Upgrade  
+title Installing %package%...
+echo Installing %package%
 choco install --limitoutput --yes %package% %version%
 if errorlevel 1 goto :EOF
-:ChocolateyInstallOK    
+:CI_Upgrade
+if not "%command%" == "upgrade" goto :CI_OK
+title Upgrading %~1...
+choco upgrade --limitoutput --yes %package% %version%
+:CI_OK    
 echo package %package% is installed
 goto :EOF
 :: Function: InstallChocolatey }}}2
