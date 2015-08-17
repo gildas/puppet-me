@@ -107,15 +107,24 @@ process
           Write-Verbose "  Source: $source_url"
           Write-Verbose "  Dest:   $destination"
           $request_args=@{}
-          if (($location.need_auth -ne $null) -and $location.need_auth)
-          {
-            Write-Verbose "Collecting credential"
-            $request_args['Authentication'] = Get-Credential
-          }
+
+          # 1st, try with the logged in user
           if ($PSCmdlet.ShouldProcess($destination, "Downloading from $($location.location)"))
           {
-            Start-BitsTransfer -Source $source_url -Destination $destination @request_args
+            if (-not (Start-BitsTransfer -Source $source_url -Destination $destination @request_args))
+            {
+              if (($location.need_auth -ne $null) -and $location.need_auth)
+              {
+                Write-Verbose "Collecting credential"
+                if ($PSCmdlet.ShouldProcess($source_url, "Getting credential for "))
+                {
+                  $request_args['Authentication'] = Get-Credential
+                }
+              }
+              Start-BitsTransfer -Source $source_url -Destination $destination @request_args
+            }
           }
+          if (! $?) { return $LastExitCode }
         }
         else
         {
