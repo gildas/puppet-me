@@ -64,19 +64,16 @@ process
       default
       {
         Write-Verbose "Validating $($source.Name)..."
-        if ($source.id -eq "MediaServer-licenses")
-        {
-          Write-Warning "Skipping $($source.Name) for now!!!"
-          continue
-        }
+        $destination = $cacheRoot
         if ($source.destination -ne $null)
         {
-          $destination = (Join-Path (Join-Path $CacheRoot $source.destination) $source.filename)
+          $destination = Join-Path $CacheRoot $source.destination
         }
-        else
+        if (($source.filename -notlike '*`**') -and ($source.filename -notlike '*`?*'))
         {
-          $destination = Join-Path $CacheRoot $source.filename
+          $destination = Join-Path $destination $source.filename
         }
+
         if ((Test-Path $destination) -and ($source.checksum -ne $null))
         {
           # TODO: What if the type is not written in the config?
