@@ -1665,13 +1665,23 @@ function dmg_install() # {{{2
 
 function brew_install() # {{{2
 {
-  local pin
+  local pin=0
+  local upgrade=1
   local version
 
   while :; do # Parse aguments {{{3
     case $1 in
+      --no-pin)
+        pin=0
+      ;;
       --pin)
-        pin="YES"
+        pin=1
+      ;;
+      --no-upgrade)
+        upgrade=0
+      ;;
+      --no-upgrade)
+        upgrade=1
       ;;
       --version)
         [[ -z $2 || ${2:0:1} == '-' ]] && error "Argument for option $1 is missing" && return 1
@@ -1697,18 +1707,20 @@ function brew_install() # {{{2
   local app_name=$1
   local app_binary=${2:-$1}
 
-  if [[ -z "$(brew info $app_name | grep '^Not installed$')" ]]; then
-    verbose "$app_name is already installed via Homebrew"
-    if [[ -n $version ]]; then
-      current=$(brew info $app_name | awk '/^${app_name}: .* \(bottled\)$/ {print $3}')
-      if [[ $current != $version ]]; then
-        verbose "  Current version is $current and we want version $version"
-        installed=$(brew info packer | grep '^\/usr\/local\/Cellar/' | sed 's/\/usr\/local\/Cellar\/${app_name}\///' | cut -d' ' -f1)
-        if [[ -n $(echo "${installed}" | grep $version) ]]; then
+  brew_info=$(brew info --json=v1 --installed | jq --raw-output --compact-output 'map(select(.name == "$app_name"))[0]')
+  if [[ "$brew_info" != "null" ]]; then
+    current=$(echo "$brew_info" | jq '.intalled | select (.poured_from_bottle == true)"')
+    verbose "$app_name $current is already installed via Homebrew"
+    if [[ $upgrade == 1 ]]; then
+      if [[ -n $version ]]; then
+        if [[ $current != $version ]]; then
           verbose "  switching to version $version"
           $NOOP brew switch $app_name $version
-        else
-          verbose "  upgrading to version $version"
+        fi
+      else
+        latest=$(echo "$brew_info" | jq --raw-output '.versions.stable')
+        if [[ $current != $latest ]]; then
+          verbose "  upgrading to version $latest"
           $NOOP brew upgrade $app_name 
         fi
       fi
@@ -1722,7 +1734,7 @@ function brew_install() # {{{2
     status=$? && [[ $status != 0 ]] && return $status
   fi
   # Do we want to pin this version?
-  [[ -n $pin ]] && brew pin $app_name
+  [[ $pin == 1 ]] && brew pin $app_name
   return 0
 } # }}}2
 
