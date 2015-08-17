@@ -3,11 +3,22 @@ Param(
   [Parameter(Mandatory=$true)]
   [string] $Uri,
   [Parameter(Mandatory=$true)]
-  [string] $CacheRoot
+  [string] $CacheRoot,
+  [Parameter(Mandatory=$false)]
+  [string] $Network
 )
 begin
 {
-  $local_ip_address = (Get-NetIPAddress | ? { ($_.AddressFamily -eq 'IPv4') -and ($_.PrefixOrigin -eq 'Dhcp') }).IPAddress
+  if ($PSBoundParameters.ContainsKey('Network'))
+  {
+    $local_ip_address = $Network
+  }
+  else
+  {
+    $ipconfig = Get-NetIPAddress | ? { ($_.AddressFamily -eq 'IPv4') -and ($_.PrefixOrigin -eq 'Dhcp') }
+    $local_ip_address = "$($ipconfig.IPAddress)/$($ipconfig.PrefixLength)"
+  }
+  Write-Verbose "My address: $local_ip_address"
 }
 process
 {
