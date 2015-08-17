@@ -99,6 +99,10 @@ process
           Write-Output  "Downloading $($source.Name)..."
           Write-Output  "  From $($location.location)"
           $source_url="$($location.url)$($source.filename)"
+          if ($source_url -match '^smb://([^/]*)/(.*)')
+          {
+            $source_url="\\$($matches[1])\$([System.Web.HttpUtility]::UrlDecode($matches[2]) -replace '/','\')"
+          }
           Write-Verbose "  Source: $source_url"
           Write-Verbose "  Dest:   $destination"
           $request_args=@{}
