@@ -23,6 +23,7 @@ SUDO="/usr/bin/sudo"
 RM="rm -rf"
 
 PACKER_VERSION=0.8.5
+VAGRANT_VERSION=1.7.4
 
 MODULE_homebrew_done=0
 MODULE_cache_done=0
@@ -2159,26 +2160,26 @@ function install_vagrant() # {{{2
     verbose "vagrant is already installed"
     version=$(vagrant --version | awk '{print $2}')
     verbose "  current version: ${version}"
-    if [[ $version == "1.7.2" ]]; then
-      warn "this version has some issues with Windows, we need to uninstall it"
-      if [[ -z "$(brew cask info vagrant | grep '^Not installed$')" ]]; then
+    latest=$(brew cask info vagrant | awk '/^vagrant: / { print $2; }')
+    if [[ $version != $latest ]]; then # TODO: We should actually compare with the version we support
+      if [[ -n "$(brew cask info vagrant${version//\./} | grep '^Not installed$')" ]]; then
         verbose "  uninstalling vagrant manually"
         $NOOP $SUDO rm -rf /opt/vagrant
         status=$? && [[ $status != 0 ]] && error "Error $status while removing /opt/vagrant" && return $status
         $NOOP $SUDO rm -f /usr/bin/vagrant
         status=$? && [[ $status != 0 ]] && error "Error $status while removing /usr/bin/vagrant" && return $status
       else
-        $NOOP cask_uninstall vagrant
+        $NOOP cask_uninstall vagrant${version//\./}
         status=$? && [[ $status != 0 ]] && error "Error $status while uninstalling vagrant" && return $status
       fi
-      verbose "  installing vagrant 1.6.5 (the last version know to work well)"
-      $NOOP cask_install vagrant165
+      verbose "  installing vagrant"
+      $NOOP cask_install vagrant
       status=$? && [[ $status != 0 ]] && error "Error $status while installing vagrant 1.6.5" && return $status
     fi
   else
-    verbose "installing vagrant 1.6.5 (the last version know to work well)"
-    $NOOP cask_install vagrant165
-    status=$? && [[ $status != 0 ]] && error "Error $status while installing vagrant 1.6.5" && return $status
+    verbose "installing vagrant"
+    $NOOP cask_install vagrant
+    status=$? && [[ $status != 0 ]] && error "Error $status while installing vagrant" && return $status
   fi
 
   if [[ ! -w $MODULE_VAGRANT_LOG_ROOT ]]; then
@@ -2330,10 +2331,10 @@ function install_vmware() # {{{2
     if [[ "$current" != "$MODULE_VMWARE_HOME" ]]; then
       verbose "Updating Virtual Machine home to ${MODULE_VMWARE_HOME}"
       LOCATION='/Library/Preferences/VMWare Fusion/lastLocationUsed'
-      $NOOP $SUDO rm -f -- "$LOCATION".tmp
-      $NOOP $SUDO print -- %s "$(canonicalize_path $MODULE_VMWARE_HOME)" > $LOCATION.tmp
-      $NOOP $SUDO chmod 444 $LOCATION.tmp
-      $NOOP $SUDO mv -f $LOCATION.tmp $LOCATION
+      $NOOP $SUDO rm -f -- "$LOCATION.tmp"
+      $NOOP $SUDO print -- %s "$(canonicalize_path $MODULE_VMWARE_HOME)" > "$LOCATION.tmp"
+      $NOOP $SUDO chmod 444 "$LOCATION.tmp"
+      $NOOP $SUDO mv -f "$LOCATION.tmp" "$LOCATION"
       $NOOP $SUDO defaults write com.vmware.fusion NSNavLastRootDirectory "$MODULE_VMWARE_HOME"
       status=$? && [[ $status != 0 ]] && return $status
     fi
