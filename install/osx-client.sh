@@ -2331,10 +2331,10 @@ function install_vmware() # {{{2
     if [[ "$current" != "$MODULE_VMWARE_HOME" ]]; then
       verbose "Updating Virtual Machine home to ${MODULE_VMWARE_HOME}"
       LOCATION='/Library/Preferences/VMWare Fusion/lastLocationUsed'
-      $NOOP $SUDO rm -f -- "$LOCATION.tmp"
-      $NOOP $SUDO print -- %s "$(canonicalize_path $MODULE_VMWARE_HOME)" > "$LOCATION.tmp"
-      $NOOP $SUDO chmod 444 "$LOCATION.tmp"
-      $NOOP $SUDO mv -f "$LOCATION.tmp" "$LOCATION"
+      $NOOP $SUDO rm -f -- "$TEMP/lastLocationUsed"
+      $NOOP $SUDO printf -- %s "$(canonicalize_path $MODULE_VMWARE_HOME)" > "$TEMP/lastLocationUsed"
+      $NOOP $SUDO mv -f "$TEMP/lastLocationUsed" "$LOCATION"
+      $NOOP $SUDO chmod 444 "$LOCATION"
       $NOOP $SUDO defaults write com.vmware.fusion NSNavLastRootDirectory "$MODULE_VMWARE_HOME"
       status=$? && [[ $status != 0 ]] && return $status
     fi
