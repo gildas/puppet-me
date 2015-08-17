@@ -1837,6 +1837,17 @@ function install_homebrew() # {{{2
     status=$? && [[ $status != 0 ]] && return $status
   fi
 
+  # Installing jq for querying json from bash
+  # We need this early so we can query brew via json as well
+  # We also cannot query brew with jq as long as it is not installed
+  if [[ ! -z $(brew info jq | grep '^Not installed$') ]]; then
+    verbose "Installing jq..."
+    $NOOP brew install jq
+    status=$? && [[ $status != 0 ]] && return $status
+  else
+    brew_install jq --upgrade
+  fi
+
   # Installing bash completion
   if [[ ! -z $(brew info bash-completion | grep '^Not installed$') ]]; then
     verbose "Installing bash completion..."
@@ -1893,15 +1904,6 @@ function install_homebrew() # {{{2
     status=$? && [[ $status != 0 ]] && return $status
   else
     verbose "bar is already installed"
-  fi
-
-  # Installing jq for querying json from bash
-  if [[ ! -z $(brew info jq | grep '^Not installed$') ]]; then
-    verbose "Installing jq..."
-    $NOOP brew install jq
-    status=$? && [[ $status != 0 ]] && return $status
-  else
-    verbose "jq is already installed"
   fi
 
   # Installing 7zip for querying json from bash
