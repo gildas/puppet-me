@@ -1865,7 +1865,14 @@ function install_homebrew() # {{{2
     $NOOP brew install brew-cask
     status=$? && [[ $status != 0 ]] && return $status
   else
-    verbose "Homebrew Cask is already installed"
+    version=$(brew cask --version)
+    latest=$(brew info brew-cask | awk '/^.*brew-cask: .*, .*$/ {print $3}' | sed 's/,//')
+    verbose "Homebrew Cask $version is already installed"
+    if [[ $version != $latest ]]; then
+      verbose "Homebrew Cask ${latest} is available, upgrading..."
+      $NOOP brew upgrade brew-cask
+    fi
+    $NOOP brew cask update
   fi
 
   if [[ ! -z $(brew info bar | grep '^Not installed$') ]]; then
