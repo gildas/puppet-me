@@ -165,7 +165,6 @@ process
               finally
               {
                 Write-Error "Unable to download $source_url, giving up"
-                continue
               }
             }
           }
