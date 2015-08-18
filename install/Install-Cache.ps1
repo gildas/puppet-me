@@ -136,12 +136,20 @@ process
           }
           Write-Verbose "  Source: $source_url"
           Write-Verbose "  Dest:   $destination"
+          Write-Verbose "  Type:   $($location.type)"
 
           # 1st, try with the logged in user
           if ($PSCmdlet.ShouldProcess($destination, "Downloading from $source_host"))
           {
             $request_args=@{}
             $downloaded=$false
+
+            if ($location.type -eq 'akamai')
+            {
+              $message = "Enter your credentials to connect to Akamai"
+              $request_args['Credential']     = Get-Credential -Message $message
+              $request_args['Authentication'] = 'Ntlm'
+            }
 
             for($try=0; $try -lt 2; $try++)
             {
@@ -166,7 +174,7 @@ process
                   else
                   {
                     $message = "Enter your credentials to connect to $source_host over $source_protocol"
-                    $request_args['Authentication'] = Get-Credential -Message $message
+                    $request_args['Credential'] = Get-Credential -Message $message
                   }
                 }
                 else
