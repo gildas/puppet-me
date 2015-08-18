@@ -137,7 +137,7 @@ goto :EOF
   ::  if Virtualbox is not installed in %ProgramFiles% the package fails
   ::call :ChocolateyInstall virtualbox.extensionpack
   ::if errorlevel 1 goto :error
-  call :Download "%GITHUB_ROOT%/install/Install-VirtualboxExtensionPack.ps1" %TEMP%
+  call :Download "https://raw.githubusercontent.com/inin-apac/puppet-me/install/Install-VirtualboxExtensionPack.ps1" %TEMP%
   if errorlevel 1 goto :EOF
   %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-VirtualboxExtensionPack.ps1'"
   if errorlevel 1 goto :EOF
@@ -167,7 +167,7 @@ goto :EOF
 set root=%~1
 set source=%~2
 
-call :Download "%GITHUB_ROOT%/install/Install-Cache.ps1" %TEMP%
+call :Download "https://raw.githubusercontent.com/inin-apac/puppet-me/install/Install-Cache.ps1" %TEMP%
 if errorlevel 1 goto :EOF
 %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-Cache.ps1' -Uri %source% -CacheRoot '%root%' -Verbose"
 :CacheStuffOK    
