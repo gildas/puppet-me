@@ -8,7 +8,7 @@ setlocal EnableDelayedExpansion EnableExtensions
 set CURRENT_DIR=%~dp0%
 set posh=%systemroot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile
 
-set GITHUB_ROOT=https://raw.githubusercontent.com/inin-apac/puppet-me/v0.5.0
+set GITHUB_ROOT=https://raw.githubusercontent.com/inin-apac/puppet-me/0.5.0
 set CACHE_ROOT=%ProgramData%\DaaS\cache
 set CACHE_CONFIG=%GITHUB_ROOT%/config/sources.json
 set MODULE_PACKER_HOME=%USERPROFILE%\Documents\packer
