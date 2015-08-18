@@ -130,31 +130,43 @@ process
           }
           Write-Verbose "  Source: $source_url"
           Write-Verbose "  Dest:   $destination"
-          $request_args=@{}
 
           # 1st, try with the logged in user
           if ($PSCmdlet.ShouldProcess($destination, "Downloading from $source_host"))
           {
-            Start-BitsTransfer -Source $source_url -Destination $destination
-            if (-not $?)
+            $request_args=@{}
+
+            for($try=0; $try -lt 2; $try++)
             {
-              if (($location.need_auth -ne $null) -and $location.need_auth)
+              try
               {
-                Write-Verbose "Collecting credential"
-                if ($PSCmdlet.ShouldProcess($source_url, "Getting credential for $source_host"))
+                Start-BitsTransfer -Source $source_url -Destination $destination @request_args -ErrorAction Stop
+              }
+              catch
+              {
+                Write-Error $_
+                Write-Verbose "Type: $($_.GetType())"
+
+                if ($_.Message -match '^HTTP status 401:.*')
                 {
+                  Write-Verbose "Collecting credential"
                   if ($source_protocol -eq 'smb')
                   {
                     $message = "Enter your credentials to connect to share $source_share on $source_host"
+                    $request_args['Credential'] = Get-Credential -Message $message
                   }
                   else
                   {
                     $message = "Enter your credentials to connect to $source_host over $source_protocol"
+                    $request_args['Authentication'] = Get-Credential -Message $message
                   }
-                  $request_args['Credential'] = Get-Credential -Message $message
                 }
               }
-              Start-BitsTransfer -Source $source_url -Destination $destination @request_args
+              finally
+              {
+                Write-Error "Unable to download $source_url, giving up"
+                continue
+              }
             }
           }
           if (! $?) { return $LastExitCode }
