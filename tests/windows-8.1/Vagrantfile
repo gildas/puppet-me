@@ -3,16 +3,21 @@
 require 'fileutils'
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "darwin-yosemite"
+  config.vm.box = "windows-8.1-enterprise-eval"
   config.vm.box_check_update = false
 
+  config.vm.guest             = :windows
+  config.windows.halt_timeout = 15
+  config.vm.communicator      = 'winrm'
+
   config.vm.hostname    = 'puppet-me'
-  config.ssh.insert_key = false
+  config.winrm.username = 'vagrant'
+  config.winrm.password = 'vagrant'
 
   FileUtils.mkdir_p '../../tmp' unless Dir.exist? '../../tmp'
-  config.vm.synced_folder "../../config",  "/config"
-  config.vm.synced_folder "../../install", "/scripts"
-  config.vm.synced_folder "../../tmp",     "/data-tmp"
+  config.vm.synced_folder '../../config',  '/config'
+  config.vm.synced_folder '../../install', '/scripts'
+  config.vm.synced_folder '../../tmp',     '/data-tmp'
 
   config.vm.provider :virtualbox do |provider, override|
     provider.customize ['modifyvm', :id, '--vram',        128]
