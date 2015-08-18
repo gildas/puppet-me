@@ -173,10 +173,15 @@ curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- --macmini-virtualbox --p
 Windows 8.1 and Windows 2012R2
 ------------------------------
 
-On Windows, run in a command:
+On Windows, open a cmd.exe as an Administrator, and type:
 ```cmd
-@powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('http://tinyurl.com/kfrj7tn'))"
+@powershell -Command "Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-1 '%TEMP%\zz.cmd'" && type %TEMP%\zz.cmd | more /p > %TEMP%\puppet-me.cmd && %TEMP%\puppet-me.cmd Virtualization
 ```
+
+Where *Virtualization* must be one of:
+- VMWare
+- Virtualbox
+
 
 AUTHORS
 =======
