@@ -107,9 +107,26 @@ process
           Write-Output  "Downloading $($source.Name)..."
           Write-Output  "  From $($location.location)"
           $source_url="$($location.url)$($source.filename)"
-          if ($source_url -match '^smb://([^/]*)/(.*)')
+          if ($source_url -match '^([^:]+)://([^/]+)/([^/]+)/(.*)')
           {
-            $source_url="\\$($matches[1])\$([System.Web.HttpUtility]::UrlDecode($matches[2]) -replace '/','\')"
+            $source_protocol = $matches[1].ToLower()
+            $source_host     = $matches[2]
+            if ($source_protocol -eq 'smb')
+            {
+              $source_share = [System.Web.HttpUtility]::UrlDecode($matches[3])
+              $source_path  = [System.Web.HttpUtility]::UrlDecode($matches[4]) -replace '/', '\'
+              $source_url   = "\\${source_host}\${source_share}\${source_path}"
+            }
+            else
+            {
+              $source_share = ''
+              $source_path  = [System.Web.HttpUtility]::UrlDecode($matches[3]) + '/' + [System.Web.HttpUtility]::UrlDecode($matches[4])
+            }
+          }
+          else
+          {
+            Write-Error "Invalid URL: $source_url"
+            continue
           }
           Write-Verbose "  Source: $source_url"
           Write-Verbose "  Dest:   $destination"
