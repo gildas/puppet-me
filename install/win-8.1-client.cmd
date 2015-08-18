@@ -184,26 +184,27 @@ title DaaS setup
   if /I "%~1" == "--"                     goto :Opts_End
   set arg=%~1
   if /I "%arg:~0,1%" NEQ "-"              goto :Opts_End
+  shift
 
-  if /I %~1   == --cache-config           (shift & set CACHE_CONFIG=%~2)
-  if /I %~1   == --cache-root             (shift & set DAAS_CACHE=%~2)
-  if /I %~1   == --daas-cache             (shift & set DAAS_CACHE=%~2)
-  if /I %~1   == --network                (shift & set NETWORK=%~2)
-  ::if /I %~1 == --packer-build
-  ::if /I %~1 == --packer-load
-  if /I %~1   == --packer-home            (shift & set PACKER_HOME=%~2)
-  if /I %~1   == --vagrant-home           (shift & set VAGRANT_HOME=%~2)
-  if /I %~1   == --vagrant-vmware-license (shift & set VAGRANT_VMWARE_LICENSE=%~2)
-  if /I %~1   == --virtual                (shift & set DAAS_VIRTUAL=%~2)
-  if /I %~1   == --virtualbox-home        (shift & set VIRTUALBOX_HOME=%~2)
-  if /I %~1   == --vmware-home            (shift & set VMWARE_HOME=%~2)
-  if /I %~1   == --vmware-license         (shift & set VMWARE_LICENSE=%~2)
+  if /I %arg%   == --cache-config           set CACHE_CONFIG=%~1
+  if /I %arg%   == --cache-root             set DAAS_CACHE=%~1
+  if /I %arg%   == --daas-cache             set DAAS_CACHE=%~1
+  if /I %arg%   == --network                set NETWORK=%~1
+  ::if /I %arg% == --packer-build
+  ::if /I %arg% == --packer-load
+  if /I %arg%   == --packer-home            set PACKER_HOME=%~1
+  if /I %arg%   == --vagrant-home           set VAGRANT_HOME=%~1
+  if /I %arg%   == --vagrant-vmware-license set VAGRANT_VMWARE_LICENSE=%~1
+  if /I %arg%   == --virtual                set DAAS_VIRTUAL=%~1
+  if /I %arg%   == --virtualbox-home        set VIRTUALBOX_HOME=%~1
+  if /I %arg%   == --vmware-home            set VMWARE_HOME=%~1
+  if /I %arg%   == --vmware-license         set VMWARE_LICENSE=%~1
 
-  ::if /I %~1 == --noop    set NOOP=-WhatIf
-  ::if /I %~1 == --dry-run
-  ::if /I %~1 == --whatif
-  if /I %~1   == --version ( echo %VERSION% & goto :eof )
-  if /I %~1   == --help    goto :Usage
+  ::if /I %arg% == --noop    set NOOP=-WhatIf
+  ::if /I %arg% == --dry-run
+  ::if /I %arg% == --whatif
+  if /I %arg%   == --version ( echo %VERSION% & goto :eof )
+  if /I %arg%   == --help    goto :Usage
   :Opts_Next
   shift
 goto :Opts_Start
@@ -255,12 +256,12 @@ exit /b 1
 :OK_HyperV
 set DAAS_VIRTUAL=hyper-v
 :OK_VIRTUAL
-::TODO Write DAAS_CACHE in the user's env
-::TODO Write DAAS_VIRTUAL in the user's env
-::TODO Write PACKER_HOME in the user's env
-::TODO Write VAGRANT_HOME in the user's env
-::TODO Write VIRTUALBOX_HOME in the user's env
-::TODO Write VMWARE_HOME in the user's env
+if "X%DAAS_VIRTUAL%"    NEQ "X" setx DAAS_VIRTUAL    "%DAAS_VIRTUAL%" >NUL
+if "X%DAAS_CACHE%"      NEQ "X" setx DAAS_CACHE      "%DAAS_CACHE%" >NUL
+if "X%PACKER_HOME%"     NEQ "X" setx PACKER_HOME     "%PACKER_HOME%" >NUL
+if "X%VAGRANT_HOME%"    NEQ "X" setx VAGRANT_HOME    "%VAGRANT_HOME%" >NUL
+if "X%VIRTUALBOX_HOME%" NEQ "X" setx VIRTUALBOX_HOME "%VIRTUALBOX_HOME%" >NUL
+if "X%VMWARE_HOME%"     NEQ "X" setx VMWARE_HOME     "%VMWARE_HOME%" >NUL
 
 :Opts_OK
 ::Validation }}}
