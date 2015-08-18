@@ -175,13 +175,43 @@ Windows 8.1 and Windows 2012R2
 
 On Windows, open a cmd.exe as an Administrator, and type:
 ```cmd
-@powershell -Command "Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-1 '%TEMP%\zz.cmd'" && type %TEMP%\zz.cmd | more /p > %TEMP%\puppet-me.cmd && %TEMP%\puppet-me.cmd Virtualization
+@powershell -Command "Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-1 '%TEMP%\zz.cmd'" && type %TEMP%\zz.cmd | more /p > %TEMP%\puppet-me.cmd && %TEMP%\puppet-me.cmd [options]
 ```
+Were *options* are:
 
-Where *Virtualization* must be one of:
-- VMWare
-- Virtualbox
-
+- --cache-root *path*  
+  Contains the location of the cache for ISO, MSI, etc files.  
+  Default: $env:ProgramData\DaaS\Cache
+- --help  
+  Prints some help on the output.
+- --network  *ip_address*/*cidr*
+  can be used to force the script to believe it is run in a given network.  
+  Both an ip address and a network (in the cidr form) must be given.  
+  Default: N/A.
+- --packer-home *path*  
+  Contains the location where packer user work data will be stored.  
+  Default value: $env:UserProfile\Documents\packer
+- --vagrant-home *path*  
+  Contains the location where vagrant user work data will be stored.  
+  Default value: $env:UserProfile/.vagrant.d
+- --vagrant-vmware-license *path*  
+  Contains the location of the license file for the Vagrant VMWare Plugin.
+- --version   
+  shows the version of this application
+- --virtual   
+  The Virtualization Kit to use (one of):  
+  Valid values: hyper-v, virtualbox, vmware  
+  Default: hyper-v  
+- --virtualbox-home *path*  
+  Contains the location virtual machine data will be stored.  
+  Default value: $env:UserProfile/VirtualBox VMs
+- --vmware-home *path*  
+  Contains the location virtual machine data will be stored.  
+  Default value: $env:UserProfile/Documents/My Virtual Machines
+- --vmware-license *key*  
+  Contains the license key to configure VMWare Fusion.  
+  If not provided here and VMWare needs to be configured,  
+  The VMWare initialization script will request it.  
 
 AUTHORS
 =======
