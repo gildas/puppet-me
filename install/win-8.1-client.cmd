@@ -255,12 +255,12 @@ exit /b 1
 :OK_HyperV
 set DAAS_VIRTUAL=hyper-v
 :OK_VIRTUAL
-::TODO Write DAAS_CACHE in the user's env
-::TODO Write DAAS_VIRTUAL in the user's env
-::TODO Write PACKER_HOME in the user's env
-::TODO Write VAGRANT_HOME in the user's env
-::TODO Write VIRTUALBOX_HOME in the user's env
-::TODO Write VMWARE_HOME in the user's env
+if "%DAAS_VIRTUAL%"    NEQ "" setx DAAS_VIRTUAL    "%DAAS_VIRTUAL%"
+if "%DAAS_CACHE%"      NEQ "" setx DAAS_CACHE      "%DAAS_CACHE%"
+if "%PACKER_HOME%"     NEQ "" setx PACKER_HOME     "%PACKER_HOME%"
+if "%VAGRANT_HOME%"    NEQ "" setx VAGRANT_HOME    "%VAGRANT_HOME%"
+if "%VIRTUALBOX_HOME%" NEQ "" setx VIRTUALBOX_HOME "%VIRTUALBOX_HOME%"
+if "%VMWARE_HOME%"     NEQ "" setx VMWARE_HOME     "%VMWARE_HOME%"
 
 :Opts_OK
 ::Validation }}}
