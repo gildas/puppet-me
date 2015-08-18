@@ -18,7 +18,7 @@ if "%PACKER_HOME%"     == "" set PACKER_HOME=%USERPROFILE%\Documents\packer
 if "%VAGRANT_HOME%"    == "" set VAGRANT_HOME=%USERPROFILE%\.vagrant.d
 set VAGRANT_VMWARE_LICENSE=
 if "%VIRTUALBOX_HOME%" == "" set VIRTUALBOX_HOME=%USERPROFILE%VirtualBox VMs
-if "%VMWARE_HOME%"     == "" set VMWARE_HOME=%USERPROFILE%\My Virtual Machines
+if "%VMWARE_HOME%"     == "" set VMWARE_HOME=%USERPROFILE%\Documents\My Virtual Machines
 set VMWARE_LICENSE=
 goto main
 
