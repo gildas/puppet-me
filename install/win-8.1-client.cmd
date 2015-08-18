@@ -218,7 +218,7 @@ echo   Downloading from github...
 %posh% -Command "(New-Object System.Net.WebClient).DownloadFile('https://github.com/gildas/packer-provisioner-wait/releases/download/v0.1.0/packer-provisioner-wait-0.1.0-win.7z', '%TEMP%\packer-provisioner-wait-0.1.0-win.7z')"
 if errorlevel 1 goto :error
 echo   Extracting in packer tools...
-C:\ProgramData\chocolatey\tools\7za.exe e -oC:\ProgramData\chocolatey\lib\packer\tools %TEMP%\packer-provisioner-wait-0.1.0-win.7z
+C:\ProgramData\chocolatey\tools\7za.exe e -y -oC:\ProgramData\chocolatey\lib\packer\tools %TEMP%\packer-provisioner-wait-0.1.0-win.7z
 if errorlevel 1 goto :error
 
 call :ChocolateyInstall vagrant
