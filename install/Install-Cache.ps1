@@ -120,7 +120,7 @@ process
             else
             {
               $source_share = ''
-              $source_path  = [System.Web.HttpUtility]::UrlDecode($matches[3]) + '/' + [System.Web.HttpUtility]::UrlDecode($matches[4])
+              $source_path  = [System.Web.HttpUtility]::UrlDecode($matches[3] + '/' + $matches[4])
             }
           }
           else
@@ -133,9 +133,10 @@ process
           $request_args=@{}
 
           # 1st, try with the logged in user
-          if ($PSCmdlet.ShouldProcess($destination, "Downloading from $($location.location)"))
+          if ($PSCmdlet.ShouldProcess($destination, "Downloading from $source_host"))
           {
-            if (-not (Start-BitsTransfer -Source $source_url -Destination $destination @request_args))
+            Start-BitsTransfer -Source $source_url -Destination $destination
+            if (-not $?)
             {
               if (($location.need_auth -ne $null) -and $location.need_auth)
               {
