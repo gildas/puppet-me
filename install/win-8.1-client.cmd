@@ -2,17 +2,15 @@
 setlocal EnableDelayedExpansion EnableExtensions
 
 :: Installation:
-:: bitsadmin /transfer puppet-me /download /priority normal https://raw.githubusercontent.com/inin-apac/puppet-me/windows/install/win-8.1-client.cmd %TEMP%\zz.cmd && type %TEMP%\zz.cmd | more /p > %TEMP%\win-8.1-client.cmd && %TEMP%\win-8.1-client.cmd Virtualization
-:::: bitsadmin will take care of the download.
+:: @powershell -Command "Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-1 '%TEMP%\zz.cmd'" && type %TEMP%\zz.cmd | more /p > %TEMP%\puppet-me.cmd && %TEMP%\puppet-me.cmd Virtualization
 :::: Using type+more allows to change CR (unix) into CRLF (dos). Executing cmd files in unix mode leads to heisenbugs.
 :::: [Virtualization] should be one of the following (case insensitive) values: Virtualbox, VMWare
 set CURRENT_DIR=%~dp0%
 set posh=%systemroot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile
 
-set GITHUB_ROOT=https://raw.githubusercontent.com/inin-apac/puppet-me/windows
+set GITHUB_ROOT=https://raw.githubusercontent.com/inin-apac/puppet-me/v0.5.0
 set CACHE_ROOT=%ProgramData%\DaaS\cache
-::set CACHE_CONFIG=https://cdn.rawgit.com/inin-apac/puppet-me/e3c534205555541ab1e02113fc65919e14684388/config/sources.json
-set CACHE_CONFIG=https://raw.githubusercontent.com/inin-apac/puppet-me/windows/config/sources.json
+set CACHE_CONFIG=%GITHUB_ROOT%/config/sources.json
 set MODULE_PACKER_HOME=%USERPROFILE%\Documents\packer
 goto main
 
