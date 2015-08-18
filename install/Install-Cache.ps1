@@ -141,12 +141,14 @@ process
           if ($PSCmdlet.ShouldProcess($destination, "Downloading from $source_host"))
           {
             $request_args=@{}
+            $downloaded=$false
 
             for($try=0; $try -lt 2; $try++)
             {
               try
               {
                 Start-BitsTransfer -Source $source_url -Destination $destination @request_args -ErrorAction Stop
+                $downloaded=$true
               }
               catch
               {
@@ -167,11 +169,15 @@ process
                     $request_args['Authentication'] = Get-Credential -Message $message
                   }
                 }
+                else
+                {
+                  break
+                }
               }
-              finally
-              {
-                Write-Error "Unable to download $source_url, giving up"
-              }
+            }
+            if (! $downloaded)
+            {
+              Write-Error "Unable to download $source_url"
             }
           }
           if (! $?) { return $LastExitCode }
