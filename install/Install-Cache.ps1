@@ -140,9 +140,17 @@ process
               if (($location.need_auth -ne $null) -and $location.need_auth)
               {
                 Write-Verbose "Collecting credential"
-                if ($PSCmdlet.ShouldProcess($source_url, "Getting credential for "))
+                if ($PSCmdlet.ShouldProcess($source_url, "Getting credential for $source_host"))
                 {
-                  $request_args['Credential'] = Get-Credential
+                  if ($source_protocol -eq 'smb')
+                  {
+                    $message = "Enter your credentials to connect to share $source_share on $source_host"
+                  }
+                  else
+                  {
+                    $message = "Enter your credentials to connect to $source_host over $source_protocol"
+                  }
+                  $request_args['Credential'] = Get-Credential -Message $message
                 }
               }
               Start-BitsTransfer -Source $source_url -Destination $destination @request_args
