@@ -6,12 +6,20 @@ setlocal EnableDelayedExpansion EnableExtensions
 :::: Using type+more allows to change CR (unix) into CRLF (dos). Executing cmd files in unix mode leads to heisenbugs.
 :::: [Virtualization] should be one of the following (case insensitive) values: Virtualbox, VMWare
 set CURRENT_DIR=%~dp0%
+set VERSION=0.5.0
 set posh=%systemroot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile
 
-set GITHUB_ROOT=https://raw.githubusercontent.com/inin-apac/puppet-me/0.5.0
-set CACHE_ROOT=%ProgramData%\DaaS\cache
+set GITHUB_ROOT=https://raw.githubusercontent.com/inin-apac/puppet-me/%VERSION%
 set CACHE_CONFIG=%GITHUB_ROOT%/config/sources.json
-set MODULE_PACKER_HOME=%USERPROFILE%\Documents\packer
+if "%DAAS_CACHE%"      == "" set DAAS_CACHE=%ProgramData%\DaaS\cache
+if "%DAAS_VIRTUAL%"    == "" set DAAS_VIRTUAL=hyper-v
+set NETWORK=
+if "%PACKER_HOME%"     == "" set PACKER_HOME=%USERPROFILE%\Documents\packer
+if "%VAGRANT_HOME%"    == "" set VAGRANT_HOME=%USERPROFILE%\.vagrant.d
+set VAGRANT_VMWARE_LICENSE=
+if "%VIRTUALBOX_HOME%" == "" set VIRTUALBOX_HOME=%USERPROFILE%VirtualBox VMs
+if "%VMWARE_HOME%"     == "" set VMWARE_HOME=%USERPROFILE%\My Virtual Machines
+set VMWARE_LICENSE=
 goto main
 
 :: functions {{{
@@ -145,6 +153,15 @@ goto :EOF
 goto :EOF
 :: Function: InstallVMWare }}}2
 
+:: Function: InstallHyperV {{{2
+:InstallHyperV    
+  echo TODO: Add the steps to configure Hyper-V!!!
+  echo Sorry!
+  if errorlevel 1 goto :error
+:InstallHVOK    
+goto :EOF
+:: Function: InstallHyperV }}}2
+
 :: Function: CacheStuff {{{2
 :CacheStuff    
 set root=%~1
@@ -161,18 +178,92 @@ goto :EOF
 
 :main
 title DaaS setup
-set virtual_kit=%~1
-if "X%~1X" EQU "XX" (
-  echo Missing Virtualization Kit
-  echo Valid values are: VMWare, Virtualbox
-  goto :error
-)
-if /I "%~1" EQU "VMWare"     goto :OptionVirtualizationOK
-if /I "%~1" EQU "Virtualbox" goto :OptionVirtualizationOK
-echo Invalid Virtualization Kit: %~1
-echo Valid values are: VMWare, Virtualbox
-goto :error
-:OptionVirtualizationOK    
+::Parse Options {{{
+:Opts_Start
+  if /I "%~1" == ""                       goto :Opts_End
+  if /I "%~1" == "--"                     goto :Opts_End
+  set arg=%~1
+  if /I "%arg:~0,1%" NEQ "-"              goto :Opts_End
+
+  if /I %~1   == --cache-config           (shift & set CACHE_CONFIG=%~2)
+  if /I %~1   == --cache-root             (shift & set DAAS_CACHE=%~2)
+  if /I %~1   == --daas-cache             (shift & set DAAS_CACHE=%~2)
+  if /I %~1   == --network                (shift & set NETWORK=%~2)
+  ::if /I %~1 == --packer-build
+  ::if /I %~1 == --packer-load
+  if /I %~1   == --packer-home            (shift & set PACKER_HOME=%~2)
+  if /I %~1   == --vagrant-home           (shift & set VAGRANT_HOME=%~2)
+  if /I %~1   == --vagrant-vmware-license (shift & set VAGRANT_VMWARE_LICENSE=%~2)
+  if /I %~1   == --virtual                (shift & set DAAS_VIRTUAL=%~2)
+  if /I %~1   == --virtualbox-home        (shift & set VIRTUALBOX_HOME=%~2)
+  if /I %~1   == --vmware-home            (shift & set VMWARE_HOME=%~2)
+  if /I %~1   == --vmware-license         (shift & set VMWARE_LICENSE=%~2)
+
+  ::if /I %~1 == --noop    set NOOP=-WhatIf
+  ::if /I %~1 == --dry-run
+  ::if /I %~1 == --whatif
+  if /I %~1   == --version ( echo %VERSION% & goto :eof )
+  if /I %~1   == --help    goto :Usage
+  :Opts_Next
+  shift
+goto :Opts_Start
+:Opts_End
+echo(
+goto :Opts_Validate
+::Parse Options }}}
+
+::Usage {{{
+:Usage
+echo Puppet Me for Windows 8.1 v%VERSION%
+echo(
+echo   Options are:
+echo(
+echo   --cache-root             Where the DaaS Cache should be created
+echo                            Default: %DAAS_CACHE%
+echo   --packer-home            where the Packer Windows project should live
+echo                            Default: %PACKER_HOME%
+echo   --vagrant-home           where Vagrant boxes should be stored
+echo                            Default: %VAGRANT_HOME%
+echo   --vagrant-vmware-license points to the license file 
+echo   --virtual                The Virtualization Kit to use (one of):
+echo                            Valid values: hyper-v, virtualbox, vmware
+echo                            Default: hyper-v
+echo   --virtualbox-home        where Virtual Machines should be created
+echo                            Default: %VIRTUALBOX_HOME%
+echo   --vmware-home            where Virtual Machines should be created
+echo                            Default: %VMWARE_HOME%
+echo   --vmware-license         contains the VMWare License Key
+
+echo   --help                   shows this help
+echo   --version                shows the version of this application
+goto :eof
+::Usage }}}
+
+::Validation {{{
+:Opts_Validate
+if    "%DAAS_VIRTUAL%" EQU ""           goto :E_NOVIRTUAL
+if /I "%DAAS_VIRTUAL%" EQU "Hyper V"    goto :OK_HyperV
+if /I "%DAAS_VIRTUAL%" EQU "Hyper-V"    goto :OK_HyperV
+if /I "%DAAS_VIRTUAL%" EQU "HyperV"     goto :OK_HyperV
+if /I "%DAAS_VIRTUAL%" EQU "vmware"     goto :OK_VIRTUAL
+if /I "%DAAS_VIRTUAL%" EQU "Virtualbox" goto :OK_VIRTUAL
+echo Invalid Virtualization kit: %DAAS_VIRTUAL%
+exit /b 1
+:E_NOVIRTUAL
+echo Missing Virtualization kit
+exit /b 1
+:OK_HyperV
+set DAAS_VIRTUAL=hyper-v
+:OK_VIRTUAL
+::TODO Write DAAS_CACHE in the user's env
+::TODO Write DAAS_VIRTUAL in the user's env
+::TODO Write PACKER_HOME in the user's env
+::TODO Write VAGRANT_HOME in the user's env
+::TODO Write VIRTUALBOX_HOME in the user's env
+::TODO Write VMWARE_HOME in the user's env
+
+:Opts_OK
+::Validation }}}
 
 call :InstallChocolatey
 if errorlevel 1 goto :error
@@ -198,13 +289,18 @@ SET PATH=%PATH%;C:\tools\ruby21\bin
 call :GemInstall bundler
 if errorlevel 1 goto :error
 
-if /I "%virtual_kit%" EQU "Virtualbox" (
+if /I "%DAAS_VIRTUAL%" EQU "Virtualbox" (
   call :InstallVirtualBox
   if errorlevel 1 goto :error
 )
 
-if /I "%virtual_kit%" EQU "VMWare" (
+if /I "%DAAS_VIRTUAL%" EQU "VMWare" (
   call :InstallVMWare
+  if errorlevel 1 goto :error
+)
+
+if /I "%DAAS_VIRTUAL%" EQU "Hyper-V" (
+  call :InstallHyperV
   if errorlevel 1 goto :error
 )
 
@@ -235,7 +331,7 @@ if /I "%virtual_kit%" EQU "VMWare" (
 
 :: Installing the Packer Windows project
 echo Installing packer windows...
-set packer_windows=%MODULE_PACKER_HOME%\packer-windows
+set packer_windows=%PACKER_HOME%\packer-windows
 if not exist "%packer_windows%" mkdir "%packer_windows%"
 if not exist "%packer_windows%\.git" (
   echo   Cloning repository
@@ -259,7 +355,7 @@ if exist "%packer_windows%\Gemfile" (
 
 ::Download sources
 echo Preparing the DaaS cache 
-call :CacheStuff "%CACHE_ROOT%" "%CACHE_CONFIG%"
+call :CacheStuff "%DAAS_CACHE%" "%CACHE_CONFIG%"
 if errorlevel 1 goto :EOF
 
 :: Load CIC box
