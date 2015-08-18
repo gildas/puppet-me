@@ -11,7 +11,7 @@ set posh=%systemroot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -No
 
 set GITHUB_ROOT=https://raw.githubusercontent.com/inin-apac/puppet-me/windows
 set CACHE_ROOT=%ProgramData%\DaaS\cache
-set CACHE_CONFIG=https://cdn.rawgit.com/inin-apac/puppet-me/608341359a0ad4c0bd335f80bcaac7b9b7c411a1/config/sources.json
+set CACHE_CONFIG=https://cdn.rawgit.com/inin-apac/puppet-me/e3c534205555541ab1e02113fc65919e14684388/config/sources.json
 set MODULE_PACKER_HOME=%USERPROFILE%\Documents\packer
 goto main
 
