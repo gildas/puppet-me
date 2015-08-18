@@ -32,11 +32,17 @@ process
   Write-Verbose "Downloading sources configuration"
   if ($PSCmdlet.ShouldProcess($Uri, "Downloading sources configuration"))
   {
+    $destination = Join-Path $CacheRoot 'config.json';
+    Write-Verbose "  into $destination"
+    if (Test-Path $destination)
+    {
+      Write-Verbose "  removing old version"
+      Remove-Item -Path $destination -Force
+    }
     #Start-BitsTransfer -Source $Uri -Destination (Join-Path $CacheRoot 'config.json') -Verbose:$false
-    (New-Object System.Net.Webclient).DownloadFile($Uri, (Join-Path $CacheRoot 'config.json'))
-    if (! $?) { return $LastExitCode }
+    (New-Object System.Net.Webclient).DownloadFile($Uri, $destination)
 
-    $sources = (Get-Content -Raw -Path (Join-Path $CacheRoot 'config.json') | ConvertFrom-Json)
+    $sources = (Get-Content -Raw -Path $destination | ConvertFrom-Json)
   }
   else
   {
