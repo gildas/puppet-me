@@ -9,8 +9,9 @@ set CURRENT_DIR=%~dp0%
 set VERSION=0.5.0
 set posh=%systemroot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile
 
-set GITHUB_ROOT=https://raw.githubusercontent.com/inin-apac/puppet-me/%VERSION%
-set CACHE_CONFIG=%GITHUB_ROOT%/config/sources.json
+set GITHUB_ROOT=https://raw.githubusercontent.com/inin-apac/puppet-me
+set TOOLS_ROOT=%GITHUB_ROOT%
+set CACHE_CONFIG=%GITHUB_ROOT%/%VERSION%/config/sources.json
 if "%DAAS_CACHE%"      == "" set DAAS_CACHE=%ProgramData%\DaaS\cache
 if "%DAAS_VIRTUAL%"    == "" set DAAS_VIRTUAL=hyper-v
 set NETWORK=
@@ -39,6 +40,19 @@ echo Downloading %URL% into %DEST%
 %posh% -Command "Start-BitsTransfer -Source %URL% -Destination '%DEST%'"
 goto :EOF
 :: Function: Download }}}2
+
+:: Function: DownloadTools {{{2
+:DownloadTools    
+  call :Download "%TOOLS_ROOT%/install/Install-VirtualboxExtensionPack.ps1" %TEMP%
+  if errorlevel 1 goto :EOF
+  call :Download "%TOOLS_ROOT%/install/Install-Hyper-V.ps1" %TEMP%
+  if errorlevel 1 goto :EOF
+  call :Download "%TOOLS_ROOT%/install/Uninstall-Hyper-V.ps1" %TEMP%
+  if errorlevel 1 goto :EOF
+  call :Download "%TOOLS_ROOT%/install/Install-Cache.ps1" %TEMP%
+  if errorlevel 1 goto :EOF
+goto :EOF
+:: Function: DownloadTools }}}2
 
 :: Function: InstallChocolatey {{{2
 :InstallChocolatey    
@@ -101,6 +115,20 @@ echo Ruby gem %gem% is installed
 goto :EOF
 :: Function: GemInstall }}}2
 
+:: Function: InstallHyperV {{{2
+:InstallHyperV    
+  %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-Hyper-V.ps1'"
+  if errorlevel 1 goto :EOF
+goto :EOF
+:: Function: InstallHyperV }}}2
+
+:: Function: UninstallHyperV {{{2
+:InstallHyperV    
+  %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-Hyper-V.ps1'"
+  if errorlevel 1 goto :EOF
+goto :EOF
+:: Function: UninstallHyperV }}}2
+
 :: Function: VagrantPluginInstall {{{2
 :: See http://www.dostips.com/forum/viewtopic.php?f=3&t=3487 for explanation about while/for/goto
 :: We have to try the install severak times as it can fail from time
@@ -130,6 +158,8 @@ goto :EOF
 
 :: Function: InstallVirtualBox {{{2
 :InstallVirtualBox    
+  call :UninstallHyperV
+  if errorlevel 1 goto :error
   call :ChocolateyInstall virtualbox
   if errorlevel 1 goto :error
 
@@ -137,8 +167,6 @@ goto :EOF
   ::  if Virtualbox is not installed in %ProgramFiles% the package fails
   ::call :ChocolateyInstall virtualbox.extensionpack
   ::if errorlevel 1 goto :error
-  call :Download "https://raw.githubusercontent.com/inin-apac/puppet-me/install/Install-VirtualboxExtensionPack.ps1" %TEMP%
-  if errorlevel 1 goto :EOF
   %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-VirtualboxExtensionPack.ps1'"
   if errorlevel 1 goto :EOF
 :InstallVirtualBoxOK    
@@ -147,28 +175,19 @@ goto :EOF
 
 :: Function: InstallVMWare {{{2
 :InstallVMWare    
+  call :UninstallHyperV
+  if errorlevel 1 goto :error
   call :ChocolateyInstall vmwareworkstation
   if errorlevel 1 goto :error
 :InstallVMWareOK    
 goto :EOF
 :: Function: InstallVMWare }}}2
 
-:: Function: InstallHyperV {{{2
-:InstallHyperV    
-  echo TODO: Add the steps to configure Hyper-V!!!
-  echo Sorry!
-  if errorlevel 1 goto :error
-:InstallHVOK    
-goto :EOF
-:: Function: InstallHyperV }}}2
-
 :: Function: CacheStuff {{{2
 :CacheStuff    
 set root=%~1
 set source=%~2
 
-call :Download "https://raw.githubusercontent.com/inin-apac/puppet-me/install/Install-Cache.ps1" %TEMP%
-if errorlevel 1 goto :EOF
 %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-Cache.ps1' -Uri %source% -CacheRoot '%root%' -Verbose"
 :CacheStuffOK    
 goto :EOF
@@ -265,6 +284,9 @@ if "X%VMWARE_HOME%"     NEQ "X" setx VMWARE_HOME     "%VMWARE_HOME%" >NUL
 
 :Opts_OK
 ::Validation }}}
+
+call :DownloadTools
+if errorlevel 1 goto :error
 
 call :InstallChocolatey
 if errorlevel 1 goto :error
