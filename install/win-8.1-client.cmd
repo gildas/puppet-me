@@ -10,7 +10,7 @@ set VERSION=0.5.0
 set posh=%systemroot%\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile
 
 set GITHUB_ROOT=https://raw.githubusercontent.com/inin-apac/puppet-me
-set TOOLS_ROOT=%GITHUB_ROOT%
+set TOOLS_ROOT=%GITHUB_ROOT%/master
 set CACHE_CONFIG=%GITHUB_ROOT%/%VERSION%/config/sources.json
 if "%DAAS_CACHE%"      == "" set DAAS_CACHE=%ProgramData%\DaaS\cache
 if "%DAAS_VIRTUAL%"    == "" set DAAS_VIRTUAL=hyper-v
