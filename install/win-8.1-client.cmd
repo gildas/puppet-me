@@ -283,6 +283,14 @@ if "X%VIRTUALBOX_HOME%" NEQ "X" setx VIRTUALBOX_HOME "%VIRTUALBOX_HOME%" >NUL
 if "X%VMWARE_HOME%"     NEQ "X" setx VMWARE_HOME     "%VMWARE_HOME%" >NUL
 
 :Opts_OK
+
+:SUDO_Validate
+net session >NUL 2>&1
+if %ERRORLEVEL% NEQ 0 (
+  echo Error: You must run this program as an Administrator
+  exit /b %ERRORLEVEL%
+)
+:SUDO_OK
 ::Validation }}}
 
 call :DownloadTools
