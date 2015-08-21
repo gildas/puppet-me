@@ -201,7 +201,6 @@ Were *options* are:
 - --virtual   
   The Virtualization Kit to use (one of):  
   Valid values: hyper-v, virtualbox, vmware  
-  Default: hyper-v  
 - --virtualbox-home *path*  
   Contains the location virtual machine data will be stored.  
   Default value: $env:UserProfile/VirtualBox VMs
