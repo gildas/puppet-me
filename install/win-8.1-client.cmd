@@ -302,9 +302,11 @@ if errorlevel 1 goto :error
 
 call :ChocolateyInstall 7zip
 if errorlevel 1 goto :error
+SET PATH=%PATH%;"%ProgramFiles%\7-zip"
 
 call :ChocolateyInstall git
 if errorlevel 1 goto :error
+SET PATH=%PATH%;"%ProgramFiles(x86)%\Git\cmd"
 
 call :ChocolateyInstall imdisk
 if errorlevel 1 goto :error
@@ -312,7 +314,6 @@ if errorlevel 1 goto :error
 call :ChocolateyInstall ruby --upgrade
 if errorlevel 1 goto :error
 :: TODO: Allow ruby through the firewall?
-
 SET PATH=%PATH%;C:\tools\ruby21\bin
 
 call :GemInstall bundler
@@ -321,11 +322,13 @@ if errorlevel 1 goto :error
 if /I "%DAAS_VIRTUAL%" EQU "Virtualbox" (
   call :InstallVirtualBox
   if errorlevel 1 goto :error
+  SET PATH=%PATH%;"%ProgramFiles%\Oracle\VirtualBox"
 )
 
 if /I "%DAAS_VIRTUAL%" EQU "VMWare" (
   call :InstallVMWare
   if errorlevel 1 goto :error
+  SET PATH=%PATH%;"%ProgramFiles(x86)%\VMWare\VMWare Workstation"
 )
 
 if /I "%DAAS_VIRTUAL%" EQU "Hyper-V" (
@@ -341,11 +344,12 @@ echo   Downloading from github...
 %posh% -Command "(New-Object System.Net.WebClient).DownloadFile('https://github.com/gildas/packer-provisioner-wait/releases/download/v0.1.0/packer-provisioner-wait-0.1.0-win.7z', '%TEMP%\packer-provisioner-wait-0.1.0-win.7z')"
 if errorlevel 1 goto :error
 echo   Extracting in packer tools...
-C:\ProgramData\chocolatey\tools\7za.exe e -y -oC:\ProgramData\chocolatey\lib\packer\tools %TEMP%\packer-provisioner-wait-0.1.0-win.7z
+7z.exe e -y -oC:\ProgramData\chocolatey\lib\packer\tools %TEMP%\packer-provisioner-wait-0.1.0-win.7z
 if errorlevel 1 goto :error
 
 call :ChocolateyInstall vagrant
 if errorlevel 1 goto :error
+SET PATH=%PATH%;C:\HashiCorp\Vagrant\bin
 
 ::C:\HashiCorp\Vagrant\bin\vagrant.exe plugin update
 if errorlevel 1 goto :error
@@ -364,11 +368,11 @@ set packer_windows=%PACKER_HOME%\packer-windows
 if not exist "%packer_windows%" mkdir "%packer_windows%"
 if not exist "%packer_windows%\.git" (
   echo   Cloning repository
-  "%ProgramFiles(x86)%\Git\cmd\git.exe" clone https://github.com/gildas/packer-windows.git "%packer_windows%"
+  git clone https://github.com/gildas/packer-windows.git "%packer_windows%"
   if errorlevel 1 goto :error
 ) else (
    echo Updating repository
-  "%ProgramFiles(x86)%\Git\cmd\git.exe" -C "%packer_windows%" pull
+  git -C "%packer_windows%" pull
   if errorlevel 1 goto :error
 )
 if exist "%packer_windows%\Gemfile" (
