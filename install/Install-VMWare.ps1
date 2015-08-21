@@ -77,8 +77,15 @@ function ConvertFrom-Ini
       New-Item -ItemType 'Directory' -Path $VirtualMachinesHome
     }
 
-    $filename     = Join-Path $env:APPDATA (Join-Path 'VMWare' 'preferences.ini')
-    $preferences  = Get-Content -Raw -Path $filename | ConvertFrom-Ini
+    $filename = Join-Path $env:APPDATA (Join-Path 'VMWare' 'preferences.ini')
+    if (Test-Path $filename)
+    {
+      $preferences  = Get-Content -Raw -Path $filename | ConvertFrom-Ini
+    }
+    else
+    {
+      $preferences  = @{}
+    }
     $current_home = $preferences['prefvmx.defaultVMPath']
 
     Write-Verbose "Current Virtual Machines Home: $current_home"
@@ -86,6 +93,7 @@ function ConvertFrom-Ini
     {
       Write-Verbose "  Updating to $VirtualMachinesHome"
       $preferences['prefvmx.defaultVMPath'] = $VirtualMachinesHome
+      If (! (Test-Path (Join-Path $env:APPDATA 'VMWare')) { mkdir Join-Path $env:APPDATA 'VMWare' }
       $preferences.Keys | Foreach { Write-Output "$_ = `"$($preferences[$_])`"" } | Set-Content -Path $filename
     }
     else
