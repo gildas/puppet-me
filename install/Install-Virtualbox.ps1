@@ -10,11 +10,35 @@ process
   # 1. Intall Virtualbox via Chocolatey
   if ((choco list -l | Where { $_ -match 'virtualbox.*' }) -eq $null)
   {
+    Write-Output "Installing Virtualbox"
     choco install -y virtualbox
   }
   else
   {
-    choco upgrade -y virtualbox
+    Write-Verbose "Checking Virtualbox"
+    $results = choco list virtualbox | Select-String -Pattern '^virtualbox\s+(.*)'
+
+    if ($results.matches.Length -gt 0)
+    {
+      $available = $results.matches[0].Groups[1].Value
+      $results = choco list -l virtualbox | Select-String -Pattern '^virtualbox\s+(.*)'
+
+      Write-Verbose "  Virtualbox v$available is available"
+      if ($results.matches.Length -gt 0)
+      {
+        $current = $results.matches[0].Groups[1].Value
+        Write-Verbose "  Virtualbox v$current is installed"
+        if ($current -ne $available)
+        {
+          Write-Output "  Upgrading to Virtualbox v$available"
+          choco upgrade -y virtualbox
+        }
+        else
+        {
+          Write-Verbose "Virtualbox v$available is already installed"
+        }
+      }
+    }
   }
 
   # 2. Get VBoxManage
@@ -58,7 +82,7 @@ process
     Start-BitsTransfer -Source $url -Destination (Join-Path $env:TEMP $vboxExtensionPack) -Verbose:$false
     if (! $?) { return $LastExitCode }
 
-    Write-Output "Installing Extension pack version ${vboxVersion}"
+    Write-Output "Installing Extension pack version v${vboxVersion}"
     & $vboxManage extpack install --replace (Join-Path $env:TEMP $vboxExtensionPack)
     if (! $?)
     {
@@ -68,6 +92,6 @@ process
   }
   else
   {
-    Write-Output "Virtualbox Extension Pack $vboxVersion is already installed"
+    Write-Verbose "Virtualbox Extension Pack v$vboxVersion is already installed"
   }
 }
