@@ -40,6 +40,7 @@ process
       }
     }
   }
+  if (! $?) { Throw "Virtualbox not installed. Error: $LASTEXITCODE" }
 
   # 2. Get VBoxManage
   if ($env:VBOX_MSI_INSTALL_PATH -eq $null) { $env:VBOX_MSI_INSTALL_PATH = [System.Environment]::GetEnvironmentVariable("VBOX_MSI_INSTALL_PATH", "Machine") }

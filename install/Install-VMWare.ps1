@@ -68,6 +68,7 @@ function ConvertFrom-Ini
       }
     }
   }
+  if (! $?) { Throw "VMWare not installed. Error: $LASTEXITCODE" }
 
   # 2. Set Virtual Machine Home
   if ($PSBoundParameters.ContainsKey('VirtualMachinesHome'))
