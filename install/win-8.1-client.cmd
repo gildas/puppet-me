@@ -116,14 +116,14 @@ goto :EOF
 
 :: Function: InstallHyperV {{{2
 :InstallHyperV    
-  %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-Hyper-V.ps1'"
+  %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-Hyper-V.ps1' -Verbose"
   if errorlevel 1 goto :EOF
 goto :EOF
 :: Function: InstallHyperV }}}2
 
 :: Function: UninstallHyperV {{{2
 :UninstallHyperV    
-  %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Uninstall-Hyper-V.ps1'"
+  %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Uninstall-Hyper-V.ps1' -Verbose"
   if errorlevel 1 goto :EOF
 goto :EOF
 :: Function: UninstallHyperV }}}2
@@ -161,7 +161,7 @@ goto :EOF
   if errorlevel 1 goto :error
   set args=
   if "X%VIRTUALBOX_HOME%" NEQ "X" set args=%args% -VirtualMachinesHome '%VIRTUALBOX_HOME%'
-  %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-Virtualbox.ps1' %args%"
+  %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-Virtualbox.ps1' %args% -Verbose"
   if errorlevel 1 goto :error
 :InstallVirtualBoxOK    
 goto :EOF
@@ -174,7 +174,7 @@ goto :EOF
   set args=
   if "X%VMWARE_HOME%"    NEQ "X" set args=%args% -VirtualMachinesHome '%VMWARE_HOME%'
   if "X%VMWARE_LICENSE%" NEQ "X" set args=%args% -License '%VMWARE_LICENSE%'
-  %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-VMWare.ps1' %args%"
+  %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-VMWare.ps1' %args% -Verbose"
   if errorlevel 1 goto :error
 :InstallVMWareOK    
 goto :EOF
