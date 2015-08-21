@@ -42,7 +42,7 @@ goto :EOF
 
 :: Function: DownloadTools {{{2
 :DownloadTools    
-  call :Download "%TOOLS_ROOT%/install/Install-VirtualboxExtensionPack.ps1" %TEMP%
+  call :Download "%TOOLS_ROOT%/install/Install-Virtualbox.ps1" %TEMP%
   if errorlevel 1 goto :EOF
   call :Download "%TOOLS_ROOT%/install/Install-Hyper-V.ps1" %TEMP%
   if errorlevel 1 goto :EOF
@@ -159,15 +159,10 @@ goto :EOF
 :InstallVirtualBox    
   call :UninstallHyperV
   if errorlevel 1 goto :error
-  call :ChocolateyInstall virtualbox
+  set args=
+  if "X%VIRTUALBOX_HOME%" NEQ "X" set args=%args% -VirtualMachinesHome '%VIRTUALBOX_HOME%'
+  %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-Virtualbox.ps1' %args%"
   if errorlevel 1 goto :error
-
-  ::The chocolatey package is broken at the moment
-  ::  if Virtualbox is not installed in %ProgramFiles% the package fails
-  ::call :ChocolateyInstall virtualbox.extensionpack
-  ::if errorlevel 1 goto :error
-  %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-VirtualboxExtensionPack.ps1'"
-  if errorlevel 1 goto :EOF
 :InstallVirtualBoxOK    
 goto :EOF
 :: Function: InstallVirtualBox }}}2
