@@ -69,7 +69,7 @@ process
       }
       default
       {
-        Write-Verbose "Validating $($source.Name)..."
+        Write-Output "Validating $($source.Name)..."
         $destination = $cacheRoot
         if ($source.destination -ne $null)
         {
@@ -110,8 +110,7 @@ process
           {
             Write-Verbose "Starting VPN $($location.vpn)"
           }
-          Write-Output  "Downloading $($source.Name)..."
-          Write-Output  "  From $($location.location)"
+          Write-Output  "Downloading $($source.Name) From $($location.location)..."
           $source_url="$($location.url)$($source.filename)"
           if ($source_url -match '^([^:]+)://([^/]+)/([^/]+)/(.*)')
           {
