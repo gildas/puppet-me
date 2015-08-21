@@ -17,8 +17,6 @@ set NETWORK=
 if "%PACKER_HOME%"     == "" set PACKER_HOME=%USERPROFILE%\Documents\packer
 if "%VAGRANT_HOME%"    == "" set VAGRANT_HOME=%USERPROFILE%\.vagrant.d
 set VAGRANT_VMWARE_LICENSE=
-if "%VIRTUALBOX_HOME%" == "" set VIRTUALBOX_HOME=%USERPROFILE%VirtualBox VMs
-if "%VMWARE_HOME%"     == "" set VMWARE_HOME=%USERPROFILE%\Documents\My Virtual Machines
 set VMWARE_LICENSE=
 goto main
 
@@ -43,6 +41,8 @@ goto :EOF
 :: Function: DownloadTools {{{2
 :DownloadTools    
   call :Download "%TOOLS_ROOT%/install/Install-Virtualbox.ps1" %TEMP%
+  if errorlevel 1 goto :EOF
+  call :Download "%TOOLS_ROOT%/install/Install-VMWare.ps1" %TEMP%
   if errorlevel 1 goto :EOF
   call :Download "%TOOLS_ROOT%/install/Install-Hyper-V.ps1" %TEMP%
   if errorlevel 1 goto :EOF
@@ -171,7 +171,10 @@ goto :EOF
 :InstallVMWare    
   call :UninstallHyperV
   if errorlevel 1 goto :error
-  call :ChocolateyInstall vmwareworkstation
+  set args=
+  if "X%VMWARE_HOME%"    NEQ "X" set args=%args% -VirtualMachinesHome '%VMWARE_HOME%'
+  if "X%VMWARE_LICENSE%" NEQ "X" set args=%args% -License '%VMWARE_LICENSE%'
+  %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-VMWare.ps1' %args%"
   if errorlevel 1 goto :error
 :InstallVMWareOK    
 goto :EOF
