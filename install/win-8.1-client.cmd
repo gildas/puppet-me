@@ -122,8 +122,8 @@ goto :EOF
 :: Function: InstallHyperV }}}2
 
 :: Function: UninstallHyperV {{{2
-:InstallHyperV    
-  %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Install-Hyper-V.ps1'"
+:UninstallHyperV    
+  %posh% -ExecutionPolicy ByPass -Command "& '%TEMP%\Uninstall-Hyper-V.ps1'"
   if errorlevel 1 goto :EOF
 goto :EOF
 :: Function: UninstallHyperV }}}2
