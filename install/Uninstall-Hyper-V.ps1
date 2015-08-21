@@ -7,7 +7,7 @@ process
   if ($hyperv_status.State -eq 'Enabled')
   {
     Write-Verbose "Enabling Hyper-V"
-    Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All -NoRestart
+    Disable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -NoRestart
 
     $hyperv_status = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -Verbose:$False
 
