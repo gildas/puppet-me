@@ -13,7 +13,6 @@ set GITHUB_ROOT=https://raw.githubusercontent.com/inin-apac/puppet-me
 set TOOLS_ROOT=%GITHUB_ROOT%/master
 set CACHE_CONFIG=%GITHUB_ROOT%/%VERSION%/config/sources.json
 if "%DAAS_CACHE%"      == "" set DAAS_CACHE=%ProgramData%\DaaS\cache
-if "%DAAS_VIRTUAL%"    == "" set DAAS_VIRTUAL=hyper-v
 set NETWORK=
 if "%PACKER_HOME%"     == "" set PACKER_HOME=%USERPROFILE%\Documents\packer
 if "%VAGRANT_HOME%"    == "" set VAGRANT_HOME=%USERPROFILE%\.vagrant.d
@@ -247,7 +246,6 @@ echo                            Default: %VAGRANT_HOME%
 echo   --vagrant-vmware-license points to the license file 
 echo   --virtual                The Virtualization Kit to use (one of):
 echo                            Valid values: hyper-v, virtualbox, vmware
-echo                            Default: hyper-v
 echo   --virtualbox-home        where Virtual Machines should be created
 echo                            Default: %VIRTUALBOX_HOME%
 echo   --vmware-home            where Virtual Machines should be created
