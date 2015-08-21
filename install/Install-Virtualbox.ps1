@@ -27,7 +27,7 @@ process
   # 3. Set Virtual Machine Home
   if ($PSBoundParameters.ContainsKey('VirtualMachinesHome'))
   {
-    $result = & $vboxManage list systemproperties | Select-String -Pattern '^Default machine folder:\s*(.*)'
+    $results = & $vboxManage list systemproperties | Select-String -Pattern '^Default machine folder:\s*(.*)'
 
     if ($results.matches.Length -gt 0)
     {
