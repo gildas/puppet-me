@@ -301,7 +301,7 @@ SET PATH=%PATH%;"%ProgramFiles%\7-zip"
 
 call :ChocolateyInstall git --upgrade
 if errorlevel 1 goto :error
-SET PATH=%PATH%;"%ProgramFiles(x86)%\Git\cmd"
+SET PATH=%PATH%;"%ProgramFiles%\Git\cmd"
 
 call :ChocolateyInstall imdisk
 if errorlevel 1 goto :error
