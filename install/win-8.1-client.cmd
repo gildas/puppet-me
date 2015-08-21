@@ -304,7 +304,7 @@ call :ChocolateyInstall 7zip
 if errorlevel 1 goto :error
 SET PATH=%PATH%;"%ProgramFiles%\7-zip"
 
-call :ChocolateyInstall git
+call :ChocolateyInstall git --upgrade
 if errorlevel 1 goto :error
 SET PATH=%PATH%;"%ProgramFiles(x86)%\Git\cmd"
 
@@ -336,7 +336,7 @@ if /I "%DAAS_VIRTUAL%" EQU "Hyper-V" (
   if errorlevel 1 goto :error
 )
 
-call :ChocolateyInstall packer
+call :ChocolateyInstall packer --upgrade
 if errorlevel 1 goto :error
 
 echo Installing Packer Provisioner Wait
@@ -347,7 +347,7 @@ echo   Extracting in packer tools...
 7z.exe e -y -oC:\ProgramData\chocolatey\lib\packer\tools %TEMP%\packer-provisioner-wait-0.1.0-win.7z
 if errorlevel 1 goto :error
 
-call :ChocolateyInstall vagrant
+call :ChocolateyInstall vagrant --upgrade
 if errorlevel 1 goto :error
 SET PATH=%PATH%;C:\HashiCorp\Vagrant\bin
 
