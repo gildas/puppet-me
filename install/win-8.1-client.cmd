@@ -134,14 +134,15 @@ goto :EOF
 ::   to time for no real good reason!!!
 :VagrantPluginInstall    
 set plugin=%~1
+set license=%~2
 C:\HashiCorp\Vagrant\bin\vagrant.exe plugin list | findstr /C:"%plugin%"
-if %ERRORLEVEL% EQU 0 goto VagrantPluginInstallOK
+if %ERRORLEVEL% EQU 0 goto :OK_VPI
 title Installing Vagrant plugin %~1...
 set try_index=0
 :While_VPI
   if %try_index% geq 5 goto :EndWhile_VPI
-  C:\HashiCorp\Vagrant\bin\vagrant.exe plugin install  %plugin%
-  if %ERRORLEVEL% EQU 0 goto :VagrantPluginInstallOK
+  C:\HashiCorp\Vagrant\bin\vagrant.exe plugin install %plugin%
+  if %ERRORLEVEL% EQU 0 goto :OK_VPI
   set STASH_ERRORLEVEL=%ERRORLEVEL%
   echo Trying again...
   set /A try_index+=1
@@ -150,8 +151,10 @@ set try_index=0
 echo Vagrant plugin %plugin% failed 5 times... giving up
 call :SetErrorLevel %STASH_ERRORLEVEL%
 goto :EOF
-:VagrantPluginInstallOK    
+:OK_VPI
 echo Vagrant plugin %plugin% is installed
+if "X%license%" EQU "X" goto :EOF
+C:\HashiCorp\Vagrant\bin\vagrant.exe plugin license %plugin% "%license%"
 goto :EOF
 :: Function: VagrantPluginInstall }}}2
 
@@ -355,8 +358,8 @@ if errorlevel 1 goto :error
 call :VagrantPluginInstall vagrant-host-shell
 if errorlevel 1 goto :error
 
-if /I "%virtual_kit%" EQU "VMWare" (
-  call :VagrantPluginInstall vagrant-vmware-workstation
+if /I "%DAAS_VIRTUAL%" EQU "VMWare" (
+  call :VagrantPluginInstall vagrant-vmware-workstation "%VAGRANT_VMWARE_LICENSE%"
   if errorlevel 1 goto :error
 )
 
