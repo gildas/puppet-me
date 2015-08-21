@@ -93,7 +93,7 @@ function ConvertFrom-Ini
     {
       Write-Verbose "  Updating to $VirtualMachinesHome"
       $preferences['prefvmx.defaultVMPath'] = $VirtualMachinesHome
-      If (! (Test-Path (Join-Path $env:APPDATA 'VMWare')) { mkdir Join-Path $env:APPDATA 'VMWare' }
+      If (! (Test-Path (Join-Path $env:APPDATA 'VMWare'))) { mkdir Join-Path $env:APPDATA 'VMWare' }
       $preferences.Keys | Foreach { Write-Output "$_ = `"$($preferences[$_])`"" } | Set-Content -Path $filename
     }
     else
