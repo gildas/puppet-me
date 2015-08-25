@@ -1,4 +1,4 @@
-@if not defined PACKER_DEBUG (@echo off) else (@echo on)
+@if not defined PUPPETME_DEBUG (@echo off) else (@echo on)
 setlocal EnableDelayedExpansion EnableExtensions
 
 :: Installation:
