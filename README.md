@@ -134,7 +134,7 @@ The possible options are:
   Contains the location virtual machine data will be stored.  
   Default value: $HOME/Documents/Virtual Machines
 - --parallels-license *key*  
-  Contains the license key to configure Parallels Desktop.  
+  Contains the license key to configure [Parallels Desktop](http://www.parallels.com/products/desktop/).  
 - --password *password*  
   Contains the sudo password for elevated tasks.  
   Warning: The password will be viewable in your shell history as well as on the current command line.  
@@ -144,10 +144,10 @@ The possible options are:
   contains the default user for various authentications (like cifs/smb).  
   Default: current user.
 - --vagrant-home *path*  
-  Contains the location where vagrant user work data will be stored.  
+  Contains the location where [Vagrant](http://vagrantup.com) user work data will be stored.  
   Default value: $HOME/.vagrant.d
 - --vagrant-vmware-license *path*  
-  Contains the location of the license file for the Vagrant VMWare Plugin.
+  Contains the location of the license file for the [Vagrant VMWare Plugin](https://www.vagrantup.com/vmware).
 - --verbose  
   Runs the script verbosely, that's by default.
 - --virtualbox-home *path*  
@@ -158,8 +158,8 @@ The possible options are:
   Default value: $HOME/Documents/Virtual Machines
 - --vmware-license *key*  
   Contains the license key to configure VMWare Fusion.  
-  If not provided here and VMWare needs to be configured,  
-  The VMWare initialization script will request it.  
+  If not provided here and [VMWare Fusion](http://www.vmware.com/products/fusion) needs to be configured,  
+  The [VMWare Fusion](http://www.vmware.com/products/fusion) initialization script will request it.  
 - --yes, --assumeyes, -y  
   Answers yes to any questions automatically.
 
@@ -173,44 +173,52 @@ curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- --macmini-virtualbox --p
 Windows 8.1 and Windows 2012R2
 ------------------------------
 
-On Windows, open a cmd.exe as an Administrator, and type:
-```cmd
-@powershell -Command "Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-1 '%TEMP%\zz.cmd'" && type %TEMP%\zz.cmd | more /p > %TEMP%\puppet-me.cmd && %TEMP%\puppet-me.cmd [options]
+On Windows, open a **Powershell** as an Administrator, and type:
+```powershell
+Start-BitsTransfer http://tinyurl.com/win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 [options]
 ```
+
 Were *options* are:
 
-- --cache-root *path*  
-  Contains the location of the cache for ISO, MSI, etc files.  
-  Default: $env:ProgramData\DaaS\Cache
-- --help  
-  Prints some help on the output.
-- --network  *ip_address*/*cidr*
-  can be used to force the script to believe it is run in a given network.  
-  Both an ip address and a network (in the cidr form) must be given.  
-  Default: N/A.
-- --packer-home *path*  
-  Contains the location where packer user work data will be stored.  
-  Default value: $env:UserProfile\Documents\packer
-- --vagrant-home *path*  
-  Contains the location where vagrant user work data will be stored.  
-  Default value: $env:UserProfile/.vagrant.d
-- --vagrant-vmware-license *path*  
-  Contains the location of the license file for the Vagrant VMWare Plugin.
-- --version   
-  shows the version of this application
-- --virtual   
-  The Virtualization Kit to use (one of):  
-  Valid values: hyper-v, virtualbox, vmware  
-- --virtualbox-home *path*  
-  Contains the location virtual machine data will be stored.  
-  Default value: $env:UserProfile/VirtualBox VMs
-- --vmware-home *path*  
-  Contains the location virtual machine data will be stored.  
-  Default value: $env:UserProfile/Documents/My Virtual Machines
-- --vmware-license *key*  
-  Contains the license key to configure VMWare Fusion.  
-  If not provided here and VMWare needs to be configured,  
-  The VMWare initialization script will request it.  
+- -CacheRoot *path*  
+  Contains the location of the cache for ISO, MSI, etc files.    
+  When used, it will update $env:DAAS_CACHE  
+  Alias: DaasCache  
+  Default: $env:DAAS_CACHE or $env:ProgramData\DaaS\Cache  
+- -PackerBuild  
+  When all software is installed, [packer-windows](https://github.com/gildas/packer-windows) will build the given list of [Vagrant](http://vagrantup.com) boxes.  
+- -PackerHome *path*  
+  Contains the location where the [packer-windows](https://github.com/gildas/packer-windows) building environment will be stored.  
+  When used, it will update $env:PACKER_HOME  
+  Warning: This folder can grow quite big!  
+  Default: $env:PACKER_HOME or $env:UserProfile\Documents\packer  
+- -PackerLoad  
+  When all software is installed, [packer-windows](https://github.com/gildas/packer-windows) will be build and load the given list of [Vagrant](http://vagrantup.com) boxes.  
+- -Usage  
+  Prints this help and exits.  
+- -VagrantHome *path*  
+  Contains the location where [Vagrant](http://vagrantup.com) Data will be stored such as Vagrant boxes.    
+  When used, it will update $env:VAGRANT_HOME  
+  Warning: This folder can grow quite big!  
+  Default value: $env:VAGRANT_HOME or $env:UserProfile/.vagrant.d  
+- -VagrantVMWareLicense *path*  
+  Contains the location of the license file for the [Vagrant VMWare Plugin](https://www.vagrantup.com/vmware).  
+- -Version  
+  Displays the version of this installer and exists.  
+- -Virtualbox  
+  When used, [Virtualbox](http://www.virtualbox.org) will be installed and configured.  
+  Only one of -HyperV, -Virtualbox, -VMWare can be specified.  
+- -VirtualMachinesHome *path*  
+  Contains the location virtual machines will be stored.    
+  The Default value depends on the Virtualization platform that was chosen.  
+  Alias: VMHome  
+- -VMWare  
+  When used, [VMWare Workstation](http://www.vmware.com/products/workstation) will be installed and configured.  
+  Only one of -HyperV, -Virtualbox, -VMWare can be specified.  
+- -VMWareLicense *key*  
+  Contains the license key to configure [VMWare Workstation](http://www.vmware.com/products/workstation).    
+  If not provided, the license key will have to be entered manually the first time [VMWare Workstation](http://www.vmware.com/products/workstation) is used.  
+
 
 AUTHORS
 =======

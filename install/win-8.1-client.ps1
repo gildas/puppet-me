@@ -1,10 +1,106 @@
 <#
+.SYNOPSIS
+  Prepare a machine for DaaS projects
 .DESCRIPTION
-  Prepare a Windows 8.1 or 2012R2 for running DaaS projects
+  Prepare a Windows 8.1 or 2012R2 for running DaaS projects by dowloading and installing software.
+
+  At minimum, these will be installed:
+    - Chocolatey
+    - 7 Zip
+    - Git
+    - Puppet
+    - IMDisk
+    - Ruby
+    - Vagrant
+    - Packer
+    - Packer Windows building environment
+
+  A Virtualization platform will also be installed and/or configured. Supported platforms are:
+    - Virtualbox
+    - VMWare Workstation
+
+  Depending on the chosen platform, more configuration will be allowed such as the Virtual Machines folder, License keys/files where they apply.
+
+  The best way to launch this installation program is to get the latest version from the Internet first:
+
+  [PS] Start-BitsTransfer http://tinyurl.com/win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -Virtualbox -Verbose
+
+  While we are in development, use:
+  Start-BitsTransfer https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/win-8.1-client.ps1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -Virtualbox -Verbose
+
+.PARAMETER Usage
+  Prints this help and exits.
+.PARAMETER Version
+  Displays the version of this installer and exists.
+.PARAMETER Virtualbox
+  When used, Virtualbox will be installed and configured.
+  Only one of -HyperV, -Virtualbox, -VMWare can be specified.
+.PARAMETER VMWare
+  When used, VMWare Workstation will be installed and configured.
+  Only one of -HyperV, -Virtualbox, -VMWare can be specified.
+.PARAMETER VMWareLicense
+  Contains the license key to configure VMWare Workstation.  
+  If not provided, the license key will have to be entered manually the first time VMWare is used.
+.PARAMETER VirtualMachinesHome
+  Contains the location virtual machines will be stored.  
+  The Default value depends on the Virtualization platform that was chosen.
+  Alias: VMHome
+.PARAMETER PackerHome
+  Contains the location where the Packer Windows building environment will be stored.
+  When used, it will update $env:PACKER_HOME
+  Warning: This folder can grow quite big!
+  Default: $env:PACKER_HOME or $env:UserProfile\Documents\packer
+.PARAMETER VagrantHome
+  Contains the location where Vagrant Data will be stored such as Vagrant boxes.  
+  When used, it will update $env:VAGRANT_HOME
+  Warning: This folder can grow quite big!
+  Default value: $env:VAGRANT_HOME or $env:UserProfile/.vagrant.d
+.PARAMETER VagrantVMWareLicense
+  Contains the location of the license file for the Vagrant VMWare Plugin.
+.PARAMETER CacheRoot
+  Contains the location of the cache for ISO, MSI, etc files.  
+  When used, it will update $env:DAAS_CACHE
+  Alias: DaasCache
+  Default: $env:DAAS_CACHE or $env:ProgramData\DaaS\Cache
+.PARAMETER CacheConfig
+  Contains the location of the JSON document that describe the Cache source locations.
+  By Default, this document is downloaded from the Internet.
+  Using this parameter is for debugging purposes.
+.PARAMETER PackerBuild
+  When all software is installed, Packer will be executed to build the given list of Vagrant boxes.
+.PARAMETER PackerLoad
+  When all software is installed, Packer will be executed to build and load the given list of Vagrant boxes.
+.PARAMETER Network
+  can be used to force the installation to believe it is run on a given network.  
+  Both an ip address and a network (in the cidr form) must be given.  
+  See examples.
+.EXAMPLE
+  Start-BitsTransfer http://tinyurl.com/win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -Version
+  Will print the current version of Puppet-Me
+.EXAMPLE
+  Start-BitsTransfer http://tinyurl.com/win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -Virtualbox
+  Will install all the software and Virtualbox in their default locations.
+.EXAMPLE
+  Start-BitsTransfer http://tinyurl.com/win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -VMWare -VirtualMachineHomes D:\VMWare -VMWareLicense 12345-asdgv-123-scvb-123
+  Will install all the software and VMWare Workstation. VMWare Workstation will be stored in D:\VMWare.
+  The given license key will be applied to VMWare Workstation.
+.EXAMPLE
+  Start-BitsTransfer http://tinyurl.com/win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -Virtualbox -PackerLoad cic-2015R3
+  Will install all the software and Virtualbox in their default locations.
+  Once installed, packer is invoked to build the Vagrant box for CIC 2015R3 with Virtualbox.
+  Once built, the resulting box is loaded in the Vagrant boxes, so it can be used in "vagrant up"
+.EXAMPLE
+  Start-BitsTransfer http://tinyurl.com/win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -VMWare -PackerBuild windows-8.1-enterprise-eval
+  Will install all the software and Virtualbox in their default locations.
+  Once installed, packer is invoked to build the Vagrant box for Windows 8.1 Enterprise Evaluation with VMWare Workstation.
+.EXAMPLE
+  Start-BitsTransfer http://tinyurl.com/win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -VMWare -PackerBuild all
+  Will install all the software and Virtualbox in their default locations.
+  Once installed, packer is invoked to build all Vagrant box available with VMWare Workstation.
 .NOTES
   Version 0.5.0
 #>
-[CmdLetBinding(SupportsShouldProcess, DefaultParameterSetName="Usage")]
+[CmdLetBinding(SupportsShouldProcess, DefaultParameterSetName="Usage", HelpURI="https://github.com/inin-apac/puppet-me")]
 Param( # {{{2
   [Parameter(Position=1, Mandatory=$false, ParameterSetName='Usage')]
   [switch] $Usage,
