@@ -12,12 +12,12 @@ Param( # {{{2
   [switch] $Version,
   [Parameter(Position=1, Mandatory=$true,  ParameterSetName='Virtualbox')]
   [switch] $Virtualbox,
-  [Parameter(Position=2, Mandatory=$false, ParameterSetName='Virtualbox')]
-  [string] $VirtualboxHome,
   [Parameter(Position=1, Mandatory=$true,  ParameterSetName='VMWare')]
   [switch] $VMWare,
   [Parameter(Position=2, Mandatory=$false, ParameterSetName='VMWare')]
-  [string] $VMWareHome,
+  [Parameter(Position=2, Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Alias('VMHome', 'VirtualMachines')]
+  [string] $VirtualMachinesHome,
   [Parameter(Position=3, Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VMWareLicense,
   [Parameter(Position=3, Mandatory=$false, ParameterSetName='Virtualbox')]
@@ -689,11 +689,11 @@ process # {{{2
     }
     'Virtualbox'
     {
-      Install-Virtualbox $VirtualboxHome
+      Install-Virtualbox $VirtualMachinesHome
     }
     'VMWare'
     {
-      Install-VMWare $VMWareHome $VMWareLicense
+      Install-VMWare $VirtualMachinesHome $VMWareLicense
     }
   }
 
