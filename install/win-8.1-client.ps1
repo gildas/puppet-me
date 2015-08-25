@@ -20,19 +20,18 @@ Param( # {{{2
   [string] $VMWareHome,
   [Parameter(Position=3, Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VMWareLicense,
-
   [Parameter(Position=3, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=4, Mandatory=$false, ParameterSetName='VMWare')]
   [string] $PackerHome,
   [Parameter(Position=4, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=5, Mandatory=$false, ParameterSetName='VMWare')]
-  [string] $VagrantHome = "${env:UserProfile}\.vagrant.d",
+  [string] $VagrantHome,
   [Parameter(Position=6, Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VagrantVMWareLicense,
   [Parameter(Position=5, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=7, Mandatory=$false, ParameterSetName='VMWare')]
   [Alias('DaasCache')]
-  [string] $CacheRoot = "${env:ProgramData}\DaaS\cache",
+  [string] $CacheRoot,
   [Parameter(Position=6, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=8, Mandatory=$false, ParameterSetName='VMWare')]
   [string] $CacheConfig,
