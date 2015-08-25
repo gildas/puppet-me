@@ -615,6 +615,7 @@ process # {{{2
   Install-Package 'MD5'
   Install-Package '7zip'
   Install-Package 'git' -Upgrade
+  Install-Package 'puppet'
   Install-Package 'imdisk'
   Install-Package 'ruby' -Upgrade
 
