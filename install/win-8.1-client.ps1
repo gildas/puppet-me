@@ -23,7 +23,7 @@ Param( # {{{2
 
   [Parameter(Position=3, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=4, Mandatory=$false, ParameterSetName='VMWare')]
-  [string] $PackerHome = "${env:UserProfile}\Documents\packer",
+  [string] $PackerHome,
   [Parameter(Position=4, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=5, Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VagrantHome = "${env:UserProfile}\.vagrant.d",
@@ -86,6 +86,46 @@ begin # {{{2
   {
     $CacheConfig = "${GitHubRoot}/${CURRENT_VERSION}/config/sources.json"
   }
+
+  if (! $PSBoundParameters.ContainsKey('PackerHome'))
+  {
+    if ([string]::IsNullOrEmpty($env:PACKER_HOME))
+    {
+      $PackerHome =  "${env:UserProfile}\Documents\packer"
+    }
+    else
+    {
+      $PackerHome = $env:PACKER_HOME
+    }
+  }
+  [Environment]::SetEnvironmentVariable('PACKER_HOME', $PackerHome, 'User')
+
+  if (! $PSBoundParameters.ContainsKey('VagrantHome'))
+  {
+    if ([string]::IsNullOrEmpty($env:VAGRANT_HOME))
+    {
+      $VagrantHome =  "${env:UserProfile}\.vagrant.d"
+    }
+    else
+    {
+      $VagrantHome = $env:VAGRANT_HOME
+    }
+  }
+  [Environment]::SetEnvironmentVariable('VAGRANT_HOME', $VagrantHome, 'User')
+
+  if (! $PSBoundParameters.ContainsKey('CacheRoot'))
+  {
+    if ([string]::IsNullOrEmpty($env:DAAS_CACHE))
+    {
+      $CacheRoot =  "${env:ProgramData}\DaaS\cache"
+    }
+    else
+    {
+      $CacheRoot = $env:DAAS_CACHE
+    }
+  }
+  [Environment]::SetEnvironmentVariable('DAAS_CACHE', $CacheRoot, 'User')
+
 
   Write-Debug "Installing Virtualization:    $Virtualization"
   Write-Debug "Installing Packer Windows in: $PackerHome"
