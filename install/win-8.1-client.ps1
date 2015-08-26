@@ -100,7 +100,7 @@
 .NOTES
   Version 0.5.0
 #>
-[CmdLetBinding(SupportsShouldProcess, DefaultParameterSetName="Usage", HelpURI="https://github.com/inin-apac/puppet-me")]
+[CmdLetBinding(SupportsShouldProcess, DefaultParameterSetName="Usage")]
 Param( # {{{2
   [Parameter(Position=1, Mandatory=$false, ParameterSetName='Usage')]
   [switch] $Usage,
