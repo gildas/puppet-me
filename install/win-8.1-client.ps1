@@ -768,32 +768,6 @@ process # {{{2
   Install-Package 'MD5'
   Install-Package '7zip'
   Install-Package 'git' -Upgrade
-  Install-Package 'puppet'
-  Install-Package 'imdisk'
-  Install-Package 'ruby' -Upgrade
-
-  # Set Firewall rules for Ruby {{{3
-  $rule = Get-NetFirewallRule | Where Name -match 'TCP.*ruby'
-  if ($rule -eq $null)
-  {
-    $rule = New-NetFirewallRule -Name TCP_Ruby_Inbound -DisplayName "Ruby Interpreter (CUI) (TCP-In)" -Description "Ruby Interpreter (CUI) (TCP-In)" -Profile Private,Public -Direction Inbound -Action Allow -Protocol TCP -EdgeTraversalPolicy DeferToUser -Program C:\tools\ruby21\bin\ruby.exe -Enabled True
-  }
-  elseif (($rule.Profiles -band 6) -ne 6) # 0=Any, 1=Domain, 2=Private, 4=Public
-  {
-    Set-NetFirewallRule -InputObject $rule -Profile Private,Public
-  }
-  $rule = Get-NetFirewallRule | Where Name -match 'UDP.*ruby'
-  if ($rule -eq $null)
-  {
-    $rule = New-NetFirewallRule -Name UDP_Ruby_Inbound -DisplayName "Ruby Interpreter (CUI) (UDP-In)" -Description "Ruby Interpreter (CUI) (UDP-In)" -Profile Private,Public -Direction Inbound -Action Allow -Protocol UDP -EdgeTraversalPolicy DeferToUser -Program C:\tools\ruby21\bin\ruby.exe -Enabled True
-  }
-  elseif (($rule.Profiles -band 6) -ne 6) # 0=Any, 1=Domain, 2=Private, 4=Public
-  {
-    Set-NetFirewallRule -InputObject $rule -Profile Private,Public
-  }
-  # }}}3
-
-  Install-Gem     'bundler'
 
   switch ($Virtualization)
   {
@@ -828,6 +802,31 @@ process # {{{2
   (New-Object System.Net.WebClient).DownloadFile('https://github.com/gildas/packer-provisioner-wait/releases/download/v0.1.0/packer-provisioner-wait-0.1.0-win.7z', "$env:TEMP\packer-provisioner-wait-0.1.0-win.7z")
   & "${env:ProgramFiles}\7-Zip\7z.exe" e -y -oC:\ProgramData\chocolatey\lib\packer\tools $env:TEMP\packer-provisioner-wait-0.1.0-win.7z | Out-Null
   if (! $?) { Throw "Packer Plugin packer-provisioner-wait not installed. Error: $LASTEXITCODE" }
+
+  Install-Package 'puppet'
+  Install-Package 'imdisk'
+  Install-Package 'ruby' -Upgrade
+  # Set Firewall rules for Ruby {{{3
+  $rule = Get-NetFirewallRule | Where Name -match 'TCP.*ruby'
+  if ($rule -eq $null)
+  {
+    $rule = New-NetFirewallRule -Name TCP_Ruby_Inbound -DisplayName "Ruby Interpreter (CUI) (TCP-In)" -Description "Ruby Interpreter (CUI) (TCP-In)" -Profile Private,Public -Direction Inbound -Action Allow -Protocol TCP -EdgeTraversalPolicy DeferToUser -Program C:\tools\ruby21\bin\ruby.exe -Enabled True
+  }
+  elseif (($rule.Profiles -band 6) -ne 6) # 0=Any, 1=Domain, 2=Private, 4=Public
+  {
+    Set-NetFirewallRule -InputObject $rule -Profile Private,Public
+  }
+  $rule = Get-NetFirewallRule | Where Name -match 'UDP.*ruby'
+  if ($rule -eq $null)
+  {
+    $rule = New-NetFirewallRule -Name UDP_Ruby_Inbound -DisplayName "Ruby Interpreter (CUI) (UDP-In)" -Description "Ruby Interpreter (CUI) (UDP-In)" -Profile Private,Public -Direction Inbound -Action Allow -Protocol UDP -EdgeTraversalPolicy DeferToUser -Program C:\tools\ruby21\bin\ruby.exe -Enabled True
+  }
+  elseif (($rule.Profiles -band 6) -ne 6) # 0=Any, 1=Domain, 2=Private, 4=Public
+  {
+    Set-NetFirewallRule -InputObject $rule -Profile Private,Public
+  }
+  # }}}3
+  Install-Gem     'bundler'
 
   $PackerWindows = Join-Path $PackerHome 'packer-windows'
   If (! (Test-Path $PackerWindows)) { New-Item -Path $PackerWindows -ItemType Directory | Out-Null }
