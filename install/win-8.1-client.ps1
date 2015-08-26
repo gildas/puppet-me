@@ -139,6 +139,9 @@ Param( # {{{2
   [string[]] $PackerLoad,
   [Parameter(Position=9,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=11, Mandatory=$false, ParameterSetName='VMWare')]
+  [switch] $NoUpdateCache,
+  [Parameter(Position=10,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=12, Mandatory=$false, ParameterSetName='VMWare')]
   [string] $Network
 ) # }}}2
 begin # {{{2
@@ -837,10 +840,22 @@ process # {{{2
     Pop-Location
   }
 
-  $args = {}
-  if ($PSBoundParameters.ContainsKey('Network')) { $args['Network'] = $Network }
-  Cache-Source -Uri $CacheConfig -Destination $CacheRoot @args
+  if (! $PSBoundParameters.ContainsKey('NoUpdateCache'))
+  {
+    $args = @{}
+    if ($PSBoundParameters.ContainsKey('Network')) { $args['Network'] = $Network }
+    Cache-Source -Uri $CacheConfig -Destination $CacheRoot @args
+  }
 
+  if ($PackerBuild.Length -gt 0)
+  {
+    Push-Location $PackerHome
+    $PackerBuild | Foreach {
+      $rake_rule="build:$($Virtualization.ToLower()):$_"
+      Write-Verbose "Raking $rake_rule"
+    }
+    Pop-Location
+  }
   Write-Verbose "Packer Build & Load"
   Write-Verbose "Your Computer is ready"
 } # }}}2
