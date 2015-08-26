@@ -872,6 +872,15 @@ process # {{{2
     }
     Pop-Location
   }
-  Write-Verbose "Packer Build & Load"
+  if ($PackerLoad.Length -gt 0)
+  {
+    Push-Location $PackerHome\packer-windows
+    $PackerLoad | Foreach {
+      $rake_rule="load:$($Virtualization.ToLower()):$_"
+      Write-Verbose "Raking $rake_rule"
+      rake $rake_rule
+    }
+    Pop-Location
+  }
   Write-Verbose "Your Computer is ready"
 } # }}}2
