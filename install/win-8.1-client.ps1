@@ -485,7 +485,7 @@ process # {{{2
     {
       if (! (Test-Path $VirtualMachinesHome))
       {
-        New-Item -ItemType 'Directory' -Path $VirtualMachinesHome
+        New-Item -Path $VirtualMachinesHome -ItemType Directory | Out-Null
       }
 
       $filename = Join-Path $env:APPDATA (Join-Path 'VMWare' 'preferences.ini')
@@ -504,7 +504,10 @@ process # {{{2
       {
         Write-Verbose "  Updating to $VirtualMachinesHome"
         $preferences['prefvmx.defaultVMPath'] = $VirtualMachinesHome
-        If (! (Test-Path (Join-Path $env:APPDATA 'VMWare'))) { mkdir (Join-Path $env:APPDATA 'VMWare') }
+        If (! (Test-Path (Join-Path $env:APPDATA 'VMWare')))
+        {
+          New-Item -Path (Join-Path $env:APPDATA 'VMWare') -ItemType Directory | Out-Null
+        }
         $preferences.Keys | Foreach { Write-Output "$_ = `"$($preferences[$_])`"" } | Set-Content -Path $filename
       }
       else
@@ -625,7 +628,7 @@ process # {{{2
           }
           if (! (Test-Path $source_destination))
           {
-            New-Item -Path $source_destination -ItemType Directory
+            New-Item -Path $source_destination -ItemType Directory | Out-Null
           }
           if (($source.filename -notlike '*`**') -and ($source.filename -notlike '*`?*'))
           {
@@ -820,7 +823,7 @@ process # {{{2
   if (! $?) { Throw "Packer Plugin packer-provisioner-wait not installed. Error: $LASTEXITCODE" }
 
   $PackerWindows = Join-Path $PackerHome 'packer-windows'
-  If (! (Test-Path $PackerWindows)) { New-Item -ItemType Directory $PackerWindows }
+  If (! (Test-Path $PackerWindows)) { New-Item -Path $PackerWindows -ItemType Directory | Out-Null }
   if (Test-Path (Join-Path $PackerWindows '.git'))
   {
     Write-Verbose "Updating Packer Windows repository"
