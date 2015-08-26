@@ -757,6 +757,7 @@ process # {{{2
   if (Get-Command 'chocolatey.exe' -ErrorAction SilentlyContinue)
   {
     Write-Verbose 'Chocolatey is already installed'
+    chocolatey upgrade -y chocolatey
   }
   else
   {
