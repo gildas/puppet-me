@@ -313,6 +313,13 @@ process # {{{2
       }
       if (! $?) { Throw "$Package not installed. Error: $LASTEXITCODE" }
     }
+    $new_path = (Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).Path
+    if ($env:PATH -ne $new_path)
+    {
+      Write-Verbose "Updating PATH"
+      Write-Debug   "Updating PATH to $new_path"
+      $env:PATH = $new_path
+    }
   } # }}}3
 
   function Install-Gem([string] $Gem, [switch] $Upgrade) # {{{3
