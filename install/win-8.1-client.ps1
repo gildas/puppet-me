@@ -473,11 +473,11 @@ process # {{{2
     Disable-HyperV
     if ([string]::IsNullOrEmpty($License))
     {
-      Install-Package -Package 'virtualbox' -Upgrade
+      Install-Package -Package 'vmwareworkstation' -Upgrade
     }
     else
     {
-      Install-Package -Package 'virtualbox' -InstallArguments "SERIALNUMBER=$License" -Upgrade
+      Install-Package -Package 'vmwareworkstation' -InstallArguments "SERIALNUMBER=$License" -Upgrade
     }
 
     # Set Virtual Machines Home {{{4
