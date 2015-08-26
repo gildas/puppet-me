@@ -324,10 +324,10 @@ process # {{{2
 
   function Install-Gem([string] $Gem, [switch] $Upgrade) # {{{3
   {
-    if ( C:\tools\ruby21\bin\gem.bat list --local | Where { $_ -match "${Gem}.*" } )
+    if ( gem list --local | Where { $_ -match "${Gem}.*" } )
     {
       $current = ''
-      $results = C:\tools\ruby21\bin\gem.bat list --local | Select-String -Pattern "^${Gem}\s+\((.*)\)"
+      $results = gem list --local | Select-String -Pattern "^${Gem}\s+\((.*)\)"
 
       if ($results.matches.Length -gt 0)
       {
@@ -337,7 +337,7 @@ process # {{{2
       if ($Upgrade)
       {
         Write-Verbose "Upgrading $Gem v$current"
-        C:\tools\ruby21\bin\gem.bat upgrade $Gem
+        gem upgrade $Gem
         if (! $?) { Throw "$Gem not upgraded. Error: $LASTEXITCODE" }
       }
       else
@@ -348,7 +348,7 @@ process # {{{2
     else
     {
       Write-Verbose "Installing $Gem"
-      C:\tools\ruby21\bin\gem.bat install $Gem
+      gem install $Gem
       if (! $?) { Throw "$Gem not installed. Error: $LASTEXITCODE" }
     }
   } # }}}3
@@ -523,9 +523,9 @@ process # {{{2
       [string] $License
     )
 
-    if ( (C:\HashiCorp\Vagrant\bin\vagrant.exe plugin list) | Where { $_ -match "${Plugin}.*" } )
+    if ( (vagrant plugin list) | Where { $_ -match "${Plugin}.*" } )
     {
-      $results = (C:\HashiCorp\Vagrant\bin\vagrant.exe plugin list) | Select-String -Pattern "^${Plugin}\s+(.*)"
+      $results = (vagrant plugin list) | Select-String -Pattern "^${Plugin}\s+(.*)"
 
       if ($results.matches.Length -gt 0)
       {
@@ -555,7 +555,7 @@ process # {{{2
       [switch] $All
     )
 
-    C:\HashiCorp\Vagrant\bin\vagrant.exe plugin update
+    vagrant plugin update
     if (! $?) { Throw "Could not upgrade Vagrant Plugins. Error: $LASTEXITCODE" }
   } # }}}3
 
@@ -824,20 +824,19 @@ process # {{{2
   if (Test-Path (Join-Path $PackerWindows '.git'))
   {
     Write-Verbose "Updating Packer Windows repository"
-    & "${env:ProgramFiles}\Git\cmd\git.exe" -C "$PackerWindows" pull
+    & git -C "$PackerWindows" pull
     if (! $?) { Throw "Packer Windows not updated. Error: $LASTEXITCODE" }
   }
   else
   {
     Write-Verbose "Cloning Packer Windows repository"
-    & "${env:ProgramFiles}\Git\cmd\git.exe" clone https://github.com/gildas/packer-windows.git $PackerWindows
+    & git clone https://github.com/gildas/packer-windows.git $PackerWindows
     if (! $?) { Throw "Packer Windows not cloned. Error: $LASTEXITCODE" }
   }
   if (Test-Path (Join-Path $PackerWindows 'Gemfile'))
   {
     Push-Location $PackerWindows
-    #$env:PATH += C:/tools/ruby21/bin if not which ruby.exe
-    C:\tools\ruby21\bin\ruby.exe C:/tools/ruby21/bin/bundle install
+    bundle install
     if (! $?)
     {
       $exitcode = $LASTEXITCODE
