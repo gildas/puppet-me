@@ -273,14 +273,14 @@ process # {{{2
 
     if ( chocolatey list --local-only | Where { $_ -match "${Package}.*" } )
     {
-      $results = choco list $Package | Select-String -Pattern "^${Package}\s+(.*)"
+      $results = chocolatey list $Package | Select-String -Pattern "^${Package}\s+(.*)"
 
       if ($results.matches.Length -gt 0)
       {
         $available = $results.matches[0].Groups[1].Value
         Write-Debug "  $Package v$available is available"
 
-        $results = choco list -l $Package | Select-String -Pattern "^${Package}\s+(.*)"
+        $results = chocolatey list -l $Package | Select-String -Pattern "^${Package}\s+(.*)"
 
         if ($results.matches.Length -gt 0)
         {
@@ -290,7 +290,7 @@ process # {{{2
           if ($Upgrade -and ($current -ne $available))
           {
             Write-Output "  Upgrading to $Package v$available"
-            choco upgrade -y $Package
+            chocolatey upgrade -y $Package
             if (! $?) { Throw "$Package not upgraded. Error: $LASTEXITCODE" }
           }
           else
