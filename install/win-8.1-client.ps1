@@ -864,10 +864,11 @@ process # {{{2
 
   if ($PackerBuild.Length -gt 0)
   {
-    Push-Location $PackerHome
+    Push-Location $PackerHome\packer-windows
     $PackerBuild | Foreach {
       $rake_rule="build:$($Virtualization.ToLower()):$_"
       Write-Verbose "Raking $rake_rule"
+      rake $rake_rule
     }
     Pop-Location
   }
