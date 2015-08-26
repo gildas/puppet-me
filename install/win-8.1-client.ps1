@@ -154,7 +154,7 @@ begin # {{{2
   {
     'Usage'
     {
-      Get-Help $PSCmdlet.MyInvocation.InvocationName
+      Get-Help -Path $PSCmdlet.MyInvocation.MyCommand.Path
       exit
     }
     'Version'
