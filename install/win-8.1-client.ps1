@@ -539,15 +539,20 @@ process # {{{2
     else
     {
       Write-Verbose "Installing Vagrant Plugin $Plugin"
-      C:\HashiCorp\Vagrant\bin\vagrant.exe plugin install $Plugin
+      vagrant plugin install $Plugin
       if (! $?) { Throw "Vagrant Plugin $Plugin not installed. Error: $LASTEXITCODE" }
     }
 
     if (! [string]::IsNullOrEmpty($License))
     {
-      Write-Verbose "Licensing Vagrant Plugin $Plugin"
-      C:\HashiCorp\Vagrant\bin\vagrant.exe plugin license $Plugin "$License"
-      if (! $?) { Throw "Vagrant Plugin $Plugin not licensed. Error: $LASTEXITCODE" }
+      # Checking if license was applied properly or not
+      vagrant box list 2>&1 | Out-Null
+      if (! $?)
+      {
+        Write-Verbose "Licensing Vagrant Plugin $Plugin"
+        vagrant plugin license $Plugin "$License"
+        if (! $?) { Throw "Vagrant Plugin $Plugin not licensed. Error: $LASTEXITCODE" }
+      }
     }
   } # }}}3
 
@@ -810,7 +815,9 @@ process # {{{2
   Install-VagrantPlugin 'vagrant-host-shell'
   if ($Virtualization -eq 'VMWare')
   {
-    Install-VagrantPlugin 'vagrant-vmware-Workstation' -License $VagrantVMWareLicense
+    $args = @{}
+    if ($PSBoundParameters.ContainsKey('VagrantVMWareLicense')) { $args['License'] = $VagrantVMWareLicense }
+    Install-VagrantPlugin 'vagrant-vmware-workstation' @args
   }
   Update-VagrantPlugin -All
 
