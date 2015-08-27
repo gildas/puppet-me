@@ -627,14 +627,14 @@ process # {{{2
     }
 
     Write-Verbose "Downloading sources configuration"
-    $config = Join-Path $CacheRoot 'config.json';
+    $config = Join-Path $env:TEMP 'config.json'
     Write-Verbose "  into $config"
     if (Test-Path $config)
     {
       Write-Verbose "  removing old version"
       Remove-Item -Path $config -Force
     }
-    #Start-BitsTransfer -Source $Uri -Destination (Join-Path $CacheRoot 'config.json') -Verbose:$false
+    #Start-BitsTransfer -Source $Uri -Destination (Join-Path $env:TEMP 'config.json') -Verbose:$false
     (New-Object System.Net.Webclient).DownloadFile($Uri, $config)
 
     $sources = (Get-Content -Raw -Path $config | ConvertFrom-Json)
