@@ -537,7 +537,7 @@ process # {{{2
 
     if ( (vagrant plugin list) | Where { $_ -match "${Plugin}.*" } )
     {
-      $results = (vagrant plugin list) | Select-String -Pattern "^${Plugin}\s+(.*)"
+      $results = (vagrant plugin list) | Select-String -Pattern "^${Plugin}\s+\((.*)\)"
 
       if ($results.matches.Length -gt 0)
       {
@@ -548,7 +548,14 @@ process # {{{2
     else
     {
       Write-Verbose "Installing Vagrant Plugin $Plugin"
-      vagrant plugin install $Plugin
+      # As long as https://github.com/jantman/vagrant-r10k/commit/773a6bbe9e49a6fec8751e3108300521bd0e26fb is not in vagrant,
+      #  we have to loop ourselves in case bundle fails to contact vagrant's plugin website:
+      foreach ($try  in 1..5)
+      {
+        Write-Debug "Updating Vagrant plugin, Try = $try"
+        vagrant plugin install $Plugin
+        if ($?) { break }
+      }
       if (! $?) { Throw "Vagrant Plugin $Plugin not installed. Error: $LASTEXITCODE" }
     }
 
@@ -572,7 +579,14 @@ process # {{{2
       [switch] $All
     )
 
-    vagrant plugin update
+    # As long as https://github.com/jantman/vagrant-r10k/commit/773a6bbe9e49a6fec8751e3108300521bd0e26fb is not in vagrant,
+    #  we have to loop ourselves in case bundle fails to contact vagrant's plugin website:
+    foreach ($try  in 1..5)
+    {
+      Write-Debug "Updating Vagrant plugin, Try = $try"
+      vagrant plugin update
+      if ($?) { return }
+    }
     if (! $?) { Throw "Could not upgrade Vagrant Plugins. Error: $LASTEXITCODE" }
   } # }}}3
 
