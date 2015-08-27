@@ -74,6 +74,11 @@
   can be used to force the installation to believe it is run on a given network.  
   Both an ip address and a network (in the cidr form) must be given.  
   See examples.
+.PARAMETER Force
+  Forces the script to check software versions, update the cache, etc.
+  Without Force, the script will try to perform these only once every few hours.
+  The idea behind is software and downloads do not change very often, so if they are locally stored in the last 4 hours,
+  there is a high chance they are up-to-date. This flash allows to override this assumption.
 .EXAMPLE
   Start-BitsTransfer http://tinyurl.com/win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -Version
   Will print the current version of Puppet-Me
@@ -148,6 +153,8 @@ begin # {{{2
 {
   $CURRENT_VERSION = '0.5.0'
   $GitHubRoot      = "https://raw.githubusercontent.com/inin-apac/puppet-me"
+  $ChocolateyLastUpdate      = "${env:ProgramData}/chocolatey/last_updated-chocolatey"
+  $ChocolateyUpdateFrequency = 4 # hours
 
   switch($PSCmdlet.ParameterSetName)
   {
@@ -269,22 +276,21 @@ process # {{{2
       [Parameter(Mandatory=$false)]
       [switch] $Upgrade
     )
+    $results = chocolatey list --local-only $Package | Select-String -Pattern "^${Package}\s+(.*)"
 
-    if ( chocolatey list --local-only | Where { $_ -match "${Package}.*" } )
+    if ($results -ne $null)
     {
-      $results = chocolatey list $Package | Select-String -Pattern "^${Package}\s+(.*)"
+      $current = $results.matches[0].Groups[1].Value
+      Write-Debug "  $Package v$current is installed"
 
-      if ($results.matches.Length -gt 0)
+      if ($Force -or !(Test-Path $ChocolateyLastUpdate) -or ([DateTime]::Now.AddHours(-$ChocolateyUpdateFrequency) -gt (Get-ChildItem ${ChocolateyLastUpdate}).LastWriteTime))
       {
-        $available = $results.matches[0].Groups[1].Value
-        Write-Debug "  $Package v$available is available"
+        $results = chocolatey list $Package | Select-String -Pattern "^${Package}\s+(.*)"
 
-        $results = chocolatey list -l $Package | Select-String -Pattern "^${Package}\s+(.*)"
-
-        if ($results.matches.Length -gt 0)
+        if ($results -ne $null)
         {
-          $current = $results.matches[0].Groups[1].Value
-          Write-Debug "  $Package v$current is installed"
+          $available = $results.matches[0].Groups[1].Value
+          Write-Debug "  $Package v$available is available"
 
           if ($Upgrade -and ($current -ne $available))
           {
@@ -297,6 +303,10 @@ process # {{{2
             Write-Verbose "$Package v$available is already installed"
           }
         }
+      }
+      else
+      {
+        Write-Verbose "$Package v$current is installed and was checked less than ${ChocolateyUpdateFrequency} hours ago, skipping..."
       }
     }
     else
@@ -805,6 +815,10 @@ process # {{{2
   Install-Package 'puppet'
   Install-Package 'imdisk'
   Install-Package 'ruby' -Upgrade
+
+  # Create/Update the filestamp to indicate installs/upgrades where performed
+  echo $null >> $ChocolateyLastUpdate
+
   # Set Firewall rules for Ruby {{{3
   $rules = Get-NetFirewallRule | Where Name -match 'TCP.*ruby'
   if ($rules -eq $null)
