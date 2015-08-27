@@ -148,7 +148,6 @@ begin # {{{2
 {
   $CURRENT_VERSION = '0.5.0'
   $GitHubRoot      = "https://raw.githubusercontent.com/inin-apac/puppet-me"
-  $ToolsRoot       = "${GitHubRoot}/master"
 
   switch($PSCmdlet.ParameterSetName)
   {
