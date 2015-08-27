@@ -40,8 +40,11 @@ MODULE_virtualization_done=0
 MODULES=(homebrew puppet rubytools)
 ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
+CURRENT_VERSION='0.5.0'
+GITHUB_ROOT='https://raw.githubusercontent.com/inin-apac/puppet-me'
+
+CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
 CACHE_ROOT='/var/cache/daas'
-CACHE_CONFIG='https://cdn.rawgit.com/inin-apac/puppet-me/e3c534205555541ab1e02113fc65919e14684388/config/sources.json'
 CACHE_SOURCES=()
 CACHE_MOUNTS=()
 CONNECTED_VPNS=()
@@ -69,7 +72,7 @@ MODULE_VAGRANT_LOG_OWNER=$userid
 MODULE_VAGRANT_LOG_GROUP=staff
 
 MODULE_updateme_root="$HOME/Desktop"
-MODULE_updateme_source='https://github.com/inin-apac/puppet-me/raw/8cb94ef0983d234c4c9be82371fb2c8b234c5823/config/osx/UpdateMe.7z'
+MODULE_updateme_source="${GITHUB_ROOT}/${CURRENT_VERSION}/config/osx/UpdateMe.7z"
 MODULE_updateme_args=""
 [[ $MODULE_PACKER_HOME  != "$HOME/Documents/packer" ]] && MODULE_updateme_args="${MODULE_updateme_args} --packer-home '${MODULE_PACKER_HOME}'"
 [[ $MODULE_VAGRANT_HOME != "$HOME/.vagrant.d"       ]] && MODULE_updateme_args="${MODULE_updateme_args} --vagrant-home '${MODULE_VAGRANT_HOME}'"
