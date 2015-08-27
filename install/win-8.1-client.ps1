@@ -153,8 +153,10 @@ begin # {{{2
 {
   $CURRENT_VERSION = '0.5.0'
   $GitHubRoot      = "https://raw.githubusercontent.com/inin-apac/puppet-me"
-  $ChocolateyLastUpdate      = "${env:ProgramData}/chocolatey/last_updated-chocolatey"
-  $ChocolateyUpdateFrequency = 4 # hours
+  $PuppetMeLastUpdate      = "${env:TEMP}/last_updated-puppetme"
+  $PuppetMeUpdateFrequency = 4 # hours
+  $PuppetMeUpdated         = $false
+  $PuppetMeShouldUpdate    = $Force -or !(Test-Path $PuppetMeLastUpdate) -or ([DateTime]::Now.AddHours(-$PuppetMeUpdateFrequency) -gt (Get-ChildItem $PuppetMeLastUpdate).LastWriteTime)
 
   switch($PSCmdlet.ParameterSetName)
   {
@@ -283,7 +285,7 @@ process # {{{2
       $current = $results.matches[0].Groups[1].Value
       Write-Debug "  $Package v$current is installed"
 
-      if ($Force -or !(Test-Path $ChocolateyLastUpdate) -or ([DateTime]::Now.AddHours(-$ChocolateyUpdateFrequency) -gt (Get-ChildItem ${ChocolateyLastUpdate}).LastWriteTime))
+      if ($PuppetMeShouldUpdate)
       {
         $results = chocolatey list $Package | Select-String -Pattern "^${Package}\s+(.*)"
 
@@ -297,6 +299,7 @@ process # {{{2
             Write-Output "  Upgrading to $Package v$available"
             chocolatey upgrade -y $Package
             if (! $?) { Throw "$Package not upgraded. Error: $LASTEXITCODE" }
+            $PuppetMeUpdated = $true
           }
           else
           {
@@ -306,7 +309,7 @@ process # {{{2
       }
       else
       {
-        Write-Verbose "$Package v$current is installed and was checked less than ${ChocolateyUpdateFrequency} hours ago, skipping..."
+        Write-Verbose "$Package v$current is installed and was checked less than ${PuppetMeUpdateFrequency} hours ago, skipping..."
       }
     }
     else
@@ -331,7 +334,7 @@ process # {{{2
     }
   } # }}}3
 
-  function Install-Gem([string] $Gem, [switch] $Upgrade) # {{{3
+  function Install-Gem([string] $Gem) # {{{3
   {
     if ( gem list --local | Where { $_ -match "${Gem}.*" } )
     {
@@ -343,11 +346,12 @@ process # {{{2
         $current = $results.matches[0].Groups[1].Value
       }
 
-      if ($Upgrade)
+      if ($Upgrade -and $PuppetMeShouldUpdate)
       {
         Write-Verbose "Upgrading $Gem v$current"
-        gem upgrade $Gem
+        gem update $Gem
         if (! $?) { Throw "$Gem not upgraded. Error: $LASTEXITCODE" }
+        $PuppetMeUpdated = $true
       }
       else
       {
@@ -579,15 +583,18 @@ process # {{{2
       [switch] $All
     )
 
-    # As long as https://github.com/jantman/vagrant-r10k/commit/773a6bbe9e49a6fec8751e3108300521bd0e26fb is not in vagrant,
-    #  we have to loop ourselves in case bundle fails to contact vagrant's plugin website:
-    foreach ($try  in 1..5)
+    if ($PuppetMeShouldUpdate)
     {
-      Write-Debug "Updating Vagrant plugin, Try = $try"
-      vagrant plugin update
-      if ($?) { return }
+      # As long as https://github.com/jantman/vagrant-r10k/commit/773a6bbe9e49a6fec8751e3108300521bd0e26fb is not in vagrant,
+      #  we have to loop ourselves in case bundle fails to contact vagrant's plugin website:
+      foreach ($try  in 1..5)
+      {
+        Write-Debug "Updating Vagrant plugin, Try = $try"
+        vagrant plugin update
+        if ($?) { return }
+      }
+      if (! $?) { Throw "Could not upgrade Vagrant Plugins. Error: $LASTEXITCODE" }
     }
-    if (! $?) { Throw "Could not upgrade Vagrant Plugins. Error: $LASTEXITCODE" }
   } # }}}3
 
   function Cache-Source # {{{3
@@ -830,9 +837,6 @@ process # {{{2
   Install-Package 'imdisk'
   Install-Package 'ruby' -Upgrade
 
-  # Create/Update the filestamp to indicate installs/upgrades where performed
-  echo $null >> $ChocolateyLastUpdate
-
   # Set Firewall rules for Ruby {{{3
   $rules = Get-NetFirewallRule | Where Name -match 'TCP.*ruby'
   if ($rules -eq $null)
@@ -882,14 +886,24 @@ process # {{{2
   if (Test-Path (Join-Path $PackerWindows 'Gemfile'))
   {
     Push-Location $PackerWindows
-    bundle install
-    if (! $?)
+    if ($PuppetMeShouldUpdate)
     {
-      $exitcode = $LASTEXITCODE
-      Pop-Location
-      Throw "Packer Windows not bundled. Error: $exitcode"
+      bundle install
+      if (! $?)
+      {
+        $exitcode = $LASTEXITCODE
+        Pop-Location
+        Throw "Packer Windows not bundled. Error: $exitcode"
+      }
+      $PuppetMeUpdated = $true
     }
     Pop-Location
+  }
+
+  # Create/Update the filestamp to indicate installs/upgrades where performed
+  if ($PuppetMeUpdated)
+  {
+    echo $null >> $PuppetMeLastUpdate
   }
 
   if ($NoUpdateCache)
