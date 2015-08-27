@@ -868,6 +868,7 @@ process # {{{2
   }
   # }}}3
   Install-Gem     'bundler'
+  Install-Gem     'savon'
 
   $PackerWindows = Join-Path $PackerHome 'packer-windows'
   If (! (Test-Path $PackerWindows)) { New-Item -Path $PackerWindows -ItemType Directory | Out-Null }
