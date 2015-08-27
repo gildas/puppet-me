@@ -864,7 +864,11 @@ process # {{{2
     Pop-Location
   }
 
-  if (! $PSBoundParameters.ContainsKey('NoUpdateCache'))
+  if ($NoUpdateCache)
+  {
+    Write-Verbose "Cache will not be updated"
+  }
+  else
   {
     $args = @{}
     if ($PSBoundParameters.ContainsKey('Network')) { $args['Network'] = $Network }
