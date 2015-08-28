@@ -15,9 +15,10 @@ Vagrant.configure(2) do |config|
   config.winrm.password = 'vagrant'
 
   FileUtils.mkdir_p '../../tmp' unless Dir.exist? '../../tmp'
-  config.vm.synced_folder '../../config',  '/config'
-  config.vm.synced_folder '../../install', '/scripts'
-  config.vm.synced_folder '../../tmp',     '/data-tmp'
+  config.vm.synced_folder '../../config',    '/config'
+  config.vm.synced_folder '../../install',   '/scripts'
+  config.vm.synced_folder '../../tmp',       '/data-tmp'
+  config.vm.synced_folder '/var/cache/daas', '/daas'
 
   config.vm.provider :virtualbox do |provider, override|
     provider.customize ['modifyvm', :id, '--vram',        128]
