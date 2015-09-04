@@ -796,6 +796,12 @@ process # {{{2
   }
 
   Install-Package 'MD5'
+  Install-Package 'psget' -Upgrade
+  if ($?)
+  {
+    $env:PsModulePath = [Environment]::GetEnvironmentVariable("PsModulePath")
+    Import-Module "C:\Program Files\Common Files\Modules\PsGet\PsGet.psm1" -ErrorAction Stop -Verbose:$false
+  }
   Install-Package '7zip'
   Install-Package 'git' -Upgrade
 
@@ -869,6 +875,11 @@ process # {{{2
   # }}}3
   Install-Gem     'bundler'
   Install-Gem     'savon'
+  Install-Module  Posh-VPN -Verbose:$Verbose
+  if ($?)
+  {
+    Import-Module Posh-VPN -ErrorAction Stop -Verbose:$Verbiose
+  }
 
   $PackerWindows = Join-Path $PackerHome 'packer-windows'
   If (! (Test-Path $PackerWindows)) { New-Item -Path $PackerWindows -ItemType Directory | Out-Null }
