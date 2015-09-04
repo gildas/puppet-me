@@ -676,11 +676,21 @@ process # {{{2
 
           if ((Test-Path $source_destination) -and ($source.checksum -ne $null))
           {
-            # TODO: What if the type is not written in the config?
-            $checksum = (Get-FileHash $source_destination -Algorithm $source.checksum.type).Hash
+            if (Test-Path "${source_destination}.$($source.checksum.type)")
+            {
+              $checksum = Get-Content "${source_destination}.$($source.checksum.type)"
+            }
+            else
+            {
+              $checksum = (Get-FileHash $source_destination -Algorithm $source.checksum.type).Hash
+            }
             if ($checksum -eq $source.checksum.value)
             {
               Write-Output "  is already downloaded and verified ($($source.checksum.type))"
+              if (!(Test-Path "${source_destination}.$($source.checksum.type)"))
+              {
+                Write-Output $checksum | Set-Content "${source_destination}.$($source.checksum.type)" -Encoding Ascii
+              }
               continue
             }
           }
@@ -713,7 +723,7 @@ process # {{{2
               {
                 Write-Verbose "Connecting to $VPNProvider profile $vpn_profile"
                 $creds = Get-Credential -Message "Please enter your credentials to connect to $VPNProvider profile $vpn_profile"
-                $vpn_session = Connect-VPN $VPNProvider -ComputerName $vpn_profile  -Credential $creds
+                $vpn_session = Connect-VPN $VPNProvider -ComputerName $vpn_profile  -Credential $creds -Verbose:$false
                 if (! $?)
                 {
                   Write-Error "Could not connect to VPN Profile $vpn_profile, skipping this download"
