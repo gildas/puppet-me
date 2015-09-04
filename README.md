@@ -175,7 +175,7 @@ Windows 8.1 and Windows 2012R2
 
 On Windows, open a **Powershell** as an Administrator, and type:
 ```powershell
-Start-BitsTransfer http://tinyurl.com/win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 [options]
+Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 [options]
 ```
 
 Were *options* are:
