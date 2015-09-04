@@ -637,7 +637,8 @@ process # {{{2
     #Start-BitsTransfer -Source $Uri -Destination (Join-Path $env:TEMP 'config.json') -Verbose:$false
     (New-Object System.Net.Webclient).DownloadFile($Uri, $config)
 
-    $sources = (Get-Content -Raw -Path $config | ConvertFrom-Json)
+    $sources     = (Get-Content -Raw -Path $config | ConvertFrom-Json)
+    $credentials = @{}
 
     Write-Verbose "Downloading $($sources.Count) sources"
     foreach ($source in $sources)
@@ -692,9 +693,41 @@ process # {{{2
           }
           if ($location -ne $null)
           {
+            $vpn_session = $null
             if ($location.vpn -ne $null)
             {
               Write-Verbose "Starting VPN $($location.vpn)"
+              $VPNProvider = 'AnyConnect'
+              $vpn_profile = $null
+              Get-VPNProfile $VPNProvider -ErrorAction SilentlyContinue | Foreach {
+                Write-Verbose "Checking $VPNProvider profile $_"
+                if ($_ -match $location.vpn)
+                {
+                  $vpn_profile = $_
+                  break
+                }
+              }
+              if ($vpn_profile -ne $null)
+              {
+                Write-Verbose "Connecting to $VPNProvider profile $vpn_profile"
+                $creds = Get-Credential -Message "Please enter your credentials to connect to $VPNProvider profile $vpn_profile"
+                $vpn_session = Connect-VPN $VPNProvider -ComputerName $vpn_profile  -Credential $creds
+                if (! $?)
+                {
+                  Write-Error "Could not connect to VPN Profile $vpn_profile, skipping this download"
+                  continue
+                }
+              }
+              else
+              {
+                Write-Error "There was no VPN Profile that matched $($location.vpn), skipping this download"
+                continue
+              }
+            }
+            else
+            {
+              Write-Warning "Skipping during this test!"
+              continue
             }
             Write-Output  "Downloading $($source.Name) From $($location.location)..."
             $source_url="$($location.url)$($source.filename)"
@@ -717,6 +750,11 @@ process # {{{2
             else
             {
               Write-Error "Invalid URL: $source_url"
+              if ($vpn_session -ne $null)
+              {
+                Write-Verbose "Disconnecting from $($vpn_session.Provider) $($vpn_session.ComputerName)"
+                Disconnect-VPN $vpn_session
+              }
               continue
             }
             Write-Verbose "  Source: $source_url"
@@ -772,6 +810,11 @@ process # {{{2
               {
                 Write-Error "Unable to download $source_url"
               }
+            }
+            if ($vpn_session -ne $null)
+            {
+              Write-Verbose "Disconnecting from $($vpn_session.Provider) $($vpn_session.ComputerName)"
+              Disconnect-VPN $vpn_session
             }
             if (! $?) { return $LastExitCode }
           }
@@ -878,7 +921,7 @@ process # {{{2
   Install-Module  Posh-VPN -Verbose:$Verbose
   if ($?)
   {
-    Import-Module Posh-VPN -ErrorAction Stop -Verbose:$Verbiose
+    Import-Module Posh-VPN -ErrorAction Stop -Verbose:$false
   }
 
   $PackerWindows = Join-Path $PackerHome 'packer-windows'
