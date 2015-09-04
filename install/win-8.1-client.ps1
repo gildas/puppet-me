@@ -637,8 +637,11 @@ process # {{{2
     #Start-BitsTransfer -Source $Uri -Destination (Join-Path $env:TEMP 'config.json') -Verbose:$false
     (New-Object System.Net.Webclient).DownloadFile($Uri, $config)
 
-    $sources     = (Get-Content -Raw -Path $config | ConvertFrom-Json)
-    $credentials = @{}
+    $sources          = (Get-Content -Raw -Path $config | ConvertFrom-Json)
+    $credentials      = @{}
+    $connected_drives = @()
+    $missed_sources   = @()
+    $vpn_session      = $null
 
     Write-Verbose "Downloading $($sources.Count) sources"
     foreach ($source in $sources)
@@ -693,7 +696,6 @@ process # {{{2
           }
           if ($location -ne $null)
           {
-            $vpn_session = $null
             if ($location.vpn -ne $null)
             {
               Write-Verbose "Starting VPN $($location.vpn)"
@@ -715,20 +717,18 @@ process # {{{2
                 if (! $?)
                 {
                   Write-Error "Could not connect to VPN Profile $vpn_profile, skipping this download"
+                  $missed_sources += $location
                   continue
                 }
               }
               else
               {
                 Write-Error "There was no VPN Profile that matched $($location.vpn), skipping this download"
+                $missed_sources += $location
                 continue
               }
             }
-            else
-            {
-              Write-Warning "Skipping during this test!"
-              continue
-            }
+
             Write-Output  "Downloading $($source.Name) From $($location.location)..."
             $source_url="$($location.url)$($source.filename)"
             if ($source_url -match '^([^:]+)://([^/]+)/([^/]+)/(.*)')
@@ -737,29 +737,28 @@ process # {{{2
               $source_host     = $matches[2]
               if ($source_protocol -eq 'smb')
               {
-                $source_share = [System.Web.HttpUtility]::UrlDecode($matches[3])
-                $source_path  = [System.Web.HttpUtility]::UrlDecode($matches[4]) -replace '/', '\'
-                $source_url   = "\\${source_host}\${source_share}\${source_path}"
+                $source_share  = [System.Web.HttpUtility]::UrlDecode($matches[3])
+                $source_path   = [System.Web.HttpUtility]::UrlDecode($matches[4]) -replace '/', '\'
+                $source_url    = "\\${source_host}\${source_share}\${source_path}"
+                $location_type = 'smb'
+                 
               }
               else
               {
-                $source_share = ''
-                $source_path  = [System.Web.HttpUtility]::UrlDecode($matches[3] + '/' + $matches[4])
+                $source_share  = ''
+                $source_path   = [System.Web.HttpUtility]::UrlDecode($matches[3] + '/' + $matches[4])
+                $location_type = $location.type
               }
             }
             else
             {
               Write-Error "Invalid URL: $source_url"
-              if ($vpn_session -ne $null)
-              {
-                Write-Verbose "Disconnecting from $($vpn_session.Provider) $($vpn_session.ComputerName)"
-                Disconnect-VPN $vpn_session
-              }
+              $missed_sources += $location
               continue
             }
             Write-Verbose "  Source: $source_url"
             Write-Verbose "  Dest:   $source_destination"
-            Write-Verbose "  Type:   $($location.type)"
+            Write-Verbose "  Type:   $location_type"
 
             # 1st, try with the logged in user
             if ($PSCmdlet.ShouldProcess($source_destination, "Downloading from $source_host"))
@@ -767,11 +766,42 @@ process # {{{2
               $request_args=@{}
               $downloaded=$false
 
-              if ($location.type -eq 'akamai')
+              switch ($location_type)
               {
-                $message = "Enter your credentials to connect to Akamai"
-                $request_args['Credential']     = Get-Credential -Message $message
-                $request_args['Authentication'] = 'Ntlm'
+                'akamai'
+                {
+                  $message = "Enter your credentials to connect to Akamai"
+                  $request_args['Credential']     = Get-Credential -Message $message
+                  $request_args['Authentication'] = 'Ntlm'
+                }
+                'smb'
+                {
+                  $samba_root = "\\${source_host}\${source_share}"
+                  if ((Get-PSDrive | where Root -eq $samba_root) -eq $null)
+                  {
+                    # Get the last drive available
+                    $drive_letter = (ls function:[d-z]: -n | ?{ !(test-path $_) } | Select -Last 1) -replace ':',''
+                    $drive = New-PSDrive -Name $drive_letter -PSProvider FileSystem -Root $samba_root -ErrorAction SilentlyContinue
+                    if ($drive -eq $null)
+                    {
+                      $message = "Enter your credentials to connect to share $source_share on $source_host"
+                      $credential = Get-Credential -Message $message
+                      if ($credential -eq $null)
+                      {
+                        Write-Error "Credentials were not entered, skipping this download"
+                        $missed_sources += $location
+                        continue
+                      }
+                      $drive = New-PSDrive -Name $drive_letter -PSProvider FileSystem -Root $samba_root -ErrorAction SilentlyContinue
+                      if ($drive -eq $null)
+                      {
+                        Write-Error "Cannot connect to share $source_share on $source_host, skipping this download"
+                        $missed_sources += $location
+                        continue
+                      }
+                    }
+                  }
+                }
               }
 
               for($try=0; $try -lt 2; $try++)
@@ -809,21 +839,34 @@ process # {{{2
               if (! $downloaded)
               {
                 Write-Error "Unable to download $source_url"
+                $missed_sources += $location
               }
             }
-            if ($vpn_session -ne $null)
-            {
-              Write-Verbose "Disconnecting from $($vpn_session.Provider) $($vpn_session.ComputerName)"
-              Disconnect-VPN $vpn_session
-            }
-            if (! $?) { return $LastExitCode }
           }
           else
           {
             Write-Warning " Cannot download $($source.Name), no location found"
+            $missed_sources += $source
           }
         }
       }
+    }
+    if ($vpn_session -ne $null)
+    {
+      Write-Verbose "Disconnecting from $($vpn_session.Provider) $($vpn_session.ComputerName)"
+      Disconnect-VPN $vpn_session
+    }
+    if ($connected_drives.Count -gt 0)
+    {
+      Write-Verbose "Disconnecting $($connected_drives.Count) Windows shares"
+      $connected_drives | Foreach {
+        Remove-PSDrive -Name $_ -ErrorAction SilentlyContinue
+        Write-Verbose "Disconnected from $($_.Root)"
+      }
+    }
+    if ($missed_sources.Count -gt 0)
+    {
+      Throw "$($missed_sources.Count) sources were not downloaded"
     }
   } # }}}3
 
