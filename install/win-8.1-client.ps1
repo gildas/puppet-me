@@ -158,6 +158,7 @@ begin # {{{2
   $PuppetMeUpdated         = $false
   $PuppetMeShouldUpdate    = $Force -or !(Test-Path $PuppetMeLastUpdate) -or ([DateTime]::Now.AddHours(-$PuppetMeUpdateFrequency) -gt (Get-ChildItem $PuppetMeLastUpdate).LastWriteTime)
 
+  if ($PuppetMeShouldUpdate) { Write-Verbose "All installs should be run" } else { Write-Verbose "Installs were checked recently, let's give the Internet a break!" }
   switch($PSCmdlet.ParameterSetName)
   {
     'Usage'
@@ -597,6 +598,40 @@ process # {{{2
     }
   } # }}}3
 
+  function Start-VPN # {{{3
+  {
+    Param(
+      [Parameter(Mandatory=$true)]
+      [string] $VPNProfile
+    )
+
+    Write-Verbose "Starting VPN $($location.vpn)"
+    $vpn_provider = 'AnyConnect'
+    $vpn_profile  = $null
+    Get-VPNProfile -Provider $vpn_provider -ErrorAction SilentlyContinue | Foreach {
+      Write-Verbose "Checking $VPNProvider profile $_"
+      if ($_ -match $location.vpn)
+      {
+        $vpn_profile = $_
+        break
+      }
+    }
+
+    if ($vpn_profile -eq $null)
+    {
+      Throw [System.IO.FileNotFoundException] $VPNProfile
+    }
+    Write-Verbose "Connecting to $vpn_provider profile $vpn_profile"
+    $creds = Get-VaultCredential -Resource $vpn_profile -ErrorAction SilentlyContinue
+    if ($creds -eq $null)
+    {
+      $creds = Get-Credential -Message "Please enter your credentials to connect to $VPNProvider profile $vpn_profile"
+    }
+    $vpn_session = Connect-VPN -Provider $vpn_provider -ComputerName $vpn_profile  -Credential $creds -Verbose:$false
+    Set-VaultCredential -Resource $vpn_profile -Credential $creds
+    return $vpn_session
+  } # }}}3
+
   function Cache-Source # {{{3
   {
     Param(
@@ -708,32 +743,19 @@ process # {{{2
           {
             if ($location.vpn -ne $null)
             {
-              Write-Verbose "Starting VPN $($location.vpn)"
-              $VPNProvider = 'AnyConnect'
-              $vpn_profile = $null
-              Get-VPNProfile $VPNProvider -ErrorAction SilentlyContinue | Foreach {
-                Write-Verbose "Checking $VPNProvider profile $_"
-                if ($_ -match $location.vpn)
-                {
-                  $vpn_profile = $_
-                  break
-                }
-              }
-              if ($vpn_profile -ne $null)
+              try
               {
-                Write-Verbose "Connecting to $VPNProvider profile $vpn_profile"
-                $creds = Get-Credential -Message "Please enter your credentials to connect to $VPNProvider profile $vpn_profile"
-                $vpn_session = Connect-VPN $VPNProvider -ComputerName $vpn_profile  -Credential $creds -Verbose:$false
-                if (! $?)
-                {
-                  Write-Error "Could not connect to VPN Profile $vpn_profile, skipping this download"
-                  $missed_sources += $location
-                  continue
-                }
+                $vpn_session = Start-VPN -VPNProfile $location.vpn
               }
-              else
+              catch [System.IO.FileNotFoundException]
               {
                 Write-Error "There was no VPN Profile that matched $($location.vpn), skipping this download"
+                $missed_sources += $location
+                continue
+              }
+              catch [System.Security.Authentication.InvalidCredentialException]
+              {
+                Write-Error "Could not connect to VPN Profile $($location.vpn), skipping this download"
                 $missed_sources += $location
                 continue
               }
@@ -750,6 +772,7 @@ process # {{{2
                 $source_share  = [System.Web.HttpUtility]::UrlDecode($matches[3])
                 $source_path   = [System.Web.HttpUtility]::UrlDecode($matches[4]) -replace '/', '\'
                 $source_url    = "\\${source_host}\${source_share}\${source_path}"
+                $source_root   = "\\${source_host}\${source_share}"
                 $location_type = 'smb'
                  
               }
@@ -757,6 +780,7 @@ process # {{{2
               {
                 $source_share  = ''
                 $source_path   = [System.Web.HttpUtility]::UrlDecode($matches[3] + '/' + $matches[4])
+                $source_root   = "http://${source_host}/" + [System.Web.HttpUtility]::UrlDecode($matches[3])
                 $location_type = $location.type
               }
             }
@@ -766,43 +790,53 @@ process # {{{2
               $missed_sources += $location
               continue
             }
+            $creds = Get-VaultCredential -Resource $source_root -ErrorAction SilentlyContinue
+
             Write-Verbose "  Source: $source_url"
+            if ($creds -ne $null) { Write-Verbose "  User:   $($creds.Username)" }
             Write-Verbose "  Dest:   $source_destination"
             Write-Verbose "  Type:   $location_type"
 
             # 1st, try with the logged in user
             if ($PSCmdlet.ShouldProcess($source_destination, "Downloading from $source_host"))
             {
-              $request_args=@{}
+              $request_args = @{}
               $downloaded=$false
 
               switch ($location_type)
               {
                 'akamai'
                 {
-                  $message = "Enter your credentials to connect to Akamai"
-                  $request_args['Credential']     = Get-Credential -Message $message
+                  if ($creds -eq $null)
+                  {
+                    $creds = Get-Credential -Message "Enter your credentials to connect to Akamai"
+                  }
+                  $request_args['Credential']     = $creds
                   $request_args['Authentication'] = 'Ntlm'
                 }
                 'smb'
                 {
-                  $samba_root = "\\${source_host}\${source_share}"
-                  if ((Get-PSDrive | where Root -eq $samba_root) -eq $null)
+                  if ((Get-PSDrive | where Root -eq $source_root) -eq $null)
                   {
                     # Get the last drive available
                     $drive_letter = (ls function:[d-z]: -n | ?{ !(test-path $_) } | Select -Last 1) -replace ':',''
-                    $drive = New-PSDrive -Name $drive_letter -PSProvider FileSystem -Root $samba_root -ErrorAction SilentlyContinue
+                    $psdrive_args = @{ Name = $drive_letter; PSProvider = 'FileSystem'; Root = $source_root }
+                    if ($creds -ne $null)
+                    {
+                      $psdrive_args['Credential'] = $creds
+                    }
+                    $drive = New-PSDrive @psdrive_args -ErrorAction SilentlyContinue
                     if ($drive -eq $null)
                     {
-                      $message = "Enter your credentials to connect to share $source_share on $source_host"
-                      $credential = Get-Credential -Message $message
-                      if ($credential -eq $null)
+                      $creds = Get-Credential -Message "Enter your credentials to connect to share $source_share on $source_host"
+                      if ($creds -eq $null)
                       {
                         Write-Error "Credentials were not entered, skipping this download"
                         $missed_sources += $location
                         continue
                       }
-                      $drive = New-PSDrive -Name $drive_letter -PSProvider FileSystem -Root $samba_root -ErrorAction SilentlyContinue
+                      $psdrive_args['Credential'] = $creds
+                      $drive = New-PSDrive @psdrive_args -ErrorAction SilentlyContinue
                       if ($drive -eq $null)
                       {
                         Write-Error "Cannot connect to share $source_share on $source_host, skipping this download"
@@ -831,19 +865,27 @@ process # {{{2
                     Write-Verbose "Collecting credential"
                     if ($source_protocol -eq 'smb')
                     {
-                      $message = "Enter your credentials to connect to share $source_share on $source_host"
-                      $request_args['Credential'] = Get-Credential -Message $message
+                      $creds = Get-Credential -Message "Enter your credentials to connect to share $source_share on $source_host"
+                      $request_args['Credential'] = $creds
                     }
                     else
                     {
-                      $message = "Enter your credentials to connect to $source_host over $source_protocol"
-                      $request_args['Credential'] = Get-Credential -Message $message
+                      $creds = Get-Credential -Message "Enter your credentials to connect to $source_host over $source_protocol"
+                      $request_args['Credential'] =  $creds
                     }
                   }
                   else
                   {
                     break
                   }
+                }
+              }
+              if ($downloaded)
+              {
+                Write-Verbose "Successful download"
+                if ($creds -ne $null)
+                {
+                  Set-VaultCredential -Resource $source_root -Credential $creds
                 }
               }
               if (! $downloaded)
@@ -971,10 +1013,16 @@ process # {{{2
   # }}}3
   Install-Gem     'bundler'
   Install-Gem     'savon'
-  Install-Module  Posh-VPN -Verbose:$Verbose
+  #Install-Module  Posh-VPN -Update -Verbose:$Verbose
+  Install-Module  -ModuleUrl https://github.com/gildas/posh-vpn/releases/download/0.1.3/posh-vpn-0.1.3.zip -Update -Verbose:$false
   if ($?)
   {
     Import-Module Posh-VPN -ErrorAction Stop -Verbose:$false
+  }
+  Install-Module  -ModuleUrl https://github.com/gildas/posh-vault/releases/download/0.1.1/posh-vault-0.1.1.zip -Update -Verbose:$false
+  if ($?)
+  {
+    Import-Module Posh-Vault -ErrorAction Stop -Verbose:$false
   }
 
   $PackerWindows = Join-Path $PackerHome 'packer-windows'
@@ -1011,7 +1059,8 @@ process # {{{2
   # Create/Update the filestamp to indicate installs/upgrades where performed
   if ($PuppetMeUpdated)
   {
-    echo $null >> $PuppetMeLastUpdate
+    Write-Verbose "Updating the `"Last Update`" timestamp"
+    echo $null > $PuppetMeLastUpdate
   }
 
   if ($NoUpdateCache)
