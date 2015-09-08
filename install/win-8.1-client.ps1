@@ -608,7 +608,7 @@ process # {{{2
     Write-Verbose "Starting VPN $($location.vpn)"
     $vpn_provider = 'AnyConnect'
     $vpn_profile  = $null
-    Get-VPNProfile $vpn_provider -ErrorAction SilentlyContinue | Foreach {
+    Get-VPNProfile -Provider $vpn_provider -ErrorAction SilentlyContinue | Foreach {
       Write-Verbose "Checking $VPNProvider profile $_"
       if ($_ -match $location.vpn)
       {
@@ -627,7 +627,7 @@ process # {{{2
     {
       $creds = Get-Credential -Message "Please enter your credentials to connect to $VPNProvider profile $vpn_profile"
     }
-    $vpn_session = Connect-VPN $vpn_provider -ComputerName $vpn_profile  -Credential $creds -Verbose:$false
+    $vpn_session = Connect-VPN -Provider $vpn_provider -ComputerName $vpn_profile  -Credential $creds -Verbose:$false
     Set-VaultCredential -Resource $vpn_profile -Credential $creds
     return $vpn_session
   } # }}}3
@@ -1014,7 +1014,7 @@ process # {{{2
   Install-Gem     'bundler'
   Install-Gem     'savon'
   #Install-Module  Posh-VPN -Update -Verbose:$Verbose
-  Install-Module  -ModuleUrl https://github.com/gildas/posh-vpn/releases/download/0.1.2/posh-vpn-0.1.2.zip -Update -Verbose:$false
+  Install-Module  -ModuleUrl https://github.com/gildas/posh-vpn/releases/download/0.1.3/posh-vpn-0.1.3.zip -Update -Verbose:$false
   if ($?)
   {
     Import-Module Posh-VPN -ErrorAction Stop -Verbose:$false
