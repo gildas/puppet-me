@@ -326,7 +326,9 @@ process # {{{2
       }
       if (! $?) { Throw "$Package not installed. Error: $LASTEXITCODE" }
     }
-    $new_path = (Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).Path
+    $new_path  = (Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).Path
+    $new_path += ';'
+    $new_path += (Get-ItemProperty -Path 'HKCU:\Environment' -Name PATH).Path
     if ($env:PATH -ne $new_path)
     {
       Write-Verbose "Updating PATH"
