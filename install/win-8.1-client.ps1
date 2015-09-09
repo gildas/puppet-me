@@ -138,15 +138,18 @@ Param( # {{{2
   [string] $CacheConfig,
   [Parameter(Position=7, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=9, Mandatory=$false, ParameterSetName='VMWare')]
-  [string[]] $PackerBuild,
-  [Parameter(Position=8,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [System.Management.Automation.PSCredential] $Credential,
+  [Parameter(Position=8, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=10, Mandatory=$false, ParameterSetName='VMWare')]
-  [string[]] $PackerLoad,
+  [string[]] $PackerBuild,
   [Parameter(Position=9,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=11, Mandatory=$false, ParameterSetName='VMWare')]
-  [switch] $NoUpdateCache,
+  [string[]] $PackerLoad,
   [Parameter(Position=10,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=12, Mandatory=$false, ParameterSetName='VMWare')]
+  [switch] $NoUpdateCache,
+  [Parameter(Position=11,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=13, Mandatory=$false, ParameterSetName='VMWare')]
   [string] $Network
 ) # }}}2
 begin # {{{2
@@ -625,6 +628,7 @@ process # {{{2
     }
     Write-Verbose "Connecting to $vpn_provider profile $vpn_profile"
     $creds = Get-VaultCredential -Resource $vpn_profile -ErrorAction SilentlyContinue
+    if ($creds -eq $null) { $creds = $Credential }
     if ($creds -eq $null)
     {
       $creds = Get-Credential -Message "Please enter your credentials to connect to $VPNProvider profile $vpn_profile"
@@ -803,6 +807,7 @@ process # {{{2
               continue
             }
             $creds = Get-VaultCredential -Resource $source_root -ErrorAction SilentlyContinue
+            if ($creds -eq $null) { $creds = $Credential }
 
             Write-Verbose "  Source: $source_url"
             if ($creds -ne $null) { Write-Verbose "  User:   $($creds.Username)" }
