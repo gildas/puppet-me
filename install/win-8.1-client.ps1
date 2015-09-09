@@ -704,6 +704,7 @@ process # {{{2
           }
           if (! (Test-Path $source_destination))
           {
+            Write-Verbose "Creating $source_destination"
             New-Item -Path $source_destination -ItemType Directory | Out-Null
           }
           if (($source.filename -notlike '*`**') -and ($source.filename -notlike '*`?*'))
@@ -713,12 +714,15 @@ process # {{{2
 
           if ((Test-Path $source_destination) -and ($source.checksum -ne $null))
           {
+            Write-Verbose "Destination exists..."
             if (Test-Path "${source_destination}.$($source.checksum.type)")
             {
+              Write-Verbose "  Importing its $($source.checksum.type) checksum"
               $checksum = Get-Content "${source_destination}.$($source.checksum.type)"
             }
             else
             {
+              Write-Verbose "  Calculating its $($source.checksum.type) checksum"
               $checksum = (Get-FileHash $source_destination -Algorithm $source.checksum.type).Hash
             }
             if ($checksum -eq $source.checksum.value)
@@ -726,9 +730,15 @@ process # {{{2
               Write-Output "  is already downloaded and verified ($($source.checksum.type))"
               if (!(Test-Path "${source_destination}.$($source.checksum.type)"))
               {
+                Write-Verbose "  Exporting its $($source.checksum.type) checksum"
                 Write-Output $checksum | Set-Content "${source_destination}.$($source.checksum.type)" -Encoding Ascii
               }
               continue
+            }
+            else
+            {
+              Write-Verbose "  $($source.checksum.type) Checksums differ, downloading again..."
+              Write-Verbose "    (expected: $($source.checksum), local: $checksum)"
             }
           }
           $location=$null
