@@ -175,10 +175,10 @@ Windows 8.1 and Windows 2012R2
 
 On Windows, open a **Powershell** as an Administrator, and type:
 ```powershell
-Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 [options]
+Start-BitsTransfer http://tinyurl.com/puppet-me-win-8 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 [options]
 ```
 
-Were *options* are:
+Where *options* are:
 
 - -CacheRoot *path*  
   Contains the location of the cache for ISO, MSI, etc files.    
@@ -219,6 +219,13 @@ Were *options* are:
   Contains the license key to configure [VMWare Workstation](http://www.vmware.com/products/workstation).    
   If not provided, the license key will have to be entered manually the first time [VMWare Workstation](http://www.vmware.com/products/workstation) is used.  
 
+Note:
+-----
+
+To use the development version, use this command instead:
+```powershell
+Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-dev $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 [options]
+```
 
 AUTHORS
 =======
