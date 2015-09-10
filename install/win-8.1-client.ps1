@@ -961,6 +961,22 @@ process # {{{2
             Write-Verbose "  Dest:   $source_destination"
             Write-Verbose "  Type:   $location_type"
 
+            # Let's see if the source host is reachable
+            foreach ($try  in 1..5)
+            {
+              Write-Debug "Testing connection to $source_host, Try = $try"
+              $connection_info = Test-Connection -ComputerName $source_host -Count 1 -ErrorAction SilentlyContinue
+              if ($?) { break }
+              Start-Sleep 2
+            }
+            if ($connection_info -eq $null)
+            {
+              Write-Error "Could not connect to $source_host after 5 tries, skipping this download"
+              $missed_sources = $location
+              continue
+            }
+            Write-Verbose "$source_host is reachable. Round-trip $($connection_info.ResponseTime)ms"
+
             # 1st, try with the logged in user
             if ($PSCmdlet.ShouldProcess($source_destination, "Downloading from $source_host"))
             {
