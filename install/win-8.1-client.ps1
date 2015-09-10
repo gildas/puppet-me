@@ -280,6 +280,8 @@ process # {{{2
       [Parameter(Mandatory=$false)]
       [string] $InstallArguments,
       [Parameter(Mandatory=$false)]
+      [string] $AddPath,
+      [Parameter(Mandatory=$false)]
       [switch] $Upgrade
     )
     $results = chocolatey list --local-only $Package | Select-String -Pattern "^${Package}\s+(.*)"
@@ -329,9 +331,17 @@ process # {{{2
       }
       if (! $?) { Throw "$Package not installed. Error: $LASTEXITCODE" }
     }
-    $new_path  = (Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).Path
+
+    $new_path  = [Environment]::GetEnvironmentVariable('PATH', 'Machine')
+    if (![string]::IsNullOrEmpty($AddPath) -and ($new_path -split ';' -notcontains $AddPath))
+    {
+      Write-Verbose "Configuring PATH"
+      $new_path += ';'
+      $new_path += $AddPath
+      [Environment]::SetEnvironmentVariable('PATH', $new_path, 'Machine')
+    }
     $new_path += ';'
-    $new_path += (Get-ItemProperty -Path 'HKCU:\Environment' -Name PATH).Path
+    $new_path += [Environment]::GetEnvironmentVariable('PATH', 'User')
     if ($env:PATH -ne $new_path)
     {
       Write-Verbose "Updating PATH"
@@ -633,6 +643,10 @@ process # {{{2
     {
       Install-Package packer -Force
     }
+    if (! (Get-Command 7z -ErrorAction SilentlyContinue))
+    {
+      Install-Package 7zip -Force -AddPath (Join-Path $env:ProgramFiles '7-Zip')
+    }
 
     Write-Verbose "Installing Packer Plugin $Name"
 
@@ -653,7 +667,7 @@ process # {{{2
     if ($Package -match '.*\.(7z|zip|tar|gz|bz2)')
     {
       Write-Verbose " Deploying Packer Plugin $Name"
-      & "${env:ProgramFiles}\7-Zip\7z.exe" e -y -o$PackerTools $Package | Out-Null
+      & 7z e -y -o$PackerTools $Package | Out-Null
       if (! $?) { Throw "Packer Plugin $Name not installed. Error: $LASTEXITCODE" }
     }
     else
@@ -1021,7 +1035,7 @@ process # {{{2
     $env:PsModulePath = [Environment]::GetEnvironmentVariable("PsModulePath")
     Import-Module "C:\Program Files\Common Files\Modules\PsGet\PsGet.psm1" -ErrorAction Stop -Verbose:$false
   }
-  Install-Package '7zip'
+  Install-Package '7zip' -AddPath (Join-Path $env:ProgramFiles '7-Zip')
   Install-Package 'git' -Upgrade
   Install-Package 'vagrant' -Upgrade
   Install-VagrantPlugin 'vagrant-host-shell'
