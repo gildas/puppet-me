@@ -549,6 +549,10 @@ process # {{{2
       [Parameter(Mandatory=$false)]
       [string] $License
     )
+    if (! (Get-Command vagrant -ErrorAction SilentlyContinue))
+    {
+      Install-Package vagrant -Force
+    }
 
     if ( (vagrant plugin list) | Where { $_ -match "${Plugin}.*" } )
     {
@@ -593,6 +597,11 @@ process # {{{2
       [Parameter(Mandatory=$false)]
       [switch] $All
     )
+
+    if (! (Get-Command vagrant -ErrorAction SilentlyContinue))
+    {
+      Install-Package vagrant -Force
+    }
 
     if ($PuppetMeShouldUpdate)
     {
