@@ -973,6 +973,8 @@ process # {{{2
   }
   Install-Package '7zip'
   Install-Package 'git' -Upgrade
+  Install-Package 'vagrant' -Upgrade
+  Install-VagrantPlugin 'vagrant-host-shell'
 
   switch ($Virtualization)
   {
@@ -987,16 +989,10 @@ process # {{{2
     'VMWare'
     {
       Install-VMWare $VirtualMachinesHome $VMWareLicense
+      $args = @{}
+      if ($PSBoundParameters.ContainsKey('VagrantVMWareLicense')) { $args['License'] = $VagrantVMWareLicense }
+      Install-VagrantPlugin 'vagrant-vmware-workstation' @args
     }
-  }
-
-  Install-Package 'vagrant' -Upgrade
-  Install-VagrantPlugin 'vagrant-host-shell'
-  if ($Virtualization -eq 'VMWare')
-  {
-    $args = @{}
-    if ($PSBoundParameters.ContainsKey('VagrantVMWareLicense')) { $args['License'] = $VagrantVMWareLicense }
-    Install-VagrantPlugin 'vagrant-vmware-workstation' @args
   }
   Update-VagrantPlugin -All
 
