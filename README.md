@@ -175,16 +175,26 @@ Windows 8.1 and Windows 2012R2
 
 On Windows, open a **Powershell** as an Administrator, and type:
 ```powershell
-Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 [options]
+Start-BitsTransfer http://tinyurl.com/puppet-me-win-8 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 [options]
 ```
 
-Were *options* are:
+Where *options* are:
 
 - -CacheRoot *path*  
   Contains the location of the cache for ISO, MSI, etc files.    
   When used, it will update $env:DAAS_CACHE  
   Alias: DaasCache  
   Default: $env:DAAS_CACHE or $env:ProgramData\DaaS\Cache  
+- -Credential *credential*  
+  Contains some **[PSCredential](https://msdn.microsoft.com/en-us/library/system.management.automation.pscredential.aspx)** to use by default when connecting to VPNs, Windows Share, etc.  
+  To get a dialog box that queries for the credentials, use the following:  
+  ```powershell
+  Start-BitsTransfer ... win-8.1-client.ps1 -Credential (Get-Credential) [options]
+  ```
+  Or, with a user:  
+  ```powershell
+  Start-BitsTransfer ... win-8.1-client.ps1 -Credential (Get-Credential ACME\john.doe) [options]
+  ```
 - -PackerBuild  
   When all software is installed, [packer-windows](https://github.com/gildas/packer-windows) will build the given list of [Vagrant](http://vagrantup.com) boxes.  
 - -PackerHome *path*  
@@ -219,6 +229,13 @@ Were *options* are:
   Contains the license key to configure [VMWare Workstation](http://www.vmware.com/products/workstation).    
   If not provided, the license key will have to be entered manually the first time [VMWare Workstation](http://www.vmware.com/products/workstation) is used.  
 
+Note:
+-----
+
+To use the development version, use this command instead:
+```powershell
+Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-dev $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 [options]
+```
 
 AUTHORS
 =======

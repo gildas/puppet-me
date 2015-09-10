@@ -21,12 +21,12 @@
 
   Depending on the chosen platform, more configuration will be allowed such as the Virtual Machines folder, License keys/files where they apply.
 
-  The best way to launch this installation program is to get the latest version from the Internet first:
+  The best way to launch this installation program is to get the latest stable version from the Internet first:
 
-  [PS] Start-BitsTransfer http://tinyurl.com/win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -Virtualbox -Verbose
+  [PS] Start-BitsTransfer http://tinyurl.com/puppet-me-win-8 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -Virtualbox -Verbose
 
   While we are in development, use:
-  Start-BitsTransfer https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/win-8.1-client.ps1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -Virtualbox -Verbose
+  Start-BitsTransfer http://tinuurl.com/puppet-me-win-8-dev $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -Virtualbox -Verbose
 
 .PARAMETER Usage
   Prints this help and exits.
@@ -103,7 +103,7 @@
   Will install all the software and Virtualbox in their default locations.
   Once installed, packer is invoked to build all Vagrant box available with VMWare Workstation.
 .NOTES
-  Version 0.5.0
+  Version 0.8.0
 #>
 [CmdLetBinding(SupportsShouldProcess, DefaultParameterSetName="Usage")]
 Param( # {{{2
@@ -138,25 +138,29 @@ Param( # {{{2
   [string] $CacheConfig,
   [Parameter(Position=7, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=9, Mandatory=$false, ParameterSetName='VMWare')]
-  [string[]] $PackerBuild,
-  [Parameter(Position=8,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Management.Automation.PSCredential] $Credential,
+  [Parameter(Position=8, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=10, Mandatory=$false, ParameterSetName='VMWare')]
-  [string[]] $PackerLoad,
+  [string[]] $PackerBuild,
   [Parameter(Position=9,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=11, Mandatory=$false, ParameterSetName='VMWare')]
-  [switch] $NoUpdateCache,
+  [string[]] $PackerLoad,
   [Parameter(Position=10,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=12, Mandatory=$false, ParameterSetName='VMWare')]
+  [switch] $NoUpdateCache,
+  [Parameter(Position=11,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=13, Mandatory=$false, ParameterSetName='VMWare')]
   [string] $Network
 ) # }}}2
 begin # {{{2
 {
-  $CURRENT_VERSION = '0.5.0'
+  $CURRENT_VERSION = '0.8.0'
   $GitHubRoot      = "https://raw.githubusercontent.com/inin-apac/puppet-me"
   $PuppetMeLastUpdate      = "${env:TEMP}/last_updated-puppetme"
   $PuppetMeUpdateFrequency = 4 # hours
   $PuppetMeUpdated         = $false
   $PuppetMeShouldUpdate    = $Force -or !(Test-Path $PuppetMeLastUpdate) -or ([DateTime]::Now.AddHours(-$PuppetMeUpdateFrequency) -gt (Get-ChildItem $PuppetMeLastUpdate).LastWriteTime)
+  $script:Credential       = $Credential
 
   if ($PuppetMeShouldUpdate) { Write-Verbose "All installs should be run" } else { Write-Verbose "Installs were checked recently, let's give the Internet a break!" }
   switch($PSCmdlet.ParameterSetName)
@@ -277,6 +281,8 @@ process # {{{2
       [Parameter(Mandatory=$false)]
       [string] $InstallArguments,
       [Parameter(Mandatory=$false)]
+      [string] $AddPath,
+      [Parameter(Mandatory=$false)]
       [switch] $Upgrade
     )
     $results = chocolatey list --local-only $Package | Select-String -Pattern "^${Package}\s+(.*)"
@@ -326,7 +332,17 @@ process # {{{2
       }
       if (! $?) { Throw "$Package not installed. Error: $LASTEXITCODE" }
     }
-    $new_path = (Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).Path
+
+    $new_path  = [Environment]::GetEnvironmentVariable('PATH', 'Machine')
+    if (![string]::IsNullOrEmpty($AddPath) -and ($new_path -split ';' -notcontains $AddPath))
+    {
+      Write-Verbose "Configuring PATH"
+      $new_path += ';'
+      $new_path += $AddPath
+      [Environment]::SetEnvironmentVariable('PATH', $new_path, 'Machine')
+    }
+    $new_path += ';'
+    $new_path += [Environment]::GetEnvironmentVariable('PATH', 'User')
     if ($env:PATH -ne $new_path)
     {
       Write-Verbose "Updating PATH"
@@ -337,6 +353,11 @@ process # {{{2
 
   function Install-Gem([string] $Gem) # {{{3
   {
+    if (! (Get-Command gem -ErrorAction SilentlyContinue))
+    {
+      Install-Package ruby -Force
+    }
+
     if ( gem list --local | Where { $_ -match "${Gem}.*" } )
     {
       $current = ''
@@ -432,7 +453,7 @@ process # {{{2
     Disable-HyperV
     Install-Package 'virtualbox' -Upgrade
 
-    if ($env:VBOX_MSI_INSTALL_PATH -eq $null) { $env:VBOX_MSI_INSTALL_PATH = [System.Environment]::GetEnvironmentVariable("VBOX_MSI_INSTALL_PATH", "Machine") }
+    if ($env:VBOX_MSI_INSTALL_PATH -eq $null) { $env:VBOX_MSI_INSTALL_PATH = [Environment]::GetEnvironmentVariable("VBOX_MSI_INSTALL_PATH", "Machine") }
     $vboxManage=Join-Path $env:VBOX_MSI_INSTALL_PATH 'VBoxManage.Exe'
 
     $vboxVersion= & $vboxManage --version
@@ -539,6 +560,10 @@ process # {{{2
       [Parameter(Mandatory=$false)]
       [string] $License
     )
+    if (! (Get-Command vagrant -ErrorAction SilentlyContinue))
+    {
+      Install-Package vagrant -Force
+    }
 
     if ( (vagrant plugin list) | Where { $_ -match "${Plugin}.*" } )
     {
@@ -584,6 +609,11 @@ process # {{{2
       [switch] $All
     )
 
+    if (! (Get-Command vagrant -ErrorAction SilentlyContinue))
+    {
+      Install-Package vagrant -Force
+    }
+
     if ($PuppetMeShouldUpdate)
     {
       # As long as https://github.com/jantman/vagrant-r10k/commit/773a6bbe9e49a6fec8751e3108300521bd0e26fb is not in vagrant,
@@ -595,6 +625,115 @@ process # {{{2
         if ($?) { return }
       }
       if (! $?) { Throw "Could not upgrade Vagrant Plugins. Error: $LASTEXITCODE" }
+    }
+  } # }}}3
+
+  function Install-PackerPlugin # {{{3
+  {
+    Param(
+      [Parameter(Mandatory=$true,ValueFromPipeline=$true)]
+      [string] $Name,
+      [Parameter(Mandatory=$false)]
+      [string] $Url,
+      [Parameter(Mandatory=$false)]
+      [string] $License,
+      [Parameter(Mandatory=$false)]
+      [switch] $Force
+    )
+    if (! (Get-Command packer -ErrorAction SilentlyContinue))
+    {
+      Install-Package packer -Force
+    }
+    if (! (Get-Command 7z -ErrorAction SilentlyContinue))
+    {
+      Install-Package 7zip -Force -AddPath (Join-Path $env:ProgramFiles '7-Zip')
+    }
+
+    Write-Verbose "Installing Packer Plugin $Name"
+
+    $PackerTools=[IO.Path]::Combine($env:ChocolateyInstall, 'lib', 'packer', 'tools')
+    $PackageLib=[IO.Path]::Combine($env:ChocolateyInstall, 'lib', $Name.ToLower() -replace ' ','-')
+    $Package=[IO.Path]::Combine($PackageLib, ([Uri] $Url).Segments[-1])
+
+    if (! (Test-Path $PackageLib)) { New-Item -Path $PackageLib -ItemType Directory | Out-Null }
+
+    if (! (Test-Path $Package) -or $Force)
+    {
+      Write-Verbose "Downloading Packer Plugin $Name"
+      #Download-File $Url $PackageLib
+      (New-Object Net.WebClient).DownloadFile($Url, $Package)
+    }
+
+    # TODO: Do not unzip everytime!
+    if ($Package -match '.*\.(7z|zip|tar|gz|bz2)')
+    {
+      Write-Verbose " Deploying Packer Plugin $Name"
+      & 7z e -y -o$PackerTools $Package | Out-Null
+      if (! $?) { Throw "Packer Plugin $Name not installed. Error: $LASTEXITCODE" }
+    }
+    else
+    {
+      Throw "Unsupported Archive: $Package"
+    }
+
+    if (! [string]::IsNullOrEmpty($License))
+    {
+      Write-Warning 'Packer Packages License is ignored at the moment'
+    }
+  } # }}}3
+
+  function Install-PackerWindows # {{{3
+  {
+    Param(
+      [Parameter(Mandatory=$false)]
+      [string] $Branch,
+      [Parameter(Mandatory=$false)]
+      [switch] $Force
+    )
+    if (! (Get-Command packer -ErrorAction SilentlyContinue))
+    {
+      Install-Package packer -Force
+    }
+    if (! (Get-Command git -ErrorAction SilentlyContinue))
+    {
+      Install-Package git -Force
+    }
+    if (! (Get-Command bundle -ErrorAction SilentlyContinue))
+    {
+      Install-Gem bundler
+    }
+
+    $PackerWindows = [IO.Path]::Combine($PackerHome, 'packer-windows')
+    If (! (Test-Path $PackerWindows)) { New-Item -Path $PackerWindows -ItemType Directory | Out-Null }
+
+    if (Test-Path (Join-Path $PackerWindows '.git'))
+    {
+      Write-Verbose "Updating Packer Windows repository"
+      & git -C "$PackerWindows" pull
+      if (! $?) { Throw "Packer Windows not updated. Error: $LASTEXITCODE" }
+    }
+    else
+    {
+      Write-Verbose "Cloning Packer Windows repository"
+      & git clone https://github.com/gildas/packer-windows.git $PackerWindows
+      if (! $?) { Throw "Packer Windows not cloned. Error: $LASTEXITCODE" }
+    }
+
+    if (Test-Path (Join-Path $PackerWindows 'Gemfile'))
+    {
+      if ($PuppetMeShouldUpdate)
+      {
+        Push-Location $PackerWindows
+        bundle install
+        if (! $?)
+        {
+          $exitcode = $LASTEXITCODE
+          Pop-Location
+          Throw "Packer Windows not bundled. Error: $exitcode"
+        }
+        $PuppetMeUpdated = $true
+        Pop-Location
+      }
     }
   } # }}}3
 
@@ -619,16 +758,24 @@ process # {{{2
 
     if ($vpn_profile -eq $null)
     {
-      Throw [System.IO.FileNotFoundException] $VPNProfile
+      Throw [IO.FileNotFoundException] $VPNProfile
     }
     Write-Verbose "Connecting to $vpn_provider profile $vpn_profile"
-    $creds = Get-VaultCredential -Resource $vpn_profile -ErrorAction SilentlyContinue
+    try
+    {
+      $creds = Get-VaultCredential -Resource $vpn_profile -ErrorAction SilentlyContinue
+    }
+    catch
+    {
+      $creds = $script:Credential
+    }
     if ($creds -eq $null)
     {
       $creds = Get-Credential -Message "Please enter your credentials to connect to $VPNProvider profile $vpn_profile"
     }
     $vpn_session = Connect-VPN -Provider $vpn_provider -ComputerName $vpn_profile  -Credential $creds -Verbose:$false
     Set-VaultCredential -Resource $vpn_profile -Credential $creds
+    $script:Credential = $creds
     return $vpn_session
   } # }}}3
 
@@ -670,7 +817,7 @@ process # {{{2
       Remove-Item -Path $config -Force
     }
     #Start-BitsTransfer -Source $Uri -Destination (Join-Path $env:TEMP 'config.json') -Verbose:$false
-    (New-Object System.Net.Webclient).DownloadFile($Uri, $config)
+    (New-Object Net.Webclient).DownloadFile($Uri, $config)
 
     $sources          = (Get-Content -Raw -Path $config | ConvertFrom-Json)
     $credentials      = @{}
@@ -702,6 +849,7 @@ process # {{{2
           }
           if (! (Test-Path $source_destination))
           {
+            Write-Verbose "Creating $source_destination"
             New-Item -Path $source_destination -ItemType Directory | Out-Null
           }
           if (($source.filename -notlike '*`**') -and ($source.filename -notlike '*`?*'))
@@ -711,12 +859,15 @@ process # {{{2
 
           if ((Test-Path $source_destination) -and ($source.checksum -ne $null))
           {
+            Write-Verbose "Destination exists..."
             if (Test-Path "${source_destination}.$($source.checksum.type)")
             {
+              Write-Verbose "  Importing its $($source.checksum.type) checksum"
               $checksum = Get-Content "${source_destination}.$($source.checksum.type)"
             }
             else
             {
+              Write-Verbose "  Calculating its $($source.checksum.type) checksum"
               $checksum = (Get-FileHash $source_destination -Algorithm $source.checksum.type).Hash
             }
             if ($checksum -eq $source.checksum.value)
@@ -724,9 +875,15 @@ process # {{{2
               Write-Output "  is already downloaded and verified ($($source.checksum.type))"
               if (!(Test-Path "${source_destination}.$($source.checksum.type)"))
               {
+                Write-Verbose "  Exporting its $($source.checksum.type) checksum"
                 Write-Output $checksum | Set-Content "${source_destination}.$($source.checksum.type)" -Encoding Ascii
               }
               continue
+            }
+            else
+            {
+              Write-Verbose "  $($source.checksum.type) Checksums differ, downloading again..."
+              Write-Verbose "    (expected: $($source.checksum), local: $checksum)"
             }
           }
           $location=$null
@@ -747,13 +904,13 @@ process # {{{2
               {
                 $vpn_session = Start-VPN -VPNProfile $location.vpn
               }
-              catch [System.IO.FileNotFoundException]
+              catch [IO.FileNotFoundException]
               {
                 Write-Error "There was no VPN Profile that matched $($location.vpn), skipping this download"
                 $missed_sources += $location
                 continue
               }
-              catch [System.Security.Authentication.InvalidCredentialException]
+              catch [Security.Authentication.InvalidCredentialException]
               {
                 Write-Error "Could not connect to VPN Profile $($location.vpn), skipping this download"
                 $missed_sources += $location
@@ -769,8 +926,8 @@ process # {{{2
               $source_host     = $matches[2]
               if ($source_protocol -eq 'smb')
               {
-                $source_share  = [System.Web.HttpUtility]::UrlDecode($matches[3])
-                $source_path   = [System.Web.HttpUtility]::UrlDecode($matches[4]) -replace '/', '\'
+                $source_share  = [Web.HttpUtility]::UrlDecode($matches[3])
+                $source_path   = [Web.HttpUtility]::UrlDecode($matches[4]) -replace '/', '\'
                 $source_url    = "\\${source_host}\${source_share}\${source_path}"
                 $source_root   = "\\${source_host}\${source_share}"
                 $location_type = 'smb'
@@ -779,8 +936,8 @@ process # {{{2
               else
               {
                 $source_share  = ''
-                $source_path   = [System.Web.HttpUtility]::UrlDecode($matches[3] + '/' + $matches[4])
-                $source_root   = "http://${source_host}/" + [System.Web.HttpUtility]::UrlDecode($matches[3])
+                $source_path   = [Web.HttpUtility]::UrlDecode($matches[3] + '/' + $matches[4])
+                $source_root   = "http://${source_host}/" + [Web.HttpUtility]::UrlDecode($matches[3])
                 $location_type = $location.type
               }
             }
@@ -790,7 +947,14 @@ process # {{{2
               $missed_sources += $location
               continue
             }
-            $creds = Get-VaultCredential -Resource $source_root -ErrorAction SilentlyContinue
+            try
+            {
+              $creds = Get-VaultCredential -Resource $source_root -ErrorAction SilentlyContinue
+            }
+            catch
+            {
+              $creds = $script:Credential
+            }
 
             Write-Verbose "  Source: $source_url"
             if ($creds -ne $null) { Write-Verbose "  User:   $($creds.Username)" }
@@ -924,7 +1088,7 @@ process # {{{2
 
   if (Get-Command 'chocolatey.exe' -ErrorAction SilentlyContinue)
   {
-    Install-Package 'chocolatey' -Upgrade
+    Install-Package chocolatey -Upgrade
   }
   else
   {
@@ -933,15 +1097,29 @@ process # {{{2
     & $env:TEMP/Install-Chocolatey.ps1
   }
 
-  Install-Package 'MD5'
-  Install-Package 'psget' -Upgrade
+  Install-Package MD5
+  Install-Package psget -Upgrade
   if ($?)
   {
     $env:PsModulePath = [Environment]::GetEnvironmentVariable("PsModulePath")
     Import-Module "C:\Program Files\Common Files\Modules\PsGet\PsGet.psm1" -ErrorAction Stop -Verbose:$false
   }
-  Install-Package '7zip'
-  Install-Package 'git' -Upgrade
+  #Install-Module  Posh-VPN -Update -Verbose:$Verbose
+  Install-Module  -ModuleUrl https://github.com/gildas/posh-vpn/releases/download/0.1.3/posh-vpn-0.1.3.zip -Update -Verbose:$false
+  if ($?)
+  {
+    Import-Module Posh-VPN -ErrorAction Stop -Verbose:$false
+  }
+  Install-Module  -ModuleUrl https://github.com/gildas/posh-vault/releases/download/0.1.1/posh-vault-0.1.1.zip -Update -Verbose:$false
+  if ($?)
+  {
+    Import-Module Posh-Vault -ErrorAction Stop -Verbose:$false
+  }
+
+  Install-Package 7zip -AddPath (Join-Path $env:ProgramFiles '7-Zip')
+  Install-Package git -Upgrade
+  Install-Package vagrant -Upgrade
+  Install-VagrantPlugin 'vagrant-host-shell'
 
   switch ($Virtualization)
   {
@@ -956,30 +1134,20 @@ process # {{{2
     'VMWare'
     {
       Install-VMWare $VirtualMachinesHome $VMWareLicense
+      $args = @{}
+      if ($PSBoundParameters.ContainsKey('VagrantVMWareLicense')) { $args['License'] = $VagrantVMWareLicense }
+      Install-VagrantPlugin 'vagrant-vmware-workstation' @args
     }
-  }
-
-  Install-Package 'vagrant' -Upgrade
-  Install-VagrantPlugin 'vagrant-host-shell'
-  if ($Virtualization -eq 'VMWare')
-  {
-    $args = @{}
-    if ($PSBoundParameters.ContainsKey('VagrantVMWareLicense')) { $args['License'] = $VagrantVMWareLicense }
-    Install-VagrantPlugin 'vagrant-vmware-workstation' @args
   }
   Update-VagrantPlugin -All
 
-  Install-Package 'packer' -Upgrade
+  Install-Package packer -Upgrade
   
-  Write-Verbose "Installing Packer Plugin provisioner wait"
-  #Download-File 'https://github.com/gildas/packer-provisioner-wait/releases/download/v0.1.0/packer-provisioner-wait-0.1.0-win.7z' $env:TEMP
-  (New-Object System.Net.WebClient).DownloadFile('https://github.com/gildas/packer-provisioner-wait/releases/download/v0.1.0/packer-provisioner-wait-0.1.0-win.7z', "$env:TEMP\packer-provisioner-wait-0.1.0-win.7z")
-  & "${env:ProgramFiles}\7-Zip\7z.exe" e -y -oC:\ProgramData\chocolatey\lib\packer\tools $env:TEMP\packer-provisioner-wait-0.1.0-win.7z | Out-Null
-  if (! $?) { Throw "Packer Plugin packer-provisioner-wait not installed. Error: $LASTEXITCODE" }
+  Install-PackerPlugin -Name 'Provisioner Wait' -Url https://github.com/gildas/packer-provisioner-wait/releases/download/v0.1.0/packer-provisioner-wait-0.1.0-win.7z
 
-  Install-Package 'puppet'
-  Install-Package 'imdisk'
-  Install-Package 'ruby' -Upgrade
+  Install-Package puppet
+  Install-Package imdisk
+  Install-Package ruby -Upgrade
 
   # Set Firewall rules for Ruby {{{3
   $rules = Get-NetFirewallRule | Where Name -match 'TCP.*ruby'
@@ -1011,50 +1179,9 @@ process # {{{2
     }
   }
   # }}}3
-  Install-Gem     'bundler'
-  Install-Gem     'savon'
-  #Install-Module  Posh-VPN -Update -Verbose:$Verbose
-  Install-Module  -ModuleUrl https://github.com/gildas/posh-vpn/releases/download/0.1.3/posh-vpn-0.1.3.zip -Update -Verbose:$false
-  if ($?)
-  {
-    Import-Module Posh-VPN -ErrorAction Stop -Verbose:$false
-  }
-  Install-Module  -ModuleUrl https://github.com/gildas/posh-vault/releases/download/0.1.1/posh-vault-0.1.1.zip -Update -Verbose:$false
-  if ($?)
-  {
-    Import-Module Posh-Vault -ErrorAction Stop -Verbose:$false
-  }
-
-  $PackerWindows = Join-Path $PackerHome 'packer-windows'
-  If (! (Test-Path $PackerWindows)) { New-Item -Path $PackerWindows -ItemType Directory | Out-Null }
-  if (Test-Path (Join-Path $PackerWindows '.git'))
-  {
-    Write-Verbose "Updating Packer Windows repository"
-    & git -C "$PackerWindows" pull
-    if (! $?) { Throw "Packer Windows not updated. Error: $LASTEXITCODE" }
-  }
-  else
-  {
-    Write-Verbose "Cloning Packer Windows repository"
-    & git clone https://github.com/gildas/packer-windows.git $PackerWindows
-    if (! $?) { Throw "Packer Windows not cloned. Error: $LASTEXITCODE" }
-  }
-  if (Test-Path (Join-Path $PackerWindows 'Gemfile'))
-  {
-    Push-Location $PackerWindows
-    if ($PuppetMeShouldUpdate)
-    {
-      bundle install
-      if (! $?)
-      {
-        $exitcode = $LASTEXITCODE
-        Pop-Location
-        Throw "Packer Windows not bundled. Error: $exitcode"
-      }
-      $PuppetMeUpdated = $true
-    }
-    Pop-Location
-  }
+  Install-Gem     bundler
+  Install-Gem     savon
+  Install-PackerWindows
 
   # Create/Update the filestamp to indicate installs/upgrades where performed
   if ($PuppetMeUpdated)
