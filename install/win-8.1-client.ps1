@@ -760,8 +760,14 @@ process # {{{2
       Throw [IO.FileNotFoundException] $VPNProfile
     }
     Write-Verbose "Connecting to $vpn_provider profile $vpn_profile"
-    $creds = Get-VaultCredential -Resource $vpn_profile -ErrorAction SilentlyContinue
-    if ($creds -eq $null) { $creds = $Credential }
+    try
+    {
+      $creds = Get-VaultCredential -Resource $vpn_profile -ErrorAction SilentlyContinue
+    }
+    catch
+    {
+      $creds = $Credential
+    }
     if ($creds -eq $null)
     {
       $creds = Get-Credential -Message "Please enter your credentials to connect to $VPNProvider profile $vpn_profile"
@@ -939,8 +945,14 @@ process # {{{2
               $missed_sources += $location
               continue
             }
-            $creds = Get-VaultCredential -Resource $source_root -ErrorAction SilentlyContinue
-            if ($creds -eq $null) { $creds = $Credential }
+            try
+            {
+              $creds = Get-VaultCredential -Resource $source_root -ErrorAction SilentlyContinue
+            }
+            catch
+            {
+              $creds = $Credential
+            }
 
             Write-Verbose "  Source: $source_url"
             if ($creds -ne $null) { Write-Verbose "  User:   $($creds.Username)" }
