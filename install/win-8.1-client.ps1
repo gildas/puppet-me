@@ -681,6 +681,61 @@ process # {{{2
     }
   } # }}}3
 
+  function Install-PackerWindows # {{{3
+  {
+    Param(
+      [Parameter(Mandatory=$false)]
+      [string] $Branch,
+      [Parameter(Mandatory=$false)]
+      [switch] $Force
+    )
+    if (! (Get-Command packer -ErrorAction SilentlyContinue))
+    {
+      Install-Package packer -Force
+    }
+    if (! (Get-Command git -ErrorAction SilentlyContinue))
+    {
+      Install-Package git -Force
+    }
+    if (! (Get-Command bundle -ErrorAction SilentlyContinue))
+    {
+      Install-Gem bundler
+    }
+
+    $PackerWindows = [IO.Path]::Combine($PackerHome, 'packer-windows')
+    If (! (Test-Path $PackerWindows)) { New-Item -Path $PackerWindows -ItemType Directory | Out-Null }
+
+    if (Test-Path (Join-Path $PackerWindows '.git'))
+    {
+      Write-Verbose "Updating Packer Windows repository"
+      & git -C "$PackerWindows" pull
+      if (! $?) { Throw "Packer Windows not updated. Error: $LASTEXITCODE" }
+    }
+    else
+    {
+      Write-Verbose "Cloning Packer Windows repository"
+      & git clone https://github.com/gildas/packer-windows.git $PackerWindows
+      if (! $?) { Throw "Packer Windows not cloned. Error: $LASTEXITCODE" }
+    }
+
+    if (Test-Path (Join-Path $PackerWindows 'Gemfile'))
+    {
+      if ($PuppetMeShouldUpdate)
+      {
+        Push-Location $PackerWindows
+        bundle install
+        if (! $?)
+        {
+          $exitcode = $LASTEXITCODE
+          Pop-Location
+          Throw "Packer Windows not bundled. Error: $exitcode"
+        }
+        $PuppetMeUpdated = $true
+        Pop-Location
+      }
+    }
+  } # }}}3
+
   function Start-VPN # {{{3
   {
     Param(
@@ -1019,7 +1074,7 @@ process # {{{2
 
   if (Get-Command 'chocolatey.exe' -ErrorAction SilentlyContinue)
   {
-    Install-Package 'chocolatey' -Upgrade
+    Install-Package chocolatey -Upgrade
   }
   else
   {
@@ -1028,16 +1083,28 @@ process # {{{2
     & $env:TEMP/Install-Chocolatey.ps1
   }
 
-  Install-Package 'MD5'
-  Install-Package 'psget' -Upgrade
+  Install-Package MD5
+  Install-Package psget -Upgrade
   if ($?)
   {
     $env:PsModulePath = [Environment]::GetEnvironmentVariable("PsModulePath")
     Import-Module "C:\Program Files\Common Files\Modules\PsGet\PsGet.psm1" -ErrorAction Stop -Verbose:$false
   }
-  Install-Package '7zip' -AddPath (Join-Path $env:ProgramFiles '7-Zip')
-  Install-Package 'git' -Upgrade
-  Install-Package 'vagrant' -Upgrade
+  #Install-Module  Posh-VPN -Update -Verbose:$Verbose
+  Install-Module  -ModuleUrl https://github.com/gildas/posh-vpn/releases/download/0.1.3/posh-vpn-0.1.3.zip -Update -Verbose:$false
+  if ($?)
+  {
+    Import-Module Posh-VPN -ErrorAction Stop -Verbose:$false
+  }
+  Install-Module  -ModuleUrl https://github.com/gildas/posh-vault/releases/download/0.1.1/posh-vault-0.1.1.zip -Update -Verbose:$false
+  if ($?)
+  {
+    Import-Module Posh-Vault -ErrorAction Stop -Verbose:$false
+  }
+
+  Install-Package 7zip -AddPath (Join-Path $env:ProgramFiles '7-Zip')
+  Install-Package git -Upgrade
+  Install-Package vagrant -Upgrade
   Install-VagrantPlugin 'vagrant-host-shell'
 
   switch ($Virtualization)
@@ -1060,13 +1127,13 @@ process # {{{2
   }
   Update-VagrantPlugin -All
 
-  Install-Package 'packer' -Upgrade
+  Install-Package packer -Upgrade
   
   Install-PackerPlugin -Name 'Provisioner Wait' -Url https://github.com/gildas/packer-provisioner-wait/releases/download/v0.1.0/packer-provisioner-wait-0.1.0-win.7z
 
-  Install-Package 'puppet'
-  Install-Package 'imdisk'
-  Install-Package 'ruby' -Upgrade
+  Install-Package puppet
+  Install-Package imdisk
+  Install-Package ruby -Upgrade
 
   # Set Firewall rules for Ruby {{{3
   $rules = Get-NetFirewallRule | Where Name -match 'TCP.*ruby'
@@ -1098,50 +1165,9 @@ process # {{{2
     }
   }
   # }}}3
-  Install-Gem     'bundler'
-  Install-Gem     'savon'
-  #Install-Module  Posh-VPN -Update -Verbose:$Verbose
-  Install-Module  -ModuleUrl https://github.com/gildas/posh-vpn/releases/download/0.1.3/posh-vpn-0.1.3.zip -Update -Verbose:$false
-  if ($?)
-  {
-    Import-Module Posh-VPN -ErrorAction Stop -Verbose:$false
-  }
-  Install-Module  -ModuleUrl https://github.com/gildas/posh-vault/releases/download/0.1.1/posh-vault-0.1.1.zip -Update -Verbose:$false
-  if ($?)
-  {
-    Import-Module Posh-Vault -ErrorAction Stop -Verbose:$false
-  }
-
-  $PackerWindows = Join-Path $PackerHome 'packer-windows'
-  If (! (Test-Path $PackerWindows)) { New-Item -Path $PackerWindows -ItemType Directory | Out-Null }
-  if (Test-Path (Join-Path $PackerWindows '.git'))
-  {
-    Write-Verbose "Updating Packer Windows repository"
-    & git -C "$PackerWindows" pull
-    if (! $?) { Throw "Packer Windows not updated. Error: $LASTEXITCODE" }
-  }
-  else
-  {
-    Write-Verbose "Cloning Packer Windows repository"
-    & git clone https://github.com/gildas/packer-windows.git $PackerWindows
-    if (! $?) { Throw "Packer Windows not cloned. Error: $LASTEXITCODE" }
-  }
-  if (Test-Path (Join-Path $PackerWindows 'Gemfile'))
-  {
-    Push-Location $PackerWindows
-    if ($PuppetMeShouldUpdate)
-    {
-      bundle install
-      if (! $?)
-      {
-        $exitcode = $LASTEXITCODE
-        Pop-Location
-        Throw "Packer Windows not bundled. Error: $exitcode"
-      }
-      $PuppetMeUpdated = $true
-    }
-    Pop-Location
-  }
+  Install-Gem     bundler
+  Install-Gem     savon
+  Install-PackerWindows
 
   # Create/Update the filestamp to indicate installs/upgrades where performed
   if ($PuppetMeUpdated)
