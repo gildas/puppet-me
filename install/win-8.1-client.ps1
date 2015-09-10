@@ -160,6 +160,7 @@ begin # {{{2
   $PuppetMeUpdateFrequency = 4 # hours
   $PuppetMeUpdated         = $false
   $PuppetMeShouldUpdate    = $Force -or !(Test-Path $PuppetMeLastUpdate) -or ([DateTime]::Now.AddHours(-$PuppetMeUpdateFrequency) -gt (Get-ChildItem $PuppetMeLastUpdate).LastWriteTime)
+  $script:Credential       = $Credential
 
   if ($PuppetMeShouldUpdate) { Write-Verbose "All installs should be run" } else { Write-Verbose "Installs were checked recently, let's give the Internet a break!" }
   switch($PSCmdlet.ParameterSetName)
@@ -766,7 +767,7 @@ process # {{{2
     }
     catch
     {
-      $creds = $Credential
+      $creds = $script:Credential
     }
     if ($creds -eq $null)
     {
@@ -774,6 +775,7 @@ process # {{{2
     }
     $vpn_session = Connect-VPN -Provider $vpn_provider -ComputerName $vpn_profile  -Credential $creds -Verbose:$false
     Set-VaultCredential -Resource $vpn_profile -Credential $creds
+    $script:Credential = $creds
     return $vpn_session
   } # }}}3
 
@@ -951,7 +953,7 @@ process # {{{2
             }
             catch
             {
-              $creds = $Credential
+              $creds = $script:Credential
             }
 
             Write-Verbose "  Source: $source_url"
