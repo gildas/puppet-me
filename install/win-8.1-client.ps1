@@ -21,12 +21,12 @@
 
   Depending on the chosen platform, more configuration will be allowed such as the Virtual Machines folder, License keys/files where they apply.
 
-  The best way to launch this installation program is to get the latest version from the Internet first:
+  The best way to launch this installation program is to get the latest stable version from the Internet first:
 
-  [PS] Start-BitsTransfer http://tinyurl.com/win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -Virtualbox -Verbose
+  [PS] Start-BitsTransfer http://tinyurl.com/puppet-me-win-8 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -Virtualbox -Verbose
 
   While we are in development, use:
-  Start-BitsTransfer https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/win-8.1-client.ps1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -Virtualbox -Verbose
+  Start-BitsTransfer http://tinuurl.com/puppet-me-win-8-dev $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -Virtualbox -Verbose
 
 .PARAMETER Usage
   Prints this help and exits.
@@ -103,7 +103,7 @@
   Will install all the software and Virtualbox in their default locations.
   Once installed, packer is invoked to build all Vagrant box available with VMWare Workstation.
 .NOTES
-  Version 0.5.0
+  Version 0.8.0
 #>
 [CmdLetBinding(SupportsShouldProcess, DefaultParameterSetName="Usage")]
 Param( # {{{2
@@ -154,7 +154,7 @@ Param( # {{{2
 ) # }}}2
 begin # {{{2
 {
-  $CURRENT_VERSION = '0.5.0'
+  $CURRENT_VERSION = '0.8.0'
   $GitHubRoot      = "https://raw.githubusercontent.com/inin-apac/puppet-me"
   $PuppetMeLastUpdate      = "${env:TEMP}/last_updated-puppetme"
   $PuppetMeUpdateFrequency = 4 # hours
