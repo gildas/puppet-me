@@ -617,6 +617,56 @@ process # {{{2
     }
   } # }}}3
 
+  function Install-PackerPlugin # {{{3
+  {
+    Param(
+      [Parameter(Mandatory=$true,ValueFromPipeline=$true)]
+      [string] $Name,
+      [Parameter(Mandatory=$false)]
+      [string] $Url,
+      [Parameter(Mandatory=$false)]
+      [string] $License,
+      [Parameter(Mandatory=$false)]
+      [switch] $Force
+    )
+    if (! (Get-Command packer -ErrorAction SilentlyContinue))
+    {
+      Install-Package packer -Force
+    }
+
+    Write-Verbose "Installing Packer Plugin $Name"
+
+    $PackerTools=[System.IO.Path]::Combine($env:ChocolateyInstall, 'lib', 'packer', 'tools')
+    $PackageLib=[System.IO.Path]::Combine($env:ChocolateyInstall, 'lib', $Name.ToLower() -replace ' ','-')
+    $Package=[System.IO.Path]::Combine($PackageLib, ([System.Uri] $Url).Segments[-1])
+
+    if (! (Test-Path $PackageLib)) { New-Item -Path $PackageLib -ItemType Directory | Out-Null }
+
+    if (! (Test-Path $Package) -or $Force)
+    {
+      Write-Verbose "Downloading Packer Plugin $Name"
+      #Download-File $Url $PackageLib
+      (New-Object System.Net.WebClient).DownloadFile($Url, $Package)
+    }
+
+    # TODO: Do not unzip everytime!
+    if ($Package -match '.*\.(7z|zip|tar|gz|bz2)')
+    {
+      Write-Verbose " Deploying Packer Plugin $Name"
+      & "${env:ProgramFiles}\7-Zip\7z.exe" e -y -o$PackerTools $Package | Out-Null
+      if (! $?) { Throw "Packer Plugin $Name not installed. Error: $LASTEXITCODE" }
+    }
+    else
+    {
+      Throw "Unsupported Archive: $Package"
+    }
+
+    if (! [string]::IsNullOrEmpty($License))
+    {
+      Write-Warning 'Packer Packages License is ignored at the moment'
+    }
+  } # }}}3
+
   function Start-VPN # {{{3
   {
     Param(
@@ -998,11 +1048,7 @@ process # {{{2
 
   Install-Package 'packer' -Upgrade
   
-  Write-Verbose "Installing Packer Plugin provisioner wait"
-  #Download-File 'https://github.com/gildas/packer-provisioner-wait/releases/download/v0.1.0/packer-provisioner-wait-0.1.0-win.7z' $env:TEMP
-  (New-Object System.Net.WebClient).DownloadFile('https://github.com/gildas/packer-provisioner-wait/releases/download/v0.1.0/packer-provisioner-wait-0.1.0-win.7z', "$env:TEMP\packer-provisioner-wait-0.1.0-win.7z")
-  & "${env:ProgramFiles}\7-Zip\7z.exe" e -y -oC:\ProgramData\chocolatey\lib\packer\tools $env:TEMP\packer-provisioner-wait-0.1.0-win.7z | Out-Null
-  if (! $?) { Throw "Packer Plugin packer-provisioner-wait not installed. Error: $LASTEXITCODE" }
+  Install-PackerPlugin -Name 'Provisioner Wait' -Url https://github.com/gildas/packer-provisioner-wait/releases/download/v0.1.0/packer-provisioner-wait-0.1.0-win.7z
 
   Install-Package 'puppet'
   Install-Package 'imdisk'
