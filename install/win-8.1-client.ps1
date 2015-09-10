@@ -1110,7 +1110,7 @@ process # {{{2
   {
     Import-Module Posh-VPN -ErrorAction Stop -Verbose:$false
   }
-  Install-Module  -ModuleUrl https://github.com/gildas/posh-vault/releases/download/0.1.1/posh-vault-0.1.1.zip -Update -Verbose:$false
+  Install-Module  -ModuleUrl https://github.com/gildas/posh-vault/releases/download/0.1.2/posh-vault-0.1.2.zip -Update -Verbose:$false
   if ($?)
   {
     Import-Module Posh-Vault -ErrorAction Stop -Verbose:$false
