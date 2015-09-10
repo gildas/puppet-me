@@ -138,7 +138,7 @@ Param( # {{{2
   [string] $CacheConfig,
   [Parameter(Position=7, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=9, Mandatory=$false, ParameterSetName='VMWare')]
-  [System.Management.Automation.PSCredential] $Credential,
+  [Management.Automation.PSCredential] $Credential,
   [Parameter(Position=8, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=10, Mandatory=$false, ParameterSetName='VMWare')]
   [string[]] $PackerBuild,
@@ -452,7 +452,7 @@ process # {{{2
     Disable-HyperV
     Install-Package 'virtualbox' -Upgrade
 
-    if ($env:VBOX_MSI_INSTALL_PATH -eq $null) { $env:VBOX_MSI_INSTALL_PATH = [System.Environment]::GetEnvironmentVariable("VBOX_MSI_INSTALL_PATH", "Machine") }
+    if ($env:VBOX_MSI_INSTALL_PATH -eq $null) { $env:VBOX_MSI_INSTALL_PATH = [Environment]::GetEnvironmentVariable("VBOX_MSI_INSTALL_PATH", "Machine") }
     $vboxManage=Join-Path $env:VBOX_MSI_INSTALL_PATH 'VBoxManage.Exe'
 
     $vboxVersion= & $vboxManage --version
@@ -650,9 +650,9 @@ process # {{{2
 
     Write-Verbose "Installing Packer Plugin $Name"
 
-    $PackerTools=[System.IO.Path]::Combine($env:ChocolateyInstall, 'lib', 'packer', 'tools')
-    $PackageLib=[System.IO.Path]::Combine($env:ChocolateyInstall, 'lib', $Name.ToLower() -replace ' ','-')
-    $Package=[System.IO.Path]::Combine($PackageLib, ([System.Uri] $Url).Segments[-1])
+    $PackerTools=[IO.Path]::Combine($env:ChocolateyInstall, 'lib', 'packer', 'tools')
+    $PackageLib=[IO.Path]::Combine($env:ChocolateyInstall, 'lib', $Name.ToLower() -replace ' ','-')
+    $Package=[IO.Path]::Combine($PackageLib, ([Uri] $Url).Segments[-1])
 
     if (! (Test-Path $PackageLib)) { New-Item -Path $PackageLib -ItemType Directory | Out-Null }
 
@@ -660,7 +660,7 @@ process # {{{2
     {
       Write-Verbose "Downloading Packer Plugin $Name"
       #Download-File $Url $PackageLib
-      (New-Object System.Net.WebClient).DownloadFile($Url, $Package)
+      (New-Object Net.WebClient).DownloadFile($Url, $Package)
     }
 
     # TODO: Do not unzip everytime!
@@ -702,7 +702,7 @@ process # {{{2
 
     if ($vpn_profile -eq $null)
     {
-      Throw [System.IO.FileNotFoundException] $VPNProfile
+      Throw [IO.FileNotFoundException] $VPNProfile
     }
     Write-Verbose "Connecting to $vpn_provider profile $vpn_profile"
     $creds = Get-VaultCredential -Resource $vpn_profile -ErrorAction SilentlyContinue
@@ -754,7 +754,7 @@ process # {{{2
       Remove-Item -Path $config -Force
     }
     #Start-BitsTransfer -Source $Uri -Destination (Join-Path $env:TEMP 'config.json') -Verbose:$false
-    (New-Object System.Net.Webclient).DownloadFile($Uri, $config)
+    (New-Object Net.Webclient).DownloadFile($Uri, $config)
 
     $sources          = (Get-Content -Raw -Path $config | ConvertFrom-Json)
     $credentials      = @{}
@@ -841,13 +841,13 @@ process # {{{2
               {
                 $vpn_session = Start-VPN -VPNProfile $location.vpn
               }
-              catch [System.IO.FileNotFoundException]
+              catch [IO.FileNotFoundException]
               {
                 Write-Error "There was no VPN Profile that matched $($location.vpn), skipping this download"
                 $missed_sources += $location
                 continue
               }
-              catch [System.Security.Authentication.InvalidCredentialException]
+              catch [Security.Authentication.InvalidCredentialException]
               {
                 Write-Error "Could not connect to VPN Profile $($location.vpn), skipping this download"
                 $missed_sources += $location
@@ -863,8 +863,8 @@ process # {{{2
               $source_host     = $matches[2]
               if ($source_protocol -eq 'smb')
               {
-                $source_share  = [System.Web.HttpUtility]::UrlDecode($matches[3])
-                $source_path   = [System.Web.HttpUtility]::UrlDecode($matches[4]) -replace '/', '\'
+                $source_share  = [Web.HttpUtility]::UrlDecode($matches[3])
+                $source_path   = [Web.HttpUtility]::UrlDecode($matches[4]) -replace '/', '\'
                 $source_url    = "\\${source_host}\${source_share}\${source_path}"
                 $source_root   = "\\${source_host}\${source_share}"
                 $location_type = 'smb'
@@ -873,8 +873,8 @@ process # {{{2
               else
               {
                 $source_share  = ''
-                $source_path   = [System.Web.HttpUtility]::UrlDecode($matches[3] + '/' + $matches[4])
-                $source_root   = "http://${source_host}/" + [System.Web.HttpUtility]::UrlDecode($matches[3])
+                $source_path   = [Web.HttpUtility]::UrlDecode($matches[3] + '/' + $matches[4])
+                $source_root   = "http://${source_host}/" + [Web.HttpUtility]::UrlDecode($matches[3])
                 $location_type = $location.type
               }
             }
