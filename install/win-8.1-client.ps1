@@ -342,6 +342,11 @@ process # {{{2
 
   function Install-Gem([string] $Gem) # {{{3
   {
+    if (! (Get-Command gem -ErrorAction SilentlyContinue))
+    {
+      Install-Package ruby -Force
+    }
+
     if ( gem list --local | Where { $_ -match "${Gem}.*" } )
     {
       $current = ''
