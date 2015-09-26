@@ -63,6 +63,9 @@ The possible options are:
 - --cache-config *url*  
   Contains the URL of the configuration file for the cached sources.  
   Default: [sources.json on cdn.rawgit.com](https://cdn.rawgit.com/inin-apac/puppet-me/f74d7ec3242afce03a29e061eb93ed36cca1e9ee/config/sources.json)
+- --cache-keep  
+  Keep previous versions of downloads (e.g., keep CIC 2015R1, 2015R2, patches)  
+  Default: previous versions are deleted  
 - --cache-sources *urls*  
   Contains the URL of the configuration file for the cached sources.  
 - --cache-source *path_or_url*  

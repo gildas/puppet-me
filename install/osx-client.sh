@@ -48,6 +48,7 @@ CACHE_ROOT='/var/cache/daas'
 CACHE_SOURCES=()
 CACHE_MOUNTS=()
 CONNECTED_VPNS=()
+CACHE_KEEP_OLD=0
 
 MODULE_VMWARE_HOME=''
 MODULE_VMWARE_KEY=''
@@ -2436,7 +2437,9 @@ function cache_stuff() # {{{2
     trace "Action: \"$document_action\""
     case $document_action in
       'delete')
-        if [[ -n "$document_destination" && -f "$document_destination" ]]; then
+        if [[ $CACHE_KEEP_OLD == 1 ]]; then
+          verbose "Keeping old download: ${document_name}"
+        elif [[ -n "$document_destination" && -f "$document_destination" ]]; then
           verbose "Deleting ${document_name}"
           trace "$RM $document_destination"
           $NOOP $RM $document_destination
@@ -2597,6 +2600,9 @@ function usage() # {{{2
   echo " --cache-config *url*  "
   echo "   Contains the URL of the configuration file for the cached sources.  "
   echo "   Default value: https://raw.githubusercontent.com/inin-apac/puppet-me/master/install/sources.json"
+  echo " --cache-keep  "
+  echo "   Keep previous versions of downloads (e.g., keep CIC 2015R1, 2015R2, patches)  "
+  echo "   Default: previous versions are deleted  "
   echo " --cache-sources *urls*  "
   echo "   Contains the URL of the configuration file for the cached sources.  "
   echo " --cache-source *path_or_url*  "
@@ -2822,6 +2828,9 @@ function parse_args() # {{{2
         ;;
       --cache-config=)
         die "Argument for option $1 is missing."
+        ;;
+      --cache-keep)
+        CACHE_KEEP_OLD=1
         ;;
       --cache-sources)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."

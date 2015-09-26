@@ -107,49 +107,52 @@
 #>
 [CmdLetBinding(SupportsShouldProcess, DefaultParameterSetName="Usage")]
 Param( # {{{2
-  [Parameter(Position=1, Mandatory=$false, ParameterSetName='Usage')]
+  [Parameter(Position=1,  Mandatory=$false, ParameterSetName='Usage')]
   [switch] $Usage,
-  [Parameter(Position=1, Mandatory=$true, ParameterSetName='Version')]
+  [Parameter(Position=1,  Mandatory=$true, ParameterSetName='Version')]
   [switch] $Version,
-  [Parameter(Position=1, Mandatory=$true,  ParameterSetName='Virtualbox')]
+  [Parameter(Position=1,  Mandatory=$true,  ParameterSetName='Virtualbox')]
   [switch] $Virtualbox,
-  [Parameter(Position=1, Mandatory=$true,  ParameterSetName='VMWare')]
+  [Parameter(Position=1,  Mandatory=$true,  ParameterSetName='VMWare')]
   [switch] $VMWare,
-  [Parameter(Position=2, Mandatory=$false, ParameterSetName='VMWare')]
-  [Parameter(Position=2, Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=2,  Mandatory=$false, ParameterSetName='VMWare')]
+  [Parameter(Position=2,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Alias('VMHome', 'VirtualMachines')]
   [string] $VirtualMachinesHome,
-  [Parameter(Position=3, Mandatory=$false, ParameterSetName='VMWare')]
+  [Parameter(Position=3,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VMWareLicense,
-  [Parameter(Position=3, Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Parameter(Position=4, Mandatory=$false, ParameterSetName='VMWare')]
+  [Parameter(Position=3,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=4,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $PackerHome,
-  [Parameter(Position=4, Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Parameter(Position=5, Mandatory=$false, ParameterSetName='VMWare')]
+  [Parameter(Position=4,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=5,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VagrantHome,
-  [Parameter(Position=6, Mandatory=$false, ParameterSetName='VMWare')]
+  [Parameter(Position=6,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VagrantVMWareLicense,
-  [Parameter(Position=5, Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Parameter(Position=7, Mandatory=$false, ParameterSetName='VMWare')]
+  [Parameter(Position=5,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=7,  Mandatory=$false, ParameterSetName='VMWare')]
   [Alias('DaasCache')]
   [string] $CacheRoot,
-  [Parameter(Position=6, Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Parameter(Position=8, Mandatory=$false, ParameterSetName='VMWare')]
+  [Parameter(Position=6,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=8,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $CacheConfig,
-  [Parameter(Position=7, Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Parameter(Position=9, Mandatory=$false, ParameterSetName='VMWare')]
-  [Management.Automation.PSCredential] $Credential,
-  [Parameter(Position=8, Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=7,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=9,  Mandatory=$false, ParameterSetName='VMWare')]
+  [switch] $CacheKeep,
+  [Parameter(Position=8,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=10, Mandatory=$false, ParameterSetName='VMWare')]
-  [string[]] $PackerBuild,
+  [Management.Automation.PSCredential] $Credential,
   [Parameter(Position=9,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=11, Mandatory=$false, ParameterSetName='VMWare')]
-  [string[]] $PackerLoad,
-  [Parameter(Position=10,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [string[]] $PackerBuild,
+  [Parameter(Position=10, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=12, Mandatory=$false, ParameterSetName='VMWare')]
-  [switch] $NoUpdateCache,
-  [Parameter(Position=11,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [string[]] $PackerLoad,
+  [Parameter(Position=11, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=13, Mandatory=$false, ParameterSetName='VMWare')]
+  [switch] $NoUpdateCache,
+  [Parameter(Position=12, Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=14, Mandatory=$false, ParameterSetName='VMWare')]
   [string] $Network
 ) # }}}2
 begin # {{{2
@@ -832,11 +835,18 @@ process # {{{2
       {
         delete
         {
-          $path = Join-Path $Destination $source.destination
-          if (Test-Path $path)
+          if ($CacheKeep)
           {
-            Write-Output "Deleting $($source.Name)..."
-            Remove-Item $path -Recurse
+            Write-Verbose "Keeping old download $($source.Name)"
+          }
+          else
+          {
+            $path = Join-Path $Destination $source.destination
+            if (Test-Path $path)
+            {
+              Write-Output "Deleting $($source.Name)..."
+              Remove-Item $path -Recurse
+            }
           }
         }
         default
@@ -881,7 +891,7 @@ process # {{{2
               continue
             }
             else
-            {
+             {
               Write-Verbose "  $($source.checksum.type) Checksums differ, downloading again..."
               Write-Verbose "    (expected: $($source.checksum), local: $checksum)"
             }
