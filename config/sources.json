@@ -90,7 +90,7 @@
   {
     "name": "CIC 2015R4",
     "id": "CIC_2015R4",
-    "checksum": { "type": "MD5", "value": "ae047963db82e11024d62c9daf704fd0" },
+    "checksum": { "type": "MD5", "value": "e4e4a47b7044858f3f64f5981a361404" },
     "filename": "CIC_2015_R4.iso",
     "locations":
     [
@@ -119,7 +119,7 @@
   {
     "name": "CIC 2015R4 Patch 4",
     "id": "CIC_2015R4_Patch4",
-    "checksum": { "type": "MD5", "value": "c6cca6bbf0bbd4b782414e5f5ca7126f" },
+    "checksum": { "type": "MD5", "value": "3e99f17acc71c117c8131fe8380069a9" },
     "filename": "CIC_2015_R4_Patch4.iso",
     "locations":
     [
@@ -160,7 +160,7 @@
   {
     "name": "Dialer 2015R4",
     "id": "Dialer_2015R4",
-    "checksum": { "type": "MD5", "value": "5d67f744dd7a596c80a92a852ff4e1fc" },
+    "checksum": { "type": "MD5", "value": "4f12f9e8230365de710f9984309e5ab2" },
     "filename": "Dialer_2015_R4.iso",
     "locations":
     [
@@ -189,7 +189,7 @@
   {
     "name": "Dialer 2015R4 Patch 4",
     "id": "Dialer_2015R4_Patch4",
-    "checksum": { "type": "MD5", "value": "9678191944e713984ba3a9963861309d" },
+    "checksum": { "type": "MD5", "value": "8dd0cf0265c67549541d15e6021927e8" },
     "filename": "Dialer_2015_R4_Patch4.iso",
     "locations":
     [
