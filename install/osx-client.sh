@@ -1318,7 +1318,7 @@ function download() # {{{2
             warn "User cancelled prompt operation"
             return 0
           fi
-          source_password=$(prompt -s --title "Downloading $filename" "Password for ${source_user}")
+          source_password=$(prompt -s --title "Downloading $filename" "Password for ${source_user/\\/;/}")
           if [[ $? != 0 ]]; then
             warn "User cancelled prompt operation"
             return 0
