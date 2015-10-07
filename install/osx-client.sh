@@ -2440,7 +2440,7 @@ function cache_stuff() # {{{2
       'delete')
         if [[ $CACHE_KEEP_OLD == 1 ]]; then
           verbose "Keeping old download: ${document_name}"
-        elif [[ -n "$document_destination" && -f "$document_destination" ]]; then
+  elif [[ -n "$document_destination" && -n $(find "$(dirname "$document_destination")" -maxdepth 1 -name "$(basename "$document_destination")" -print -quit) ]]; then
           verbose "Deleting ${document_name}"
           trace "$RM $document_destination"
           $NOOP $RM $document_destination
