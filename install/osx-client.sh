@@ -1821,7 +1821,7 @@ function install_homebrew() # {{{2
     if [[ -n ${NO_UPDATES[homebrew]} ]]; then
       echo "Not updating"
     else
-      [[ -w /usr/local ]] && $NOOP $SUDO chown -R $(whoami):admin /usr/local
+      [[ -w /usr/local ]] || $NOOP $SUDO chown -R $(whoami):admin /usr/local
       [[ -f $filestamp ]] && trace "filestamp: $filestamp, $(stat -f "%Sm" $filestamp)"
       if [[ $FORCE_UPDATE == "1" || ! -f $filestamp || -n "$(find "$filestamp" -mmin +240)" ]]; then
         verbose "Updating..."
