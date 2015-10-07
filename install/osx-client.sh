@@ -22,9 +22,6 @@ CURL="/usr/bin/curl --location --progress-bar "
 SUDO="/usr/bin/sudo"
 RM="rm -rf"
 
-PACKER_VERSION=0.8.5
-VAGRANT_VERSION=1.7.4
-
 MODULE_homebrew_done=0
 MODULE_cache_done=0
 MODULE_packer_done=0
