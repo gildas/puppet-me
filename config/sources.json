@@ -117,10 +117,10 @@
     ]
   },
   {
-    "name": "CIC 2015R4 Patch 5",
-    "id": "CIC_2015R4_Patch5",
-    "checksum": { "type": "MD5", "value": "d41d8cd98f00b204e9800998ecf8427e" },
-    "filename": "CIC_2015_R4_Patch5.iso",
+    "name": "CIC 2015R4 Patch 4",
+    "id": "CIC_2015R4_Patch4",
+    "checksum": { "type": "MD5", "value": "3e99f17acc71c117c8131fe8380069a9" },
+    "filename": "CIC_2015_R4_Patch4.iso",
     "locations":
     [
       {
@@ -141,7 +141,7 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2015r4/P05/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2015r4/P04/"
       }
     ]
   },
@@ -187,10 +187,10 @@
     ]
   },
   {
-    "name": "Dialer 2015R4 Patch 5",
-    "id": "Dialer_2015R4_Patch5",
-    "checksum": { "type": "MD5", "value": "d41d8cd98f00b204e9800998ecf8427e" },
-    "filename": "Dialer_2015_R4_Patch5.iso",
+    "name": "Dialer 2015R4 Patch 4",
+    "id": "Dialer_2015R4_Patch4",
+    "checksum": { "type": "MD5", "value": "8dd0cf0265c67549541d15e6021927e8" },
+    "filename": "Dialer_2015_R4_Patch4.iso",
     "locations":
     [
       {
@@ -211,7 +211,7 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2015r4/P05/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2015r4/P04/"
       }
     ]
   },
