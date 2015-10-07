@@ -999,6 +999,7 @@ function download() # {{{2
   # download "smb://login:password@hostname/path/file?k1=v1&k2=v2" "local_folder"
   local need_auth=0
   local has_resume
+  local auth_type
   local source
   local target
   local checksum_type
@@ -1027,6 +1028,10 @@ function download() # {{{2
       --need_auth)
         need_auth=1
         trace "The source URL needs authentication"
+      ;;
+      --ntlm)
+        auth_type='--ntlm'
+        trace "The authentication mechanism is NTLM"
       ;;
       -?*) # Invalid options
         warn "Unknown option $1 will be ignored"
@@ -1309,16 +1314,16 @@ function download() # {{{2
     local attempt=0
     while [[ $attempt < $DOWNLOAD_MAX_ATTEMPTS ]]; do
       verbose "  Copying from url location (attempt: ${attempt}/${DOWNLOAD_MAX_ATTEMPTS})"
-      curl_creds=''
       if [[ $need_auth == 1 ]]; then
         if [[ -z "$source_password" ]]; then
           verbose "  Requesting credentials for ${source_host}"
           source_user=$(prompt --default="$source_user" --title "Downloading $filename" "User to download from ${source_host}")
+          trace "Source user: $source_user"
           if [[ $? != 0 ]]; then
             warn "User cancelled prompt operation"
             return 0
           fi
-          source_password=$(prompt -s --title "Downloading $filename" "Password for ${source_user/\\/;/}")
+          source_password=$(prompt -s --title "Downloading $filename" "Password for ${source_user/\\/\\\\}")
           if [[ $? != 0 ]]; then
             warn "User cancelled prompt operation"
             return 0
@@ -1326,11 +1331,15 @@ function download() # {{{2
           source_credentials_updated=1
           echo
         fi
-        curl_creds="--user ${source_user/\\/;/}:${source_password}" # encode domain
       fi
       verbose "  Downloading..."
-      trace $_SUDO $CURL $has_resume ${curl_creds} --output "${target_path}" "${source}"
-      $NOOP $_SUDO $CURL $has_resume ${curl_creds} --output "${target_path}" "${source}"
+      if [[ -n $source_user && -n $source_password ]]; then
+        trace $_SUDO $CURL $has_resume ${auth_type} --user "${source_user/\\/\\\\}:********" --output "${target_path}" "${source}"
+        $NOOP $_SUDO $CURL $has_resume ${auth_type} --user "${source_user}:${source_password}" --output "${target_path}" "${source}"
+      else
+        trace $_SUDO $CURL $has_resume --output "${target_path}" "${source}"
+        $NOOP $_SUDO $CURL $has_resume --output "${target_path}" "${source}"
+      fi
       status=$?
       case $status in
         0)
@@ -2486,15 +2495,25 @@ function cache_stuff() # {{{2
         for location in "${sources[@]}"; do
           trace "Analyzing location: $location"
           source_location=$(echo "$location" | jq --raw-output '.location')
+          source_type=$(echo "$location" | jq --raw-output '.type')
           source_url="$(echo "$location" | jq --raw-output '.url')"
           source_url="${source_url%%/}/${source_filename}"
           source_has_resume=''
           [[ "$(echo "$location" | jq '.has_resume')" == 'true' ]] && source_has_resume='--has_resume'
           source_need_auth=''
           [[ "$(echo "$location" | jq '.need_auth')" == 'true' ]] && source_need_auth='--need_auth'
+          source_auth=''
+          if [[ -n $source_need_auth ]]; then
+            case $source_type in
+              akamai)
+                source_auth='--ntlm'
+              ;;
+            esac
+          fi
           source_vpn="$(echo "$location" | jq --raw-output '.vpn' | grep -v null)"
           verbose "  Downloading from $source_location"
-          trace   "  Source URL: $source_url"
+          trace   "  Source URL:  $source_url"
+          trace   "  Source Type: $source_type"
           if [[ -n "$source_location" ]]; then
             document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
             document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
@@ -2502,7 +2521,7 @@ function cache_stuff() # {{{2
               vpn_start --server="${source_vpn}"
               status=$? && [[ $status != 0 ]] && failure=( "start_vpn|${status}|${source_vpn}" ) && continue
             fi
-            download $source_has_resume $source_need_auth $source_url "$document_destination" $document_checksum_type $document_checksum
+            download $source_has_resume $source_need_auth $source_auth $source_url "$document_destination" $document_checksum_type $document_checksum
             status=$? && [[ $status != 0 ]] && failure=( "${document_action}|${status}|${document_name}|${source_url}" ) && continue
             if [[ -n $source_vpn ]]; then
               vpn_stop --server="${source_vpn}"
