@@ -148,7 +148,7 @@
   {
     "name": "Old CIC 2015 releases",
     "id": "CIC_2015R1,R2,R3",
-    "filename": "CIC_2015_R[1-3].iso*",
+    "destination": "CIC_2015_R[1-3].iso*",
     "action": "delete"
   },
   {
@@ -218,7 +218,7 @@
   {
     "name": "Old Dialer 2015 releases",
     "id": "Dialer_2015R1,R2,R3",
-    "filename": "Dialer_2015_R[1-3].iso*",
+    "destination": "Dialer_2015_R[1-3].iso*",
     "action": "delete"
   },
   {
