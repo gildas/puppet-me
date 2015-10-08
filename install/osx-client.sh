@@ -2272,7 +2272,7 @@ function install_parallels() # {{{2
   local parallels_tools_root
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
 
-  cask_install parallels-desktop
+  cask_install parallels10
   status=$? && [[ $status != 0 ]] && return $status
 
   [[ -d "/Applications/Parallels Desktop.app/Contents/MacOS"      ]] && parallels_tools_root="/Applications/Parallels Desktop.app/Contents/MacOS"
