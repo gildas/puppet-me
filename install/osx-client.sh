@@ -1046,7 +1046,7 @@ function download() # {{{2
   source=$1
   target=$2
   checksum_type=$3
-  checksum_value=$4
+  checksum_value=$(echo $4 | tr [:lower:] [:upper:])
 
   # Extract source components {{{3
   trace ">> source: ${source}"
@@ -1168,11 +1168,11 @@ function download() # {{{2
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
     if [[ ! -f "${target_path}.${checksum_type}" ]]; then
       verbose "  Calculating checksum of the file that is already cached"
-      target_checksum=$(bar -n "$target_path" | $checksum)
+      target_checksum=$(bar -n "$target_path" | $checksum | tr [:lower:] [:upper:])
       echo -n "$target_checksum" | $_SUDO tee "${target_path}.$checksum_type" > /dev/null
     else
       verbose "  Loading checksum of the file that is already cached"
-      target_checksum=$(cat "${target_path}.$checksum_type")
+      target_checksum=$(cat "${target_path}.$checksum_type" | tr [:lower:] [:upper:])
       trace "  cached checksum: ${target_checksum}"
     fi
     if [[ $target_checksum =~ \s*$checksum_value\s* ]]; then
