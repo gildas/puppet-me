@@ -811,18 +811,27 @@ process # {{{2
       if (! $?) { Throw "Unable to create folder $Destination. Error: $LastExitCode" }
     }
 
-    Write-Verbose "Downloading sources configuration"
-    $config = Join-Path $env:TEMP 'config.json'
-    Write-Verbose "  into $config"
-    if (Test-Path $config)
+    if ($Uri -match 'https?:.*')
     {
-      Write-Verbose "  removing old version"
-      Remove-Item -Path $config -Force
-    }
-    #Start-BitsTransfer -Source $Uri -Destination (Join-Path $env:TEMP 'config.json') -Verbose:$false
-    (New-Object Net.Webclient).DownloadFile($Uri, $config)
+      Write-Verbose "Downloading sources configuration"
+      $config = Join-Path $env:TEMP 'config.json'
+      Write-Verbose "  into $config"
+      if (Test-Path $config)
+      {
+        Write-Verbose "  removing old version"
+        Remove-Item -Path $config -Force
+      }
 
-    $sources          = (Get-Content -Raw -Path $config | ConvertFrom-Json)
+      #Start-BitsTransfer -Source $Uri -Destination (Join-Path $env:TEMP 'config.json') -Verbose:$false
+      (New-Object Net.Webclient).DownloadFile($Uri, $config)
+
+      $sources        = (Get-Content -Raw -Path $config | ConvertFrom-Json)
+    }
+    else
+    {
+      Write-Verbose "Using sources configuration from ${Uri}"
+      $sources        = (Get-Content -Raw -Path $Uri | ConvertFrom-Json)
+    }
     $credentials      = @{}
     $connected_drives = @()
     $missed_sources   = @()
