@@ -655,7 +655,7 @@ process # {{{2
     Write-Verbose "Installing Packer Plugin $Name"
 
     $PackerTools=[IO.Path]::Combine($env:ChocolateyInstall, 'lib', 'packer', 'tools')
-    $PackageLib=[IO.Path]::Combine($env:ChocolateyInstall, 'lib', $Name.ToLower() -replace ' ','-')
+    $PackageLib=[IO.Path]::Combine($env:ChocolateyInstall, 'lib', ($Name.ToLower() -replace ' ','-'))
     $Package=[IO.Path]::Combine($PackageLib, ([Uri] $Url).Segments[-1])
 
     if (! (Test-Path $PackageLib)) { New-Item -Path $PackageLib -ItemType Directory | Out-Null }
