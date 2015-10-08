@@ -609,6 +609,7 @@ function keychain_get_user() # {{{2
   case $kind in # {{{4
     internet|'')         command='find-internet-password' ;;
     application|generic) command='find-generic-password' ;;
+    vpn)                 command='find-generic-password' ;;
     *)
       error "$FUNCNAME: Unsupported kind \"${kind}\""
       return 2
@@ -748,6 +749,7 @@ function keychain_get_password() # {{{2
   case $kind in # {{{4
     internet|'')         command='find-internet-password' ;;
     application|generic) command='find-generic-password' ;;
+    vpn)                 command='find-generic-password' ;;
     *)
       error "$FUNCNAME: Unsupported kind \"${kind}\""
       return 2
@@ -936,6 +938,7 @@ function keychain_set_password() # {{{2
   case $kind in # {{{4
     internet|'')         command='add-internet-password' ;;
     application|generic) command='add-generic-password' ;;
+    vpn)                 command='add-generic-password' ;;
     *)
       error "$FUNCNAME: Unsupported kind \"${kind}\""
       return 2
@@ -1486,16 +1489,14 @@ function vpn_start() #{{{2
     shift
   done # }}}3
   # Validate Arguments {{{3
-  if [[ -z "$vpn_id" ]]; then # {{{4
-    error "At least one of these options must be given: --server, --id"
-    return 2
-  fi # }}}4
+  [[ -z "$vpn_id" ]] && error "At least one of these options must be given: --server, --id" && return 2
+  [[ -n $user ]] && [[ -z $password ]] && error "password is mandatory when user is provided" && return 3
   # }}}3
 
   local vpn_name=$(vpn_get_name $vpn_id)
   printf %s "Starting VPN ${vpn_name}..."
-  trace "Starting VPN ${vpn_name} [$vpn_id]"
-  /usr/sbin/scutil --nc start $vpn_id
+  trace "Starting VPN ${vpn_name} [$vpn_id] ${user:+as} $user"
+  /usr/sbin/scutil --nc start $vpn_id ${user:+--user} $user ${password:+--password} $password
   status=$? && [[ $status != 0 ]] && return $status
   loop=0
   while :; do
@@ -2511,6 +2512,8 @@ function cache_stuff() # {{{2
             esac
           fi
           source_vpn="$(echo "$location" | jq --raw-output '.vpn' | grep -v null)"
+          vpn_user=''
+          vpn_password=''
           verbose "  Downloading from $source_location"
           trace   "  Source URL:  $source_url"
           trace   "  Source Type: $source_type"
@@ -2518,12 +2521,37 @@ function cache_stuff() # {{{2
             document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
             document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
             if [[ -n $source_vpn ]]; then
-              vpn_start --server="${source_vpn}"
+              trace "  Querying keychain for user to use with vpn $source_vpn"
+              vpn_user=$(keychain_get_user --kind=vpn --host=$source_vpn 2>&1)
+              if [[ $? == 0 ]]; then
+                trace "    Found user: $vpn_user"
+                trace "  Querying keychain for password of user $vpn_user"
+                vpn_password=$(keychain_get_password --kind=vpn --host=$source_vpn --user=$vpn_user 2>&1)
+                vpn_start --server="${source_vpn}" --user $vpn_user --password $vpn_password
+                status=$?
+                if [[ $status != 0 ]]; then
+                  error "Failed to connect to vpn $source_vpn as $vpn_user, asking for credentials"
+                  vpn_user=''
+                  vpn_password=''
+                  vpn_start --server="${source_vpn}"
+                fi
+              else
+                vpn_start --server="${source_vpn}"
+              fi
               status=$? && [[ $status != 0 ]] && failure=( "start_vpn|${status}|${source_vpn}" ) && continue
             fi
             download $source_has_resume $source_need_auth $source_auth $source_url "$document_destination" $document_checksum_type $document_checksum
             status=$? && [[ $status != 0 ]] && failure=( "${document_action}|${status}|${document_name}|${source_url}" ) && continue
             if [[ -n $source_vpn ]]; then
+              if [[ -n $vpn_user ]]; then
+                # Let's save the credentials in keychain
+                keychain_set_password --kind=vpn --host=$source_vpn --user=$vpn_user --password=$vpn_password
+                status=$? && [[ $status != 0 ]] && error "Could not save credentials.\nError: $status"
+
+                # Let's not keep these in memory...
+                vpn_user=''
+                vpn_password=''
+              fi
               vpn_stop --server="${source_vpn}"
               status=$? && [[ $status != 0 ]] && warn "  Warning $status: cannot stop vpn $source_vpn"
             fi
