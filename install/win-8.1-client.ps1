@@ -671,7 +671,7 @@ process # {{{2
     if ($Package -match '.*\.(7z|zip|tar|gz|bz2)')
     {
       Write-Verbose " Deploying Packer Plugin $Name"
-      & 7z e -y -o$PackerTools $Package | Out-Null
+      & 7z e -y -o"$PackerTools" $Package | Out-Null
       if (! $?) { Throw "Packer Plugin $Name not installed. Error: $LASTEXITCODE" }
     }
     else
