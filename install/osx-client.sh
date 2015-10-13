@@ -1771,7 +1771,7 @@ function cask_uninstall() # {{{2
   local app_name=$1
 
   verbose "Uninstalling $app_name"
-  $NOOP brew cask uninstall "$app_name"
+  $NOOP brew cask uninstall "$app_name" --force
   status=$? && [[ $status != 0 ]] && return $status
   return 0
 } # }}}2
