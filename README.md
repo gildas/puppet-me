@@ -183,6 +183,9 @@ Start-BitsTransfer http://tinyurl.com/puppet-me-win-8 $env:TEMP\_.ps1 ; & $env:T
 
 Where *options* are:
 
+- -CacheKeep  
+  Keep previous versions of downloads (e.g., keep CIC 2015R1, 2015R2, patches)  
+  Default: previous versions are deleted  
 - -CacheRoot *path*  
   Contains the location of the cache for ISO, MSI, etc files.    
   When used, it will update $env:DAAS_CACHE  
