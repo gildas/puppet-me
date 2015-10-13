@@ -2273,6 +2273,9 @@ function install_parallels() # {{{2
   local parallels_tools_root
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
 
+  if [[ -z "$(brew cask info parallels10 | grep '^Not installed$')"  || -d /opt/homebrew-cask/parallels-desktop/10.* ]]; then
+    cask_uninstall parallels10
+  fi
   cask_install parallels-desktop
   status=$? && [[ $status != 0 ]] && return $status
 
