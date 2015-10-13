@@ -1769,9 +1769,10 @@ function cask_install() # {{{2
 function cask_uninstall() # {{{2
 {
   local app_name=$1
+  shift
 
   verbose "Uninstalling $app_name"
-  $NOOP brew cask uninstall "$app_name" --force
+  $NOOP brew cask uninstall "$app_name" $@
   status=$? && [[ $status != 0 ]] && return $status
   return 0
 } # }}}2
@@ -2274,7 +2275,7 @@ function install_parallels() # {{{2
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
 
   if [[ -z "$(brew cask info parallels10 | grep '^Not installed$')"  || -d /opt/homebrew-cask/parallels-desktop/10.* ]]; then
-    cask_uninstall parallels10
+    cask_uninstall parallels10 --force
   fi
   cask_install parallels-desktop
   status=$? && [[ $status != 0 ]] && return $status
