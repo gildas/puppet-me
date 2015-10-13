@@ -237,7 +237,7 @@ Note:
 
 To use the development version, use this command instead:
 ```powershell
-Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-dev $env:TEMP\_.ps1 ; & $env:TEMP\_.ps1 [options]
+Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-dev $env:TEMP\_.ps1 ; & $env:TEMP\_.ps1 -CacheConfig https://raw.githubusercontent.com/inin-apac/puppet-me/dev/config/sources.json [options]
 ```
 
 AUTHORS
