@@ -22,7 +22,7 @@ CURL="/usr/bin/curl --location --progress-bar "
 SUDO="/usr/bin/sudo"
 RM="rm -rf"
 
-MODULE_homebrew_done=0
+MODULE_prerequisites_done=0
 MODULE_cache_done=0
 MODULE_packer_done=0
 MODULE_puppet_done=0
@@ -34,8 +34,8 @@ MODULE_virtualbox_done=0
 MODULE_vmware_done=0
 MODULE_virtualization_done=0
 
-MODULES=(homebrew puppet rubytools)
-ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
+MODULES=(puppet rubytools)
+ALL_MODULES=(cache packer puppet rubytools vagrant virtualbox)
 
 CURRENT_VERSION='0.9.0'
 GITHUB_ROOT='https://raw.githubusercontent.com/inin-apac/puppet-me'
@@ -47,11 +47,7 @@ CACHE_MOUNTS=()
 CONNECTED_VPNS=()
 CACHE_KEEP_OLD=0
 
-MODULE_VMWARE_HOME=''
-MODULE_VMWARE_KEY=''
 MODULE_VIRTUALBOX_HOME=''
-MODULE_PARALLELS_HOME=''
-MODULE_PARALLELS_LICENSE=''
 MODULE_PACKER_VIRT=vmware
 MODULE_PACKER_HOME="$HOME/Documents/packer"
 [[ -n "$PACKER_HOME"    ]] && MODULE_PACKER_HOME="$PACKER_HOME"
@@ -59,21 +55,14 @@ MODULE_PACKER_BUILD=()
 MODULE_PACKER_LOAD=()
 MODULE_PACKER_LOG_ROOT=/var/log/packer
 MODULE_PACKER_LOG_OWNER=$userid
-MODULE_PACKER_LOG_GROUP=staff
+MODULE_PACKER_LOG_GROUP=users
 
 MODULE_VAGRANT_HOME="$HOME/.vagrant.d"
 [[ -n $XDG_CONFIG_HOME ]] && MODULE_VAGRANT_HOME="$XDG_CONFIG_HOME/vagrant"
 [[ -n $VAGRANT_HOME    ]] && MODULE_VAGRANT_HOME="$VAGRANT_HOME"
-MODULE_VAGRANT_VMWARE_LICENSE=''
 MODULE_VAGRANT_LOG_ROOT=/var/log/vagrant
 MODULE_VAGRANT_LOG_OWNER=$userid
 MODULE_VAGRANT_LOG_GROUP=staff
-
-MODULE_updateme_root="$HOME/Desktop"
-MODULE_updateme_source="${GITHUB_ROOT}/${CURRENT_VERSION}/config/osx/UpdateMe.7z"
-MODULE_updateme_args=""
-[[ $MODULE_PACKER_HOME  != "$HOME/Documents/packer" ]] && MODULE_updateme_args="${MODULE_updateme_args} --packer-home '${MODULE_PACKER_HOME}'"
-[[ $MODULE_VAGRANT_HOME != "$HOME/.vagrant.d"       ]] && MODULE_updateme_args="${MODULE_updateme_args} --vagrant-home '${MODULE_VAGRANT_HOME}'"
 
 trap trace_end EXIT
 
@@ -609,7 +598,6 @@ function keychain_get_user() # {{{2
   case $kind in # {{{4
     internet|'')         command='find-internet-password' ;;
     application|generic) command='find-generic-password' ;;
-    vpn)                 command='find-generic-password' ;;
     *)
       error "$FUNCNAME: Unsupported kind \"${kind}\""
       return 2
@@ -749,7 +737,6 @@ function keychain_get_password() # {{{2
   case $kind in # {{{4
     internet|'')         command='find-internet-password' ;;
     application|generic) command='find-generic-password' ;;
-    vpn)                 command='find-generic-password' ;;
     *)
       error "$FUNCNAME: Unsupported kind \"${kind}\""
       return 2
@@ -938,7 +925,6 @@ function keychain_set_password() # {{{2
   case $kind in # {{{4
     internet|'')         command='add-internet-password' ;;
     application|generic) command='add-generic-password' ;;
-    vpn)                 command='add-generic-password' ;;
     *)
       error "$FUNCNAME: Unsupported kind \"${kind}\""
       return 2
@@ -1002,7 +988,6 @@ function download() # {{{2
   # download "smb://login:password@hostname/path/file?k1=v1&k2=v2" "local_folder"
   local need_auth=0
   local has_resume
-  local auth_type
   local source
   local target
   local checksum_type
@@ -1032,10 +1017,6 @@ function download() # {{{2
         need_auth=1
         trace "The source URL needs authentication"
       ;;
-      --ntlm)
-        auth_type='--ntlm'
-        trace "The authentication mechanism is NTLM"
-      ;;
       -?*) # Invalid options
         warn "Unknown option $1 will be ignored"
       ;;
@@ -1049,7 +1030,7 @@ function download() # {{{2
   source=$1
   target=$2
   checksum_type=$3
-  checksum_value=$(echo $4 | tr [:lower:] [:upper:])
+  checksum_value=$4
 
   # Extract source components {{{3
   trace ">> source: ${source}"
@@ -1171,14 +1152,15 @@ function download() # {{{2
   if [[ -r "${target_path}" && ! -z ${checksum} ]]; then
     if [[ ! -f "${target_path}.${checksum_type}" ]]; then
       verbose "  Calculating checksum of the file that is already cached"
-      target_checksum=$(bar -n "$target_path" | $checksum | tr [:lower:] [:upper:])
+      target_checksum=$(bar -n "$target_path" | $checksum)
       echo -n "$target_checksum" | $_SUDO tee "${target_path}.$checksum_type" > /dev/null
     else
       verbose "  Loading checksum of the file that is already cached"
-      target_checksum=$(cat "${target_path}.$checksum_type" | tr [:lower:] [:upper:])
+      target_checksum=$(cat "${target_path}.$checksum_type")
       trace "  cached checksum: ${target_checksum}"
     fi
-    if [[ $target_checksum =~ \s*$checksum_value\s* ]]; then
+    # Perform case insensitive match (^^)
+    if [[ ${target_checksum^^} =~ \s*${checksum_value^^}\s* ]]; then
       verbose "  File already cached and checksum verified"
       return 0
     else
@@ -1317,16 +1299,16 @@ function download() # {{{2
     local attempt=0
     while [[ $attempt < $DOWNLOAD_MAX_ATTEMPTS ]]; do
       verbose "  Copying from url location (attempt: ${attempt}/${DOWNLOAD_MAX_ATTEMPTS})"
+      curl_creds=''
       if [[ $need_auth == 1 ]]; then
         if [[ -z "$source_password" ]]; then
           verbose "  Requesting credentials for ${source_host}"
           source_user=$(prompt --default="$source_user" --title "Downloading $filename" "User to download from ${source_host}")
-          trace "Source user: $source_user"
           if [[ $? != 0 ]]; then
             warn "User cancelled prompt operation"
             return 0
           fi
-          source_password=$(prompt -s --title "Downloading $filename" "Password for ${source_user/\\/\\\\}")
+          source_password=$(prompt -s --title "Downloading $filename" "Password for ${source_user}")
           if [[ $? != 0 ]]; then
             warn "User cancelled prompt operation"
             return 0
@@ -1334,15 +1316,11 @@ function download() # {{{2
           source_credentials_updated=1
           echo
         fi
+        curl_creds="--user ${source_user/\\/;/}:${source_password}" # encode domain
       fi
       verbose "  Downloading..."
-      if [[ -n $source_user && -n $source_password ]]; then
-        trace $_SUDO $CURL $has_resume ${auth_type} --user "${source_user/\\/\\\\}:********" --output "${target_path}" "${source}"
-        $NOOP $_SUDO $CURL $has_resume ${auth_type} --user "${source_user}:${source_password}" --output "${target_path}" "${source}"
-      else
-        trace $_SUDO $CURL $has_resume --output "${target_path}" "${source}"
-        $NOOP $_SUDO $CURL $has_resume --output "${target_path}" "${source}"
-      fi
+      trace $_SUDO $CURL $has_resume ${curl_creds} --output "${target_path}" "${source}"
+      $NOOP $_SUDO $CURL $has_resume ${curl_creds} --output "${target_path}" "${source}"
       status=$?
       case $status in
         0)
@@ -1489,14 +1467,16 @@ function vpn_start() #{{{2
     shift
   done # }}}3
   # Validate Arguments {{{3
-  [[ -z "$vpn_id" ]] && error "At least one of these options must be given: --server, --id" && return 2
-  [[ -n $user ]] && [[ -z $password ]] && error "password is mandatory when user is provided" && return 3
+  if [[ -z "$vpn_id" ]]; then # {{{4
+    error "At least one of these options must be given: --server, --id"
+    return 2
+  fi # }}}4
   # }}}3
 
   local vpn_name=$(vpn_get_name $vpn_id)
   printf %s "Starting VPN ${vpn_name}..."
-  trace "Starting VPN ${vpn_name} [$vpn_id] ${user:+as} $user"
-  /usr/sbin/scutil --nc start $vpn_id ${user:+--user} $user ${password:+--password} $password
+  trace "Starting VPN ${vpn_name} [$vpn_id]"
+  /usr/sbin/scutil --nc start $vpn_id
   status=$? && [[ $status != 0 ]] && return $status
   loop=0
   while :; do
@@ -1587,6 +1567,8 @@ function vpn_stop() #{{{2
 
 function sudo_init() #{{{2
 {
+        #TODO: Write this stuff
+        return 0
   dseditgroup -o checkmember -m $userid admin &> /dev/null
   if [[ $? != 0 ]]; then
     dseditgroup -o checkmember -m $userid wheel &> /dev/null
@@ -1634,334 +1616,52 @@ EOF
 # }}}
 
 # Module: Module Installers {{{
-
-function dmg_install() # {{{2
+function install_prerequisites() # {{{2
 {
-  local source="$1"
-  local pkg="$2"
-  local target_dir="$HOME/Downloads"
-  local filename
-  local target
-  local mount
-  local package
-  local plist_path
-
-  filename=${source##*/}        # Remove everything up to the last /
-  filename=${filename%%\?*}     # emove everything after the ? (including)
-  target="${target_dir}/${filename}"
-
-  download "$source" "$target_dir"
+  verbose "Updating the aptitude package list (this can take a while)"
+  $NOOP $SUDO apt-get update > /dev/null
   status=$? && [[ $status != 0 ]] && return $status
 
-  verbose "    Mounting ${target}"
-  mount=$(hdiutil attach "${target}" | grep '\/Volumes' | sed -e 's/^.*\/Volumes/\/Volumes/')
-  status=$? && [[ $status != 0 ]] && return $status
-  verbose "      mounted on ${mount}"
-
-  verbose "    Installing ${target}"
-  local package=$(find "${mount}" -name "${pkg:-*.pkg}")
-  if [[ -z $package ]]; then
-    error "Cannot find the package ${pkg:-*.pkg}"
-    hdiutil eject "$mount" > /dev/null
-    return 1
-  fi
-  verbose "      Package: ${package}"
-  $NOOP $SUDO installer -allowUntrusted -pkg "${package}" -target /
-  status=$? && [[ $status != 0 ]] && return $status
-
-  verbose "    Unmounting ${target}"
-  hdiutil eject "${mount}" > /dev/null
-  status=$? && [[ $status != 0 ]] && return $status
-} # }}}2
-
-function brew_install() # {{{2
-{
-  local pin=0
-  local upgrade=1
-  local version
-
-  while :; do # Parse aguments {{{3
-    case $1 in
-      --no-pin)
-        pin=0
-      ;;
-      --pin)
-        pin=1
-      ;;
-      --no-upgrade)
-        upgrade=0
-      ;;
-      --no-upgrade)
-        upgrade=1
-      ;;
-      --version)
-        [[ -z $2 || ${2:0:1} == '-' ]] && error "Argument for option $1 is missing" && return 1
-        version=$2
-        shift 2
-        continue
-      ;;
-      --version=*?)
-        version=${1#*=} # delete everything up to =
-      ;;
-      --version=)
-        error "Argument for option $1 is missing" && return 1
-      ;;
-      -?*) # Invalid options
-        warn "Unknown option $1 will be ignored"
-      ;;
-      *)  # End of options
-        break
-      ;;
-    esac
-    shift
-  done # }}}3
-  local app_name=$1
-  local app_binary=${2:-$1}
-
-  brew_info=$(brew info --json=v1 --installed | jq --raw-output --compact-output 'map(select(.name == "$app_name"))[0]')
-  if [[ "$brew_info" != "null" ]]; then
-    current=$(echo "$brew_info" | jq '.intalled | select (.poured_from_bottle == true)"')
-    verbose "$app_name $current is already installed via Homebrew"
-    if [[ $upgrade == 1 ]]; then
-      if [[ -n $version ]]; then
-        if [[ $current != $version ]]; then
-          verbose "  switching to version $version"
-          $NOOP brew switch $app_name $version
-        fi
-      else
-        latest=$(echo "$brew_info" | jq --raw-output '.versions.stable')
-        if [[ $current != $latest ]]; then
-          verbose "  upgrading to version $latest"
-          $NOOP brew upgrade $app_name 
-        fi
-      fi
-    fi
-  elif which "$app_binary" > /dev/null 2>&1; then
-    verbose "$app_name was manually installed \(no automatic updates possible\)"
-    return 0
-  else
-    verbose "Installing $app_name"
-    $NOOP brew install --appdir=/Applications $app_binary
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
-  # Do we want to pin this version?
-  [[ $pin == 1 ]] && brew pin $app_name
-  return 0
-} # }}}2
-
-function cask_install() # {{{2
-{
-  local app_name=$1
-  local app_binary=${2:-$1}
-
-  if [[ -z "$(brew cask info $app_name | grep '^Not installed$')" ]]; then
-    verbose "$app_name is already installed via Homebrew"
-  elif which "$app_binary" > /dev/null 2>&1; then
-    verbose "$app_name was manually installed (no automatic updates possible)"
-  else
-    verbose "Installing $app_name"
-    $NOOP brew cask install --appdir=/Applications "$app_name"
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
-  return 0
-} # }}}2
-
-function cask_uninstall() # {{{2
-{
-  local app_name=$1
-  shift
-
-  verbose "Uninstalling $app_name"
-  $NOOP brew cask uninstall "$app_name" $@
-  status=$? && [[ $status != 0 ]] && return $status
-  return 0
-} # }}}2
-
-function install_xcode_tools() # {{{2
-{
-  local downloaded=0
-  local os_maj=$(sw_vers -productVersion | cut -d. -f1)
-  local os_min=$(sw_vers -productVersion | cut -d. -f2)
-  local product
-  local url
-  local mount
-
-  if [[ $os_min -ge 9 ]]; then # Mavericks or later
-    if xcode-select -p > /dev/null 2>&1; then
-      verbose "XCode Command Line tools are already installed"
-      [[ -n ${NO_UPDATES[xcode]} ]] && echo "Not updating" && return 0
-      verbose "  Checking for updates"
-      product=$(softwareupdate --list 2>&1 | grep "\*.*Command Line" | tail -1 | sed -e 's/^   \* //' | tr -d '\n')
-      status=$? && [[ $status != 0 ]] && error "Cannot contact Apple Software Update. Error: $status" && return $status
-      [[ -z $product ]] && verbose "All is well in AppleLand, tools are up-to-date!" && return 0
-      verbose "  Upgrading via Software Update"
-    else
-      verbose "  Installing via Software Update"
-      touch /tmp/.com.apple.dt.CommandLinetools.installondemand.in-progress
-      verbose "  Finding proper version"
-      product=$(softwareupdate --list 2>&1 | grep "\*.*Command Line" | tail -1 | sed -e 's/^   \* //' | tr -d '\n')
-      status=$? && [[ $status != 0 ]] && error "Cannot contact Apple Software Update. Error: $status" && return $status
-    fi
-    verbose "  Downloading and Installing ${product}. You should get some coffee or tea as this might take a while..."
-    $NOOP $SUDO softwareupdate --install "$product"
-    status=$? && [[ $status != 0 ]] && error "Apple Software Update failed. Error: $status" && return $status
-  else # Older versions like Mountain Lion, Lion
-    die "The version $(sw_vers -productVersion) of $(sw_vers -productName) is not supported anymore, please upgrade to at least Mac OS X 10.9 (Mavericks)" 22 # EINVAL
-    verbose "Installing XCode tools from Website"
-    [[ $os_min == 7 ]] && url=http://devimages.apple.com/downloads/xcode/command_line_tools_for_xcode_os_x_lion_april_2013.dmg
-    [[ $os_min == 8 ]] && url=http://devimages.apple.com/downloads/xcode/command_line_tools_for_osx_mountain_lion_april_2014.dmg
-    $NOOP dmg_install $url "DeveloperToolsCLI.pkg"
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
-  return 0
-} # }}}2
-
-function install_homebrew() # {{{2
-{
-  local filestamp="/usr/local/last_updated-homebrew"
-  # Installing homebrew from http://brew.sh
-  # prerequisites:
-  install_xcode_tools
-  status=$? && [[ $status != 0 ]] && return $status
-
-  if which brew > /dev/null 2>&1; then
-    verbose "Homebrew is already installed."
-    if [[ -n ${NO_UPDATES[homebrew]} ]]; then
-      echo "Not updating"
-    else
-      [[ -w /usr/local ]] || $NOOP $SUDO chown -R $(whoami):admin /usr/local
-      [[ -f $filestamp ]] && trace "filestamp: $filestamp, $(stat -f "%Sm" $filestamp)"
-      if [[ $FORCE_UPDATE == "1" || ! -f $filestamp || -n "$(find "$filestamp" -mmin +240)" ]]; then
-        verbose "Updating..."
-        $NOOP brew update
-        status=$? && [[ $status != 0 ]] && return $status
-        touch $filestamp
-      else
-        verbose "Homebrew was updated less than 4 hours ago, let's give the Internet some rest..."
-      fi
-    fi
-  else
-    verbose "Installing Homebrew..."
-    $NOOP ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    status=$? && [[ $status != 0 ]] && return $status
-
-    # Preparing brew for first time or sanitizing it if already installed
-    $NOOP brew doctor
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
-
-  # Installing jq for querying json from bash
-  # We need this early so we can query brew via json as well
-  # We also cannot query brew with jq as long as it is not installed
-  if [[ ! -z $(brew info jq | grep '^Not installed$') ]]; then
-    verbose "Installing jq..."
-    $NOOP brew install jq
-    status=$? && [[ $status != 0 ]] && return $status
-  else
-    brew_install jq --upgrade
-  fi
-
-  # Installing bash completion
-  if [[ ! -z $(brew info bash-completion | grep '^Not installed$') ]]; then
-    verbose "Installing bash completion..."
-    $NOOP brew install bash-completion
-    status=$? && [[ $status != 0 ]] && return $status
-  else
-    verbose "Homebrew bash completion is already installed"
-  fi
-
-  if [[ -z $(brew tap | grep 'homebrew/completions') ]]; then
-    brew tap homebrew/completions
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
-
-  if [[ -z $(brew tap | grep 'homebrew/binary') ]]; then
-    brew tap homebrew/binary
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
-
-  # Installing Cask from http://caskroom.io
-  if [[ -z $(brew tap | grep 'caskroom/cask') ]]; then
-    brew tap caskroom/cask
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
-
-  if [[ -z $(brew tap | grep 'homebrew/versions') ]]; then
-    brew tap homebrew/versions
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
-
-  if [[ -z $(brew tap | grep 'caskroom/versions') ]]; then
-    brew tap caskroom/versions
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
-
-  if [[ ! -z $(brew info brew-cask | grep '^Not installed$') ]]; then
-    verbose "Installing Homebrew Cask..."
-    $NOOP brew install brew-cask
-    status=$? && [[ $status != 0 ]] && return $status
-  else
-    version=$(brew cask --version)
-    latest=$(brew info brew-cask | awk '/^.*brew-cask: .*, .*$/ {print $3}' | sed 's/,//')
-    verbose "Homebrew Cask $version is already installed"
-    if [[ $version != $latest ]]; then
-      verbose "Homebrew Cask ${latest} is available, upgrading..."
-      $NOOP brew upgrade brew-cask
-    fi
-    $NOOP brew cask update
-  fi
-
-  if [[ ! -z $(brew info bar | grep '^Not installed$') ]]; then
-    verbose "Installing bar..."
-    $NOOP brew install bar
-    status=$? && [[ $status != 0 ]] && return $status
-  else
-    verbose "bar is already installed"
-  fi
-
-  # Installing 7zip for querying json from bash
-  if [[ ! -z $(brew info p7zip | grep '^Not installed$') ]]; then
-    verbose "Installing 7-Zip..."
-    $NOOP brew install p7zip
-    status=$? && [[ $status != 0 ]] && return $status
-  else
-    verbose "7-Zip is already installed"
-  fi
-  MODULE_homebrew_done=1
+  [[ -z $(dpkg -s unzip | grep '^Status: install ok installed$') ]] && $NOOP $SUDO apt-get install -y unzip
+  status=$? && [[ $status != 0 ]] && error "Error $status while installing unzip" && return $status
+  MODULE_prerequisites_done=1
   return 0
 } # }}}2
 
 function install_packer() # {{{2
 {
-  [[ $MODULE_homebrew_done  == 0 ]] && install_homebrew
-  [[ $MODULE_rubytools_done == 0 ]] && install_rubytools
-  [[ $MODULE_vagrant_done   == 0 ]] && install_vagrant
+  [[ $MODULE_prerequisite_done == 0 ]] && install_prerequisites
+  [[ $MODULE_rubytools_done    == 0 ]] && install_rubytools
+  [[ $MODULE_vagrant_done      == 0 ]] && install_vagrant
 
-  # Check if packer has already been installed and remove the ugly old packer plugins manually
-  if [[ -z "$(brew info packer | grep '^Not installed$')" ]]; then
-    installed=$(brew info packer | grep '^\/usr\/local\/Cellar/' | sed 's/\/usr\/local\/Cellar\/${app_name}\///' | cut -d' ' -f1)
-    if [[ -n $(echo "${installed}" | grep 0.7.5) ]]; then
-      verbose "Removing packer 0.7.5 plugins"
-      packer_bindir=/usr/local/bin
-
-      [[ -f $packer_bindir/packer-builder-amazon-windows-ebs ]]     && $NOOP rm -f $packer_bindir/packer-builder-amazon-windows-ebs
-      [[ -f $packer_bindir/packer-builder-parallels-windows-iso ]]  && $NOOP rm -f $packer_bindir/packer-builder-parallels-windows-iso
-      [[ -f $packer_bindir/packer-builder-parallels-windows-pvm ]]  && $NOOP rm -f $packer_bindir/packer-builder-parallels-windows-pvm
-      [[ -f $packer_bindir/packer-builder-virtualbox-windows-iso ]] && $NOOP rm -f $packer_bindir/packer-builder-virtualbox-windows-iso
-      [[ -f $packer_bindir/packer-builder-virtualbox-windows-ovf ]] && $NOOP rm -f $packer_bindir/packer-builder-virtualbox-windows-ovf
-      [[ -f $packer_bindir/packer-builder-vmware-windows-iso ]]     && $NOOP rm -f $packer_bindir/packer-builder-vmware-windows-iso
-      [[ -f $packer_bindir/packer-builder-vmware-windows-vmx ]]     && $NOOP rm -f $packer_bindir/packer-builder-vmware-windows-vmx
-      [[ -f $packer_bindir/packer-provisioner-restart-windows ]]    && $NOOP rm -f $packer_bindir/packer-provisioner-restart-windows
-#      [[ -f $packer_bindir/packer-provisioner-wait ]]               && $NOOP rm -f $packer_bindir/packer-provisioner-wait
-      [[ -f $packer_bindir/packer-communicator-winrm        && ! -L $packer_bindir/packer-communicator-winrm        ]] && $NOOP rm -f $packer_bindir/packer-communicator-winrm
-      [[ -f $packer_bindir/packer-provisioner-powershell    && ! -L $packer_bindir/packer-provisioner-powershell    ]] && $NOOP rm -f $packer_bindir/packer-provisioner-powershell
-      [[ -f $packer_bindir/packer-provisioner-windows-shell && ! -L $packer_bindir/packer-provisioner-windows-shell ]] && $NOOP rm -f $packer_bindir/packer-provisioner-windows-shell
-
-      brew uninstall packer
+  verbose "Finding latest packer"
+  packer_filename=$(curl --silent https://dl.bintray.com/mitchellh/packer/ | grep "packer.*linux_amd64.*" | tail -1  | sed -e 's/.*\(packer.*zip\).*/\1/')
+  candidate_version=$(echo $packer_filename | sed -e 's/packer_\([0-9]\+\.[0-9]\+\.[0-9]\+\)_linux_amd64\.zip$/\1/')
+  if hash packer 2>/dev/null; then
+    version=$(packer --version)
+    verbose "Packer version ${version} is installed"
+    if [[ ${version} == ${candidate_version} ]]; then
+      verbose "  Packer is up-to-date"
+    else
+      verbose "  Updating Packer version ${version} to ${candidate_version}"
+      $CURL --output "$HOME/Downloads/${packer_filename}" https://dl.bintray.com/mitchellh/packer/${packer_filename}
+      status=$? && [[ $status != 0 ]] && error "Error $status while downloading Packer" && return $status
+      $NOOP mkdir -p /opt/packer/${candidate_version}
+      $NOOP unzip  "$HOME/Downloads/${packer_filename}" /opt/packer/${candidate_version}
+      $NOOP $SUDO rm /opt/packer/bin
+      $NOOP $SUDO ln -s /opt/packer/${candidate_version} /opt/packer/bin
+      [[ -L /usr/local/bin/packer ]] || $NOOP $SUDO ln -s /opt/packer/bin/packer /usr/local/bin/packer
     fi
+  else
+    verbose "  Installing Packer version ${candidate_version}"
+    $CURL --output "$HOME/Downloads/${packer_filename}" https://dl.bintray.com/mitchellh/packer/${packer_filename}
+    status=$? && [[ $status != 0 ]] && error "Error $status while downloading Packer" && return $status
+    $NOOP mkdir -p /opt/packer/${candidate_version}
+    $NOOP unzip  "$HOME/Downloads/${packer_filename}" /opt/packer/${candidate_version}
+    $NOOP $SUDO rm /opt/packer/bin
+    $NOOP $SUDO ln -s /opt/packer/${candidate_version} /opt/packer/bin
+    [[ -L /usr/local/bin/packer ]] || $NOOP $SUDO ln -s /opt/packer/bin/packer /usr/local/bin/packer
   fi
-  brew_install packer
-  status=$? && [[ $status != 0 ]] && return $status
 
   if [[ ! -w $MODULE_PACKER_LOG_ROOT ]]; then
     trace "Adding the log folder in $MODULE_PACKER_LOG_ROOT"
@@ -1971,13 +1671,6 @@ function install_packer() # {{{2
     fi
     $NOOP $SUDO chown $MODULE_PACKER_LOG_OWNER:$MODULE_PACKER_LOG_GROUP "$MODULE_PACKER_LOG_ROOT"
     $NOOP $SUDO chmod 775 "$MODULE_PACKER_LOG_ROOT"
-  fi
-
-  # Installing bash completion
-  if [[ ! -z $(brew info homebrew/completions/packer-completion | grep '^Not installed$') ]]; then
-    verbose "Installing bash completion for Packer..."
-    $NOOP brew install homebrew/completions/packer-completion
-    status=$? && [[ $status != 0 ]] && return $status
   fi
 
   packer_windows=${MODULE_PACKER_HOME}/packer-windows
@@ -2027,71 +1720,61 @@ function install_packer() # {{{2
   fi
 
   #TODO: Make this multi-virtualization!
-  [[ $MODULE_parallels_done  == 1 ]] && MODULE_PACKER_VIRT=parallels
   [[ $MODULE_virtualbox_done == 1 ]] && MODULE_PACKER_VIRT=virtualbox
-  [[ $MODULE_vmware_done     == 1 ]] && MODULE_PACKER_VIRT=vmware
   MODULE_packer_done=1
   return 0
 } # }}}2
 
 function install_puppet() # {{{2
 {
-  local os_maj=$(sw_vers -productVersion | cut -d. -f1)
-  local os_min=$(sw_vers -productVersion | cut -d. -f2)
+  [[ $MODULE_prerequisite_done == 0 ]] && install_prerequisites
 
-  [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
-
-  verbose "installing facter, hiera, and puppet"
-  cask_install puppet
-  status=$? && [[ $status != 0 ]] && return $status
-  cask_install hiera
-  status=$? && [[ $status != 0 ]] && return $status
-  cask_install facter
-  status=$? && [[ $status != 0 ]] && return $status
-
-  verbose "Creating user/group resources"
-  dseditgroup -o read puppet &> /dev/null
-  if [ $? -ne 0 ]; then
-    verbose "  Creating group 'puppet'"
-    $NOOP $SUDO puppet resource group puppet ensure=present
-    status=$? && [[ $status != 0 ]] && return $status
+  if [[ -n $(dpkg -s puppet | grep '^Status: install ok installed$') ]]; then
+    version=$(puppet --version)
+    verbose "Puppet ${version} is already installed"
+    installed_version=$(apt-cache policy puppet | awk '/Installed/ {print $2}')
+    candidate_version=$(apt-cache policy puppet | awk '/Candidate/ {print $2}')
+    if [[ $installed_version != $candidate_version ]]; then
+      verbose "Upgrading Puppet"
+      $NOOP $SUDO apt-get upgrade -y puppet
+      status=$? && [[ $status != 0 ]] && return $status
+    fi
   else
-    verbose "  Group 'puppet' is already created"
-  fi
-  dseditgroup -o checkmember -m puppet puppet &> /dev/null
-  if [ ! $? -eq 0 ]; then
-    verbose "  Adding puppet to group 'puppet'"
-    $NOOP $SUDO puppet resource user puppet ensure=present gid=puppet shell="/sbin/nologin"
-    status=$? && [[ $status != 0 ]] && return $status
-  else
-    verbose "  User 'puppet' is already a member of group 'puppet'"
+    verbose "Installing Puppet"
+    $NOOP $SUDO apt-get install -y puppet
+    status=$? && [[ $status != 0 ]] && error "Error $status while installing Puppet" && return $status
   fi
 
-  verbose "Hiding the puppet user from the Login window"
-  if [[ $os_min -ge 10 ]]; then # Yosemite or later
-    if [[ -z $(dscl . read /Users/puppet | grep IsHidden) ]]; then
-      $SUDO dscl . create /Users/puppet IsHidden 1
+  if [[ -n $(dpkg -s hiera | grep '^Status: install ok installed$') ]]; then
+    version=$(hiera --version)
+    verbose "Hiera ${version} is already installed"
+    installed_version=$(apt-cache policy hiera | awk '/Installed/ {print $2}')
+    candidate_version=$(apt-cache policy hiera | awk '/Candidate/ {print $2}')
+    if [[ $installed_version != $candidate_version ]]; then
+      verbose "Upgrading Hiera"
+      $NOOP $SUDO apt-get upgrade -y hiera
       status=$? && [[ $status != 0 ]] && return $status
-    elif [[ -z $(dscl . read /Users/puppet IsHidden | grep 1) ]]; then
-      $SUDO dscl . create /Users/puppet IsHidden 1
-      status=$? && [[ $status != 0 ]] && return $status
-    else
-      verbose "  User puppet is already hidden from the Login window"
     fi
   else
-    hidden_users=$(/usr/libexec/PlistBuddy -c "Print :HiddenUsersList" /Library/Preferences/com.apple.loginwindow.plist 2>&1)
-    if [ ! $? -eq 0 ]; then
-      verbose "  Adding the HiddenUsersList entry"
-      $NOOP $SUDO /usr/libexec/PlistBuddy -c "Add :HiddenUsersList array" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
+    verbose "Installing Hiera"
+    $NOOP $SUDO apt-get install -y hiera
+    status=$? && [[ $status != 0 ]] && error "Error $status while installing Hiera" && return $status
+  fi
+
+  if [[ -n $(dpkg -s facter | grep '^Status: install ok installed$') ]]; then
+    version=$(facter --version)
+    verbose "Facter ${version} is already installed"
+    installed_version=$(apt-cache policy facter | awk '/Installed/ {print $2}')
+    candidate_version=$(apt-cache policy facter | awk '/Candidate/ {print $2}')
+    if [[ $installed_version != $candidate_version ]]; then
+      verbose "Upgrading Facter"
+      $NOOP $SUDO apt-get upgrade -y facter
       status=$? && [[ $status != 0 ]] && return $status
     fi
-    if [[ ! ${hidden_users} =~ "puppet" ]]; then
-      verbose "  Adding puppet to the hidden user list"
-      $NOOP $SUDO /usr/libexec/PlistBuddy -c "Add :HiddenUsersList: string puppet" /Library/Preferences/com.apple.loginwindow.plist &> /dev/null
-      status=$? && [[ $status != 0 ]] && return $status
-    else
-      verbose "  User puppet is already hidden from the Login window"
-    fi
+  else
+    verbose "Installing Facter"
+    $NOOP $SUDO apt-get install -y facter
+    status=$? && [[ $status != 0 ]] && error "Error $status while installing Facter" && return $status
   fi
 
   verbose "Creating folders"
@@ -2113,8 +1796,12 @@ function install_puppet() # {{{2
   status=$? && [[ $status != 0 ]] && return $status
 
   verbose "Configuring Puppet"
+  if [[ -z $(grep "START=yes" /etc/default/puppet) ]]; then
+    verbose "  Setting puppet service to start at boot"
+    $NOOP $SUDO sed -i 's/^START=no/START=yes/' /etc/default/puppet
+  fi
   if [ ! -f "/etc/puppet/puppet.conf" ]; then
-    config=$(mktemp -t puppet)
+    config=$(mktemp)
     puppet_master='puppet'
     #read -p "  Please enter the hostname or ip address of the puppet server [${puppet_master}]: " input_puppet_master
     #[[ ! -z "${input_puppet_master}" ]] && puppet_master=$input_puppet_master
@@ -2140,28 +1827,29 @@ EOF
     status=$? && [[ $status != 0 ]] && return $status
   fi
 
-  verbose "Installing the puppet agent daemon"
-  if [ ! -f "/Library/LaunchDaemons/com.puppetlabs.puppet.plist" ]; then
-    download https://raw.github.com/inin-apac/puppet-me/master/config/osx/com.puppetlabs.puppet.plist "$HOME/Downloads"
-    status=$? && [[ $status != 0 ]] && return $status
-    $NOOP $SUDO install -m 0644 -o root -g wheel $HOME/Downloads/com.puppetlabs.puppet.plist /Library/LaunchDaemons
-    status=$? && [[ $status != 0 ]] && return $status
-    $NOOP $SUDO launchctl load -w /Library/LaunchDaemons/com.puppetlabs.puppet.plist
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
-  verbose "Starting the puppet agent daemon"
-  $NOOP $SUDO launchctl start com.puppetlabs.puppet
-  status=$? && [[ $status != 0 ]] && return $status
   MODULE_puppet_done=1
   return 0
 } # }}}2
 
 function install_rubytools() # {{{2
 {
-  [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
+  [[ $MODULE_prerequisite_done == 0 ]] && install_prerequisites
+  if [[ -n $(dpkg -s ruby | grep '^Status: install ok installed$') ]]; then
+    version=$(ruby --version | awk '{print $2}')
+    verbose "Ruby ${version} is already installed"
+    installed_version=$(apt-cache policy ruby | awk '/Installed/ {print $2}')
+    candidate_version=$(apt-cache policy ruby | awk '/Candidate/ {print $2}')
+    if [[ $installed_version != $candidate_version ]]; then
+      verbose "Upgrading Ruby"
+      $NOOP $SUDO apt-get upgrade -y ruby
+      status=$? && [[ $status != 0 ]] && return $status
+    fi
+  else
+    verbose "Installing Ruby"
+    $NOOP $SUDO apt-get install -y ruby
+    status=$? && [[ $status != 0 ]] && error "Error $status while installing ruby" && return $status
+  fi
 
-  # On Mac OS/X, ruby is always installed. And since Mavericks, we get 2.0.0
-  # Gem and Rake are also installed.
   if [[ ! -z $(gem list --local | grep bundler) ]]; then
     verbose "Bundler is already installed"
   else
@@ -2174,7 +1862,7 @@ function install_rubytools() # {{{2
 
 function install_vagrant() # {{{2
 {
-  [[ $MODULE_homebrew_done == 0 ]]        && install_homebrew
+  [[ $MODULE_prerequisite_done   == 0 ]] && install_prerequisites
   [[ $MODULE_virtualization_done == 0 ]]  && die "You must install at least one virtualization kit to install vagrant"
 
   trace "Current Vagrant Home (if any): $VAGRANT_HOME"
@@ -2190,31 +1878,20 @@ function install_vagrant() # {{{2
     trace "VAGRANT HOME (preset): $VAGRANT_HOME"
   fi
 
-  if which vagrant > /dev/null 2>&1; then
-    verbose "vagrant is already installed"
+  if hash vagrant 2>/dev/null; then
     version=$(vagrant --version | awk '{print $2}')
-    verbose "  current version: ${version}"
-    latest=$(brew cask info vagrant | awk '/^vagrant: / { print $2; }')
-    if [[ $version != $latest ]]; then # TODO: We should actually compare with the version we support
-      verbose "Vagrant ${latest} is available"
-      if [[ -n "$(brew cask info vagrant${version//\./} | grep '^Not installed$')" ]]; then
-        verbose "  uninstalling vagrant manually"
-        $NOOP $SUDO rm -rf /opt/vagrant
-        status=$? && [[ $status != 0 ]] && error "Error $status while removing /opt/vagrant" && return $status
-        $NOOP $SUDO rm -f /usr/bin/vagrant
-        status=$? && [[ $status != 0 ]] && error "Error $status while removing /usr/bin/vagrant" && return $status
-      else
-        $NOOP cask_uninstall vagrant${version//\./}
-        status=$? && [[ $status != 0 ]] && error "Error $status while uninstalling vagrant" && return $status
-      fi
-      verbose "  installing vagrant"
-      $NOOP cask_install vagrant
-      status=$? && [[ $status != 0 ]] && error "Error $status while installing vagrant 1.6.5" && return $status
+    verbose "Vagrant ${version} is already installed"
+    installed_version=$(apt-cache policy virtualbox-5.0 | awk '/Installed/ {print $2}')
+    candidate_version=$(apt-cache policy virtualbox-5.0 | awk '/Candidate/ {print $2}')
+    if [[ $installed_version != $candidate_version ]]; then
+      verbose "Upgrading Vagrant"
+      $NOOP $SUDO apt-get upgrade -y vagrant
+      status=$? && [[ $status != 0 ]] && return $status
     fi
   else
-    verbose "installing vagrant"
-    $NOOP cask_install vagrant
-    status=$? && [[ $status != 0 ]] && error "Error $status while installing vagrant" && return $status
+    verbose "Installing Vagrant"
+    $NOOP $SUDO apt-get install -y vagrant
+    status=$? && [[ $status != 0 ]] && return $status
   fi
 
   if [[ ! -w $MODULE_VAGRANT_LOG_ROOT ]]; then
@@ -2231,169 +1908,82 @@ function install_vagrant() # {{{2
   $NOOP vagrant plugin update
   status=$? && [[ $status != 0 ]] && error "Error $status while updating vagrant plugins" && return $status
 
-  # Installing bash completion
-  if [[ ! -z $(brew info homebrew/completions/vagrant-completion | grep '^Not installed$') ]]; then
-    verbose "Installing bash completion for Vagrant..."
-    $NOOP brew install homebrew/completions/vagrant-completion
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
-
   if [[ -z $(vagrant plugin list | grep 'vagrant-host-shell') ]]; then
     verbose "  Installing Vagrant Plugin for Host Shell"
     $NOOP vagrant plugin install vagrant-host-shell
     status=$? && [[ $status != 0 ]] && return $status
   fi
 
-  if [[ $MODULE_vmware_done == 1 && -z $(vagrant plugin list | grep 'vagrant-vmware-fusion') ]]; then
-    verbose "  Installing Vagrant Plugin for VMWare"
-    $NOOP vagrant plugin install vagrant-vmware-fusion
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
-
-  if [[ -n "$(vagrant 2>&1 | grep 'valid license.*Vagrant VMware')" ]]; then
-    if [[ -n $MODULE_VAGRANT_VMWARE_LICENSE ]]; then
-      $NOOP vagrant plugin license vagrant-vmware-fusion $MODULE_VAGRANT_VMWARE_LICENSE
-    else
-      warn "  TODO: install your Vagrant for VMWare license!"
-    fi
-  else
-    verbose "Vagrant Plugin for VMWare is already licensed"
-  fi
-
-  if [[ $MODULE_parallels_done == 1 && -z $(vagrant plugin list | grep 'vagrant-parallels') ]]; then
-    verbose "  Installing Vagrant Plugin for Parallels"
-    $NOOP vagrant plugin install vagrant-parallels
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
   MODULE_vagrant_done=1
-  return 0
-} # }}}2
-
-function install_parallels() # {{{2
-{
-  local parallels_tools_root
-  [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
-
-  if [[ -z "$(brew cask info parallels10 | grep '^Not installed$')"  || -d /opt/homebrew-cask/parallels-desktop/10.* ]]; then
-    cask_uninstall parallels10 --force
-  fi
-  cask_install parallels-desktop
-  status=$? && [[ $status != 0 ]] && return $status
-
-  [[ -d "/Applications/Parallels Desktop.app/Contents/MacOS"      ]] && parallels_tools_root="/Applications/Parallels Desktop.app/Contents/MacOS"
-  [[ -d "$HOME/Applications/Parallels Desktop.app/Contents/MacOS" ]] && parallels_tools_root="$HOME/Applications/Parallels Desktop.app/Contents/MacOS"
-  if ! which prlsrvctl > /dev/null 2>&1; then
-    verbose "Initializing Parallels Desktop"
-    $NOOP $SUDO "${parallels_tools_root}/inittool" init -s
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
-
-  if [[ -z "$(prlsrvctl info | grep "^License: state='valid'.*")" ]]; then
-    if [[ -n $MODULE_PARALLELS_LICENSE ]]; then
-      verbose "Configuring license..."
-      prlsrvctl install-license --key $MODULE_PARALLELS_LICENSE
-    else
-      warn "Do not forget to configure your Parallels Desktop license"
-    fi
-  fi
-
-  if [[ -n "$MODULE_PARALLELS_HOME" ]]; then
-    current=$(prlsrvctl user list 2> /dev/null | grep "$whoami" | awk '{ print $3 }')
-    if [[ "$current" != "$MODULE_PARALLELS_HOME" ]]; then
-      verbose "Updating Virtual Machine home to ${MODULE_PARALLELS_HOME}"
-      $NOOP mkdir -p "$MODULE_PARALLELS_HOME"
-      $NOOP prlsrvctl user set --def-vm-home "$MODULE_PARALLELS_HOME"
-      status=$? && [[ $status != 0 ]] && return $status
-    fi
-  fi
-  MODULE_parallels_done=1
-  MODULE_virtualization_done=1
   return 0
 } # }}}2
 
 function install_virtualbox() # {{{2
 {
-  [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
+  [[ $MODULE_prerequisite_done == 0 ]] && install_prerequisites
 
-  if which VBoxManage > /dev/null 2>&1; then
-    version=$(VBoxManage --version)
+  if hash vboxmanage 2>/dev/null; then
+    version=$(vboxmanage --version)
     verbose "Virtualbox ${version} is already installed"
-    latest=$(brew cask info virtualbox | awk '/^virtualbox: / { print $2; }')
-    if [[ ${version/r/-} != $latest ]]; then # TODO: We should actually compare with the version we support
-      verbose "Virtualbox ${latest} is available"
-      if [[ -n "$(brew cask info virtualbox${version//[\.r]/} | grep '^Not installed$')" ]]; then
-        verbose "Please uninstall Virtualbox ${version} manually"
-      else
-        $NOOP cask_uninstall virtualbox${version//[\.r]/}
-      fi
+    installed_version=$(apt-cache policy virtualbox-5.0 | awk '/Installed/ {print $2}')
+    candidate_version=$(apt-cache policy virtualbox-5.0 | awk '/Candidate/ {print $2}')
+    if [[ $installed_version != $candidate_version ]]; then
+      verbose "Upgrading Virtualbox"
+      $NOOP $SUDO apt-get upgrade -y virtualbox-5.0
+      status=$? && [[ $status != 0 ]] && return $status
     fi
+  else
+    if [[ -z $(apt-key list | grep 'Oracle Corporation (VirtualBox archive signing key)') ]]; then
+      verbose "Installing Oracle's GPG key"
+      $NOOP wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | $SUDO apt-key add -
+      status=$? && [[ $status != 0 ]] && return $status
+    fi
+
+    case $(lsb_release --short --id) in
+      LinuxMint)
+        codename=$(awk 'BEGIN {FS="="} /DISTRIB_CODENAME/ { print $2 }' /etc/lsb-release.dpkg-dist)
+      ;;
+      Ubuntu)
+        codename=$(lsb_release --short --codename)
+      ;;
+      *)
+       error "Unsupported Distribution of Ubuntu flavor: $(lsb_release --short --id)"
+       return 1
+    esac
+
+    if [[ -z $(grep -i virtualbox /etc/apt/sources.list.d/*) ]]; then
+      verbose "Adding Virtualbox source list"
+      $NOOP echo "deb http://download.virtualbox.org/virtualbox/debian $codename contrib" | $SUDO tee /etc/apt/sources.list.d/virtualbox.list > /dev/null
+      status=$? && [[ $status != 0 ]] && return $status
+      verbose "Updating the aptitude package list (this can take a while)"
+      $NOOP $SUDO apt-get update > /dev/null
+      status=$? && [[ $status != 0 ]] && return $status
+    fi
+
+    if [[ -z $(dpkg -s dkms | grep '^Status: install ok installed$') ]]; then
+      $NOOP $SUDO apt-get install -y dkms
+      status=$? && [[ $status != 0 ]] && return $status
+    fi
+    $NOOP $SUDO apt-get install -y virtualbox-5.0
+    status=$? && [[ $status != 0 ]] && return $status
+
+    # TODO: Extension pack
+    #http://download.virtualbox.org/virtualbox/5.0.6/Oracle_VM_VirtualBox_Extension_Pack-5.0.6-103037.vbox-extpack
+    #$NOOP cask_install virtualbox-extension-pack
+    #status=$? && [[ $status != 0 ]] && return $status
   fi
-  $NOOP cask_install virtualbox
-  status=$? && [[ $status != 0 ]] && return $status
-  $NOOP cask_install virtualbox-extension-pack
-  status=$? && [[ $status != 0 ]] && return $status
 
   if [[ -n "$MODULE_VIRTUALBOX_HOME" ]]; then
-    current=$(VBoxManage list systemproperties | grep 'Default machine folder' | cut -d: -f2 | sed -e 's/^ *//')
+    current=$(vboxmanage list systemproperties | grep 'Default machine folder' | cut -d: -f2 | sed -e 's/^ *//')
     if [[ "$current" != "$MODULE_VIRTUALBOX_HOME" ]]; then
       verbose "Updating Virtual Machine home to ${MODULE_VIRTUALBOX_HOME}"
-      $NOOP VBoxManage setproperty machinefolder "$MODULE_VIRTUALBOX_HOME"
+      $NOOP vboxmanage setproperty machinefolder "$MODULE_VIRTUALBOX_HOME"
       status=$? && [[ $status != 0 ]] && return $status
     fi
   fi
   MODULE_virtualbox_done=1
   MODULE_virtualization_done=1
   return 0
-} # }}}2
-
-function install_vmware() # {{{2
-{
-  [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
-
-  cask_install vmware-fusion '/Applications/VMware Fusion.app/Contents/Library/vmrun'
-  status=$? && [[ $status != 0 ]] && return $status
-
-  vmware_root='/Applications'
-  if [[ ! -d '/Applications/VMware Fusion.app' ]]; then
-    verbose "Linking VMWare Fusion in /Applications"
-    if [[ -d "$HOME/Applications/VMWare Fusion.app" ]]; then
-      vmware_root="$HOME/Applications"
-    else
-      vmware_root=$(brew cask info vagrant | awk '/^\/opt/ { print $1 }')
-    fi
-    trace "VMWare Fusion is in: $vmware_root"
-    verbose "VMWare Fusion is in: $vmware_root"
-    ln -s "$vmware_root/VMware Fusion.app"  /Applications
-  fi
-  vmware_bin="$vmware_root/VMWare Fusion.app/Contents/Library"
-
-  if ! $("$vmware_bin"/vmrun list 2>&1 > /dev/null); then
-    verbose "Initializing VMWare Fusion..."
-    $NOOP $SUDO "$vmware_bin/Initialize VMware Fusion.tool" set
-    status=$? && [[ $status != 0 ]] && return $status
-    if [[ -n $MODULE_VMWARE_KEY ]]; then
-      verbose "Configuring license..."
-      $NOOP $SUDO "$vmware_bin/licenses/vmware-licensetool" enter "$MODULE_VMWARE_KEY" '' '' '7.0' 'VMware Fusion for Mac OS' '' \
-                  | grep -q '200 License operation succeeded.'
-      status=$? && [[ $status != 0 ]] && return $status
-    fi
-  fi
-
-  if [[ -n "$MODULE_VMWARE_HOME" ]]; then
-    current=$(defaults read com.vmware.fusion NSNavLastRootDirectory 2> /dev/null)
-    if [[ "$current" != "$MODULE_VMWARE_HOME" ]]; then
-      verbose "Updating Virtual Machine home to ${MODULE_VMWARE_HOME}"
-      LOCATION='/Library/Preferences/VMWare Fusion/lastLocationUsed'
-      $NOOP $SUDO rm -f -- "$TEMP/lastLocationUsed"
-      $NOOP $SUDO printf -- %s "$(canonicalize_path $MODULE_VMWARE_HOME)" > "$TEMP/lastLocationUsed"
-      $NOOP $SUDO mv -f "$TEMP/lastLocationUsed" "$LOCATION"
-      $NOOP $SUDO chmod 444 "$LOCATION"
-      $NOOP $SUDO defaults write com.vmware.fusion NSNavLastRootDirectory "$MODULE_VMWARE_HOME"
-      status=$? && [[ $status != 0 ]] && return $status
-    fi
-  fi
-  MODULE_vmware_done=1
-  MODULE_virtualization_done=1
 } # }}}2
 
 function cache_stuff() # {{{2
@@ -2500,62 +2090,25 @@ function cache_stuff() # {{{2
         for location in "${sources[@]}"; do
           trace "Analyzing location: $location"
           source_location=$(echo "$location" | jq --raw-output '.location')
-          source_type=$(echo "$location" | jq --raw-output '.type')
           source_url="$(echo "$location" | jq --raw-output '.url')"
           source_url="${source_url%%/}/${source_filename}"
           source_has_resume=''
           [[ "$(echo "$location" | jq '.has_resume')" == 'true' ]] && source_has_resume='--has_resume'
           source_need_auth=''
           [[ "$(echo "$location" | jq '.need_auth')" == 'true' ]] && source_need_auth='--need_auth'
-          source_auth=''
-          if [[ -n $source_need_auth ]]; then
-            case $source_type in
-              akamai)
-                source_auth='--ntlm'
-              ;;
-            esac
-          fi
           source_vpn="$(echo "$location" | jq --raw-output '.vpn' | grep -v null)"
-          vpn_user=''
-          vpn_password=''
           verbose "  Downloading from $source_location"
-          trace   "  Source URL:  $source_url"
-          trace   "  Source Type: $source_type"
+          trace   "  Source URL: $source_url"
           if [[ -n "$source_location" ]]; then
             document_checksum=$(echo "$document" | jq --raw-output '.checksum.value')
             document_checksum_type=$(echo "$document" | jq --raw-output '.checksum.type')
             if [[ -n $source_vpn ]]; then
-              trace "  Querying keychain for user to use with vpn $source_vpn"
-              vpn_user=$(keychain_get_user --kind=vpn --host=$source_vpn 2>&1)
-              if [[ $? == 0 ]]; then
-                trace "    Found user: $vpn_user"
-                trace "  Querying keychain for password of user $vpn_user"
-                vpn_password=$(keychain_get_password --kind=vpn --host=$source_vpn --user=$vpn_user 2>&1)
-                vpn_start --server="${source_vpn}" --user $vpn_user --password $vpn_password
-                status=$?
-                if [[ $status != 0 ]]; then
-                  error "Failed to connect to vpn $source_vpn as $vpn_user, asking for credentials"
-                  vpn_user=''
-                  vpn_password=''
-                  vpn_start --server="${source_vpn}"
-                fi
-              else
-                vpn_start --server="${source_vpn}"
-              fi
+              vpn_start --server="${source_vpn}"
               status=$? && [[ $status != 0 ]] && failure=( "start_vpn|${status}|${source_vpn}" ) && continue
             fi
-            download $source_has_resume $source_need_auth $source_auth $source_url "$document_destination" $document_checksum_type $document_checksum
+            download $source_has_resume $source_need_auth $source_url "$document_destination" $document_checksum_type $document_checksum
             status=$? && [[ $status != 0 ]] && failure=( "${document_action}|${status}|${document_name}|${source_url}" ) && continue
             if [[ -n $source_vpn ]]; then
-              if [[ -n $vpn_user ]]; then
-                # Let's save the credentials in keychain
-                keychain_set_password --kind=vpn --host=$source_vpn --user=$vpn_user --password=$vpn_password
-                status=$? && [[ $status != 0 ]] && error "Could not save credentials.\nError: $status"
-
-                # Let's not keep these in memory...
-                vpn_user=''
-                vpn_password=''
-              fi
               vpn_stop --server="${source_vpn}"
               status=$? && [[ $status != 0 ]] && warn "  Warning $status: cannot stop vpn $source_vpn"
             fi
@@ -2580,57 +2133,6 @@ function cache_stuff() # {{{2
     return 1
   fi
   MODULE_cache_done=1
-  return 0
-} # }}}2
-
-function set_noidle() # {{{2
-{
-  verbose "Setting Energy Saver for Mac Mini server"
-  $SUDO pmset -c autorestart 1
-  status=$? && [[ $status != 0 ]] && return $status
-  $SUDO pmset -c sleep       0
-  status=$? && [[ $status != 0 ]] && return $status
-  $SUDO pmset -c disksleep   0
-  status=$? && [[ $status != 0 ]] && return $status
-
-  MODULE_noidle_done=1
-  return 0
-} # }}}2
-
-function install_updateme() # {{{2
-{
-  local install_me
-  local script
-
-  [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
-
-  [[ -d "$MODULE_updateme_root" ]] || $NOOP mkdir -p "$MODULE_updateme_root"
-  status=$? && [[ $status != 0 ]] && return $status
-  trace "Creating a temporary folder"
-  temp_dir=$(mktemp -d -t puppet-me)
-  status=$? && [[ $status != 0 ]] && return $status
-  download "$MODULE_updateme_source" $temp_dir
-  status=$? && [[ $status != 0 ]] && rm -rf $temp_dir && return $status
-
-  if [[ -d "$HOME/Desktop/DaaS - Update & Build Me.app" ]]; then
-    verbose "Removing obsolete applications"
-    rm -rf "$HOME/Desktop/DaaS - Update & Build Me.app"
-  fi
-
-  verbose "Unarchiving UpdateMe application"
-  trace "Executing: [7z x -o\"${MODULE_updateme_root}\" -y \"$temp_dir/$(basename ${MODULE_updateme_source})\"]"
-  7z x -o"${MODULE_updateme_root}" -y "$temp_dir/$(basename ${MODULE_updateme_source})" 2>&1 >> "$LOG"
-  status=$? && [[ $status != 0 ]] && rm -rf $temp_dir && return $status
-  rm -rf $temp_dir
-
-  verbose "Configuring UpdateMe application"
-  install_me="curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- ${MODULE_updateme_args}"
-  script="$HOME/Desktop/DaaS - Update Me.app/Contents/Resources/script"
-  trace "Updating [$script]"
-  verbose "Updating $(basename "$(dirname "$(dirname "$(dirname "$script")")")" .app)"
-  sed -i '.org' -e "s;^curl.*;${install_me};" "$script"
-
-  MODULE_updateme_done=1
   return 0
 } # }}}2
 
@@ -2667,22 +2169,13 @@ function usage() # {{{2
   echo "   Note: if the password contains the @ sign, it should be replaced with %40  "
   echo " --force  "
   echo "   Force all updates to happen (downloads still do not happen if already done).  " 
-  echo " --gui  "
-  echo "   Force prompts to use a dialog box to query the user (whenever possible).  " 
-  echo " --no-gui  "
-  echo "   Force prompts to not use a dialog box to query the user.  " 
   echo " --help  "
   echo "   Prints some help on the output."
-  echo " --macmini-parallels  "
-  echo "   will install these modules: noidle homebrew rubytools puppet parallels vagrant cache packer"
-  echo " --macmini-virtualbox  "
-  echo "   will install these modules: noidle homebrew rubytools puppet virtualbox vagrant cache packer"
-  echo " --macmini-vmware or --macmini  "
-  echo "   will install these modules: noidle homebrew rubytools puppet vmware vagrant cache packer"
+  echo " --virtualbox  "
+  echo "   will install these modules: rubytools puppet virtualbox vagrant cache packer"
   echo " --modules  "
   echo "   contains a comma-separated list of modules to install.  "
   echo "   The complete list can be obtained with --help.  "
-  echo "   The --macmini options will change that list.  "
   echo "   Default: homebrew,puppet,rubytools"
   echo " --network  *ip_address*/*cidr*"
   echo "   can be used to force the script to believe it is run in a given network.  "
@@ -2714,11 +2207,6 @@ function usage() # {{{2
   echo "     --packer-build virtualbox:all  "
   echo "     will (build and load) all boxes known to packer-windows for Virtualbox.  "
   echo "   Default value: N/A  "
-  echo " --parallels-home *path*  "
-  echo "   Contains the location virtual machine data will be stored.  "
-  echo "   Default: \$HOME/Documents/Virtual Machines"
-  echo " --parallels-license *key*  "
-  echo "   Contains the license key to configure Parallels Desktop.  "
   echo " --password *password*  "
   echo "   Contains the sudo password for elevated tasks.  "
   echo "   Warning: The password will be viewable in your shell history as well as on the current command line.  "
@@ -2730,20 +2218,11 @@ function usage() # {{{2
   echo " --vagrant-home *path*  "
   echo "   Contains the location where vagrant user work data will be stored.  "
   echo "   Default value: \$HOME/.vagrant.d"
-  echo " --vagrant-vmware-license *path*  "
-  echo "   Contains the location of the license file for the Vagrant VMWare Plugin.  "
   echo " --verbose  "
   echo "   Runs the script verbosely, that's by default."
   echo " --virtualbox-home *path*  "
   echo "   Contains the location virtual machine data will be stored.  "
   echo "   Default value: $HOME/Documents/Virtual Machines"
-  echo " --vmware-home *path*  "
-  echo "   Contains the location virtual machine data will be stored.  "
-  echo "   Default value: $HOME/Documents/Virtual Machines"
-  echo " --vmware-license *key*  "
-  echo "   Contains the license key to configure VMWare Fusion.  "
-  echo "   If not provided here and VMWare needs to be configured,  "
-  echo "   The VMWare initialization script will request it.  "
   echo " --yes, --assumeyes, -y  "
   echo "   Answers yes to any questions automatiquely."
   echo ""
@@ -2772,13 +2251,11 @@ function parse_args() # {{{2
       --userid|--user|-u)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing"
         userid=$2
-        MODULE_updateme_args="${MODULE_updateme_args} --userid=$userid"
         shift 2
         continue
       ;;
       --userid=*?|--user=*?)
         userid=${1#*=} # delete everything up to =
-        MODULE_updateme_args="${MODULE_updateme_args} --userid=$userid"
       ;;
       --userid=|--user=)
         die "Argument for option $1 is missing"
@@ -2795,33 +2272,20 @@ function parse_args() # {{{2
       --password=)
         die "Argument for option $1 is missing"
         ;;
-      --macmini|--macmini-vmware)
-        MODULES=(noidle homebrew updateme rubytools puppet vmware vagrant cache packer)
-        MODULE_updateme_args="${MODULE_updateme_args} --macmini-vmware"
-        ;;
-      --macmini-parallels)
-        MODULES=(noidle homebrew updateme rubytools puppet parallels vagrant cache packer)
-        MODULE_updateme_args="${MODULE_updateme_args} --macmini-parallels"
-        ;;
-      --macmini-virtualbox)
-        MODULES=(noidle homebrew updateme rubytools puppet virtualbox vagrant cache packer)
-        MODULE_updateme_args="${MODULE_updateme_args} --macmini-virtualbox"
-        ;;
-      --macmini-all)
-        MODULES=(noidle homebrew updateme rubytools puppet parallels virtualbox vmware vagrant cache packer)
-        MODULE_updateme_args="${MODULE_updateme_args} --macmini-all"
+      --virtualbox)
+        # TODO: Implement cache module!
+        #MODULES=(rubytools puppet virtualbox vagrant cache packer)
+        MODULES=(rubytools puppet virtualbox vagrant packer)
         ;;
       --modules)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing.\nIt is a comma-separated list of the possible values are: ${ALL_MODULES[*]}"
         MODULES=(${2//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} --modules $2"
         shift 2
         continue
         ;;
       --modules=*?)
         MODULES=${1#*=} # delete everything up to =
         MODULES=(${MODULES//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} $1"
         ;;
       --modules=)
         die "Argument for option $1 is missing.\nIt is a comma-separated list of the possible values are: ${ALL_MODULES[*]}"
@@ -2829,13 +2293,11 @@ function parse_args() # {{{2
       --network)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         NETWORK=$2
-        MODULE_updateme_args="${MODULE_updateme_args} --network $NETWORK"
         shift 2
         continue
         ;;
       --network=*?)
         NETWORK=${1#*=} # delete everything up to =
-        MODULE_updateme_args="${MODULE_updateme_args} --network $NETWORK"
         ;;
       --network=)
         die "Argument for option $1 is missing."
@@ -2853,13 +2315,11 @@ function parse_args() # {{{2
       --cache-root)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         CACHE_ROOT=$2
-        MODULE_updateme_args="${MODULE_updateme_args} --cache-root '$CACHE_ROOT'"
         shift 2
         continue
         ;;
       --cache-root=*?)
         CACHE_ROOT=${1#*=} # delete everything up to =
-        MODULE_updateme_args="${MODULE_updateme_args} --cache-root '$CACHE_ROOT'"
         ;;
       --cache-root=)
         die "Argument for option $1 is missing."
@@ -2867,13 +2327,11 @@ function parse_args() # {{{2
       --cache-config)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         CACHE_CONFIG=$2
-        MODULE_updateme_args="${MODULE_updateme_args} --cache-config '$CACHE_CONFIG'"
         shift 2
         continue
         ;;
       --cache-config=*?)
         CACHE_CONFIG=${1#*=} # delete everything up to =
-        MODULE_updateme_args="${MODULE_updateme_args} --cache-config '$CACHE_CONFIG'"
         ;;
       --cache-config=)
         die "Argument for option $1 is missing."
@@ -2884,14 +2342,12 @@ function parse_args() # {{{2
       --cache-sources)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         CACHE_SOURCES=(${2//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} --cache-sources $2"
         shift 2
         continue
         ;;
       --cache-sources=*?)
         CACHE_SOURCES=${1#*=} # delete everything up to =
         CACHE_SOURCES=(${CACHE_SOURCES//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} $1"
         ;;
       --cache-sources=)
         die "Argument for option $1 is missing."
@@ -2899,13 +2355,11 @@ function parse_args() # {{{2
       --cache-source)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         CACHE_SOURCES+=( "$2" )
-        MODULE_updateme_args="${MODULE_updateme_args} --cache-source '$2'"
         shift 2
         continue
         ;;
       --cache-source=*?)
         CACHE_SOURCES+=( "${1#*=}" ) # delete everything up to =
-        MODULE_updateme_args="${MODULE_updateme_args} --cache-source '$1'"
         ;;
       --cache-source=)
         die "Argument for option $1 is missing."
@@ -2913,13 +2367,11 @@ function parse_args() # {{{2
       --packer-home)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         MODULE_PACKER_HOME=$2
-        MODULE_updateme_args="${MODULE_updateme_args} --packer-home '$MODULE_PACKER_HOME'"
         shift 2
         continue
         ;;
       --packer-home=*?)
         MODULE_PACKER_HOME=${1#*=} # delete everything up to =
-        MODULE_updateme_args="${MODULE_updateme_args} --packer-home '$MODULE_PACKER_HOME'"
         ;;
       --packer-home=)
         die "Argument for option $1 is missing."
@@ -2927,14 +2379,12 @@ function parse_args() # {{{2
       --packer-build)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         MODULE_PACKER_BUILD=("${MODULE_PACKER_BUILD[@]}" ${2//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} --packer-build $2"
         shift 2
         continue
         ;;
       --packer-build=*?)
         build=${1#*=} # delete everything up to =
         MODULE_PACKER_BUILD=("${MODULE_PACKER_BUILD[@]}" ${build//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} $1"
         ;;
       --packer-build=)
         die "Argument for option $1 is missing."
@@ -2942,14 +2392,12 @@ function parse_args() # {{{2
       --packer-load)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         MODULE_PACKER_LOAD=("${MODULE_PACKER_LOAD[@]}" ${2//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} --packer-load $2"
         shift 2
         continue
         ;;
       --packer-load=*?)
         load=${1#*=} # delete everything up to =
         MODULE_PACKER_LOAD=("${MODULE_PACKER_LOAD[@]}" ${load//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} $1"
         ;;
       --packer-load=)
         die "Argument for option $1 is missing."
@@ -2957,99 +2405,25 @@ function parse_args() # {{{2
       --vagrant-home)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         MODULE_VAGRANT_HOME=$2
-        MODULE_updateme_args="${MODULE_updateme_args} --vagrant-home '$MODULE_VAGRANT_HOME'"
         shift 2
         continue
         ;;
       --vagrant-home=*?)
         MODULE_VAGRANT_HOME=${1#*=} # delete everything up to =
-        MODULE_updateme_args="${MODULE_updateme_args} --vagrant-home '$MODULE_VAGRANT_HOME'"
         ;;
       --vagrant-home=)
-        die "Argument for option $1 is missing."
-        ;;
-      --vagrant-vmware-license)
-        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
-        MODULE_VAGRANT_VMWARE_LICENSE=$2
-        MODULE_updateme_args="${MODULE_updateme_args} --vagrant-vmware-license '$MODULE_VAGRANT_VMWARE_LICENSE'"
-        shift 2
-        continue
-        ;;
-      --vagrant-vmware-license=*?)
-        MODULE_VAGRANT_VMWARE_LICENSE=${1#*=} # delete everything up to =
-        MODULE_updateme_args="${MODULE_updateme_args} --vagrant-vmware-license '$MODULE_VAGRANT_VMWARE_LICENSE'"
-        ;;
-      --vagrant-vmware-license=)
-        die "Argument for option $1 is missing."
-        ;;
-      --parallels-home)
-        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
-        MODULE_PARALLELS_HOME=$2
-        MODULE_updateme_args="${MODULE_updateme_args} --parallels-home '$MODULE_PARALLELS_HOME'"
-        shift 2
-        continue
-        ;;
-      --parallels-home=*?)
-        MODULE_PARALLELS_HOME=${1#*=} # delete everything up to =
-        MODULE_updateme_args="${MODULE_updateme_args} --parallels-home '$MODULE_PARALLELS_HOME'"
-        ;;
-      --parallels-home=)
-        die "Argument for option $1 is missing."
-        ;;
-      --parallels-license)
-        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
-        MODULE_PARALLELS_LICENSE=$2
-        MODULE_updateme_args="${MODULE_updateme_args} --parallels-license $MODULE_PARALLELS_LICENSE"
-        shift 2
-        continue
-        ;;
-      --parallels-license=*?)
-        MODULE_PARALLELS_LICENSE=${1#*=} # delete everything up to =
-        MODULE_updateme_args="${MODULE_updateme_args} --parallels-home $MODULE_PARALLELS_LICENSE"
-        ;;
-      --parallels-license=)
         die "Argument for option $1 is missing."
         ;;
       --virtualbox-home)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
         MODULE_VIRTUALBOX_HOME=$2
-        MODULE_updateme_args="${MODULE_updateme_args} --virtualbox-home '$MODULE_VIRTUALBOX_HOME'"
         shift 2
         continue
         ;;
       --virtualbox-home=*?)
         MODULE_VIRTUALBOX_HOME=${1#*=} # delete everything up to =
-        MODULE_updateme_args="${MODULE_updateme_args} --virtualbox-home '$MODULE_VIRTUALBOX_HOME'"
         ;;
       --virtualbox-home=)
-        die "Argument for option $1 is missing."
-        ;;
-      --vmware-home)
-        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
-        MODULE_VMWARE_HOME=$2
-        MODULE_updateme_args="${MODULE_updateme_args} --vmware-home '$MODULE_VMWARE_HOME'"
-        shift 2
-        continue
-        ;;
-      --vmware-home=*?)
-        MODULE_VMWARE_HOME=${1#*=} # delete everything up to =
-        MODULE_updateme_args="${MODULE_updateme_args} --vmware-home '$MODULE_VMWARE_HOME'"
-        ;;
-      --vmware-home=)
-        die "Argument for option $1 is missing."
-        ;;
-      --vmware-license)
-        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
-        MODULE_VMWARE_KEY=$2
-        MODULE_updateme_args="${MODULE_updateme_args} --vmware-license '$MODULE_VMWARE_KEY'"
-        shift 2
-        continue
-        ;;
-      --vmware-license=*?)
-        MODULE_VMWARE_KEY=${1#*=} # delete everything up to =
-        MODULE_updateme_args="${MODULE_updateme_args} --vmware-license '$MODULE_VMWARE_KEY'"
-        ;;
-      --vmware-license=)
         die "Argument for option $1 is missing."
         ;;
       --noop|--dry-run)
@@ -3068,18 +2442,9 @@ function parse_args() # {{{2
       --test-keychain=)
         die "Argument for option $1 is missing."
         ;;
-      --gui)
-       trace "Force gui for prompts: on"
-       PROMPT_USE_GUI=1
-       ;;
-      --no-gui)
-       trace "Force gui for prompts: off"
-       PROMPT_USE_GUI=0
-       ;;
       --force)
        trace "Force updates: on"
        FORCE_UPDATE=1
-       MODULE_updateme_args="${MODULE_updateme_args} --force"
        ;;
       -h|-\?|--help)
        trace "Showing usage"
@@ -3089,16 +2454,13 @@ function parse_args() # {{{2
      --quiet)
        VERBOSE=0
        trace "Verbose level: $VERBOSE"
-       MODULE_updateme_args="${MODULE_updateme_args} --quiet"
        ;;
      -v|--verbose)
        VERBOSE=$((VERBOSE + 1))
        trace "Verbose level: $VERBOSE"
-       MODULE_updateme_args="${MODULE_updateme_args} --verbose"
        ;;
      -y|--yes|--assumeyes|--assume-yes) # All questions will get a "yes"  answer automatically
        ASSUMEYES=1
-       MODULE_updateme_args="${MODULE_updateme_args} --assume-yes"
        trace "All prompts will be answered \"yes\" automatically"
        ;;
      -?*) # Invalid options
@@ -3114,24 +2476,6 @@ function parse_args() # {{{2
     esac
     shift
   done
-
-  if [[ -z $PROMPT_USE_GUI ]]; then
-    trace "PROMPT_USE_GUI was not set, detecting..."
-    if [[ -n $PLATYPUS ]]; then
-      trace "Detected Platypus, Using GUI"
-      PROMPT_USE_GUI=1
-    elif [[ -n $TERM_PROGRAM ]]; then
-      trace "Detected Mac terminal: $TERM_PROGRAM, Using GUI"
-      PROMPT_USE_GUI=1
-    elif [[ -n $XTERM_VERSION ]]; then
-      trace "Detected X terminal: $XTERM_VERSION, Using GUI"
-      PROMPT_USE_GUI=1
-      #TODO: What if the xterm is running on another DISPLAY?!?
-    elif [[ -n $SSH_CLIENT ]]; then
-      trace "Detected SSH session: $SSH_CLIENT, NOT using GUI"
-      PROMPT_USE_GUI=0
-    fi
-  fi
 } # }}}2
 
 # }}}
@@ -3147,23 +2491,15 @@ function main() # {{{
   for module in ${MODULES[*]} ; do
     trace "Installing Module ${module}"
     case $module in
-      noidle)     set_noidle ;;
-      homebrew)   install_homebrew ;;
       cache)      cache_stuff ;;
       packer)     install_packer ;;
-      parallels)  install_parallels ;;
       puppet)     install_puppet ;;
       rubytools)  install_rubytools ;;
       vagrant)    install_vagrant ;;
       virtualbox) install_virtualbox ;;
-      vmware)     install_vmware ;;
-      updateme)   install_updateme ;;
       *)          die "Unsupported Module: ${module}" ;;
     esac
     status=$? && [[ $status != 0 ]] && die "Error $status while installing module $module" $status
   done
-  if which brew > /dev/null 2>&1; then
-    $NOOP brew cleanup
-  fi
 } # }}}
 main "$@"

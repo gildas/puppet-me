@@ -88,23 +88,23 @@
     ]
   },
   {
-    "name": "CIC 2015R3",
-    "id": "CIC_2015R3",
-    "checksum": { "type": "MD5", "value": "ae047963db82e11024d62c9daf704fd0" },
-    "filename": "CIC_2015_R3.iso",
+    "name": "CIC 2015R4",
+    "id": "CIC_2015R4",
+    "checksum": { "type": "MD5", "value": "e4e4a47b7044858f3f64f5981a361404" },
+    "filename": "CIC_2015_R4.iso",
     "locations":
     [
       {
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/21|3",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R3/"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R4/"
       },
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R4/"
       },
       {
         "location": "Internet",
@@ -112,28 +112,28 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2015r3/P00/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2015r4/P00/"
       }
     ]
   },
   {
-    "name": "CIC 2015R3 Patch 2",
-    "id": "CIC_2015R3_Patch2",
-    "checksum": { "type": "MD5", "value": "c6cca6bbf0bbd4b782414e5f5ca7126f" },
-    "filename": "CIC_2015_R3_Patch2.iso",
+    "name": "CIC 2015R4 Patch 5",
+    "id": "CIC_2015R4_Patch5",
+    "checksum": { "type": "MD5", "value": "F37FA7AB3C3E85BFD9A513030F1BD684" },
+    "filename": "CIC_2015_R4_Patch5.iso",
     "locations":
     [
       {
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/21|3",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R3/"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R4/"
       },
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R3/"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R4/"
       },
       {
         "location": "Internet",
@@ -141,40 +141,40 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2015r3/P02/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2015r4/P05/"
       }
     ]
   },
   {
-    "name": "CIC 2015R2",
-    "id": "CIC_2015R2",
-    "destination": "CIC_2015_R2.iso*",
+    "name": "Old CIC 2015 releases",
+    "id": "CIC_2015R1,R2,R3",
+    "destination": "CIC_2015_R[1-3].iso*",
     "action": "delete"
   },
   {
-    "name": "CIC 2015R2 Patches",
-    "id": "CIC_2015R2_Patches",
-    "destination": "CIC_2015_R2_Patch*.iso*",
+    "name": "Old CIC 2015 Patches",
+    "id": "CIC_2015R1,R2,R3_Patches",
+    "destination": "CIC_2015_R[1-3]_Patch*.iso*",
     "action": "delete"
   },
   {
-    "name": "Dialer 2015R3",
-    "id": "Dialer_2015R3",
-    "checksum": { "type": "MD5", "value": "5d67f744dd7a596c80a92a852ff4e1fc" },
-    "filename": "Dialer_2015_R3.iso",
+    "name": "Dialer 2015R4",
+    "id": "Dialer_2015R4",
+    "checksum": { "type": "MD5", "value": "4f12f9e8230365de710f9984309e5ab2" },
+    "filename": "Dialer_2015_R4.iso",
     "locations":
     [
       {
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/21|3",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2015R4/"
       },
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R4/"
       },
       {
         "location": "Internet",
@@ -182,28 +182,28 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2015r3/P00/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2015r4/P00/"
       }
     ]
   },
   {
-    "name": "Dialer 2015R3 Patch 2",
-    "id": "Dialer_2015R3_Patch2",
-    "checksum": { "type": "MD5", "value": "9678191944e713984ba3a9963861309d" },
-    "filename": "Dialer_2015_R3_Patch2.iso",
+    "name": "Dialer 2015R4 Patch 5",
+    "id": "Dialer_2015R4_Patch5",
+    "checksum": { "type": "MD5", "value": "890061F84AF0CA38F0D79170B6F4CAA9" },
+    "filename": "Dialer_2015_R4_Patch5.iso",
     "locations":
     [
       {
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/21|3",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2015R4/"
       },
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R3/"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R4/"
       },
       {
         "location": "Internet",
@@ -211,9 +211,21 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2015r3/P02/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2015r4/P05/"
       }
     ]
+  },
+  {
+    "name": "Old Dialer 2015 releases",
+    "id": "Dialer_2015R1,R2,R3",
+    "destination": "Dialer_2015_R[1-3].iso*",
+    "action": "delete"
+  },
+  {
+    "name": "Old Dialer 2015 Patches",
+    "id": "Dialer_2015R1,R2,R3_Patches",
+    "destination": "Dialer_2015_R[1-3]_Patch*.iso*",
+    "action": "delete"
   },
   {
     "name": "IC Server 2015R2",

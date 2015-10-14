@@ -63,6 +63,9 @@ The possible options are:
 - --cache-config *url*  
   Contains the URL of the configuration file for the cached sources.  
   Default: [sources.json on cdn.rawgit.com](https://cdn.rawgit.com/inin-apac/puppet-me/f74d7ec3242afce03a29e061eb93ed36cca1e9ee/config/sources.json)
+- --cache-keep  
+  Keep previous versions of downloads (e.g., keep CIC 2015R1, 2015R2, patches)  
+  Default: previous versions are deleted  
 - --cache-sources *urls*  
   Contains the URL of the configuration file for the cached sources.  
 - --cache-source *path_or_url*  
@@ -180,6 +183,9 @@ Start-BitsTransfer http://tinyurl.com/puppet-me-win-8 $env:TEMP\_.ps1 ; & $env:T
 
 Where *options* are:
 
+- -CacheKeep  
+  Keep previous versions of downloads (e.g., keep CIC 2015R1, 2015R2, patches)  
+  Default: previous versions are deleted  
 - -CacheRoot *path*  
   Contains the location of the cache for ISO, MSI, etc files.    
   When used, it will update $env:DAAS_CACHE  
@@ -234,7 +240,7 @@ Note:
 
 To use the development version, use this command instead:
 ```powershell
-Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-dev $env:TEMP\_.ps1 ; & $env:TEMP\_.ps1 [options]
+Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-dev $env:TEMP\_.ps1 ; & $env:TEMP\_.ps1 -CacheConfig https://raw.githubusercontent.com/inin-apac/puppet-me/dev/config/sources.json [options]
 ```
 
 AUTHORS

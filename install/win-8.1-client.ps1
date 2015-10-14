@@ -103,58 +103,61 @@
   Will install all the software and Virtualbox in their default locations.
   Once installed, packer is invoked to build all Vagrant box available with VMWare Workstation.
 .NOTES
-  Version 0.8.0
+  Version 0.9.0
 #>
 [CmdLetBinding(SupportsShouldProcess, DefaultParameterSetName="Usage")]
 Param( # {{{2
-  [Parameter(Position=1, Mandatory=$false, ParameterSetName='Usage')]
+  [Parameter(Position=1,  Mandatory=$false, ParameterSetName='Usage')]
   [switch] $Usage,
-  [Parameter(Position=1, Mandatory=$true, ParameterSetName='Version')]
+  [Parameter(Position=1,  Mandatory=$true, ParameterSetName='Version')]
   [switch] $Version,
-  [Parameter(Position=1, Mandatory=$true,  ParameterSetName='Virtualbox')]
+  [Parameter(Position=1,  Mandatory=$true,  ParameterSetName='Virtualbox')]
   [switch] $Virtualbox,
-  [Parameter(Position=1, Mandatory=$true,  ParameterSetName='VMWare')]
+  [Parameter(Position=1,  Mandatory=$true,  ParameterSetName='VMWare')]
   [switch] $VMWare,
-  [Parameter(Position=2, Mandatory=$false, ParameterSetName='VMWare')]
-  [Parameter(Position=2, Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=2,  Mandatory=$false, ParameterSetName='VMWare')]
+  [Parameter(Position=2,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Alias('VMHome', 'VirtualMachines')]
   [string] $VirtualMachinesHome,
-  [Parameter(Position=3, Mandatory=$false, ParameterSetName='VMWare')]
+  [Parameter(Position=3,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VMWareLicense,
-  [Parameter(Position=3, Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Parameter(Position=4, Mandatory=$false, ParameterSetName='VMWare')]
+  [Parameter(Position=3,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=4,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $PackerHome,
-  [Parameter(Position=4, Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Parameter(Position=5, Mandatory=$false, ParameterSetName='VMWare')]
+  [Parameter(Position=4,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=5,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VagrantHome,
-  [Parameter(Position=6, Mandatory=$false, ParameterSetName='VMWare')]
+  [Parameter(Position=6,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VagrantVMWareLicense,
-  [Parameter(Position=5, Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Parameter(Position=7, Mandatory=$false, ParameterSetName='VMWare')]
+  [Parameter(Position=5,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=7,  Mandatory=$false, ParameterSetName='VMWare')]
   [Alias('DaasCache')]
   [string] $CacheRoot,
-  [Parameter(Position=6, Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Parameter(Position=8, Mandatory=$false, ParameterSetName='VMWare')]
+  [Parameter(Position=6,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=8,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $CacheConfig,
-  [Parameter(Position=7, Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Parameter(Position=9, Mandatory=$false, ParameterSetName='VMWare')]
-  [Management.Automation.PSCredential] $Credential,
-  [Parameter(Position=8, Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=7,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=9,  Mandatory=$false, ParameterSetName='VMWare')]
+  [switch] $CacheKeep,
+  [Parameter(Position=8,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=10, Mandatory=$false, ParameterSetName='VMWare')]
-  [string[]] $PackerBuild,
+  [Management.Automation.PSCredential] $Credential,
   [Parameter(Position=9,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=11, Mandatory=$false, ParameterSetName='VMWare')]
-  [string[]] $PackerLoad,
-  [Parameter(Position=10,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [string[]] $PackerBuild,
+  [Parameter(Position=10, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=12, Mandatory=$false, ParameterSetName='VMWare')]
-  [switch] $NoUpdateCache,
-  [Parameter(Position=11,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [string[]] $PackerLoad,
+  [Parameter(Position=11, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=13, Mandatory=$false, ParameterSetName='VMWare')]
+  [switch] $NoUpdateCache,
+  [Parameter(Position=12, Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=14, Mandatory=$false, ParameterSetName='VMWare')]
   [string] $Network
 ) # }}}2
 begin # {{{2
 {
-  $CURRENT_VERSION = '0.8.1'
+  $CURRENT_VERSION = '0.9.0'
   $GitHubRoot      = "https://raw.githubusercontent.com/inin-apac/puppet-me"
   $PuppetMeLastUpdate      = "${env:TEMP}/last_updated-puppetme"
   $PuppetMeUpdateFrequency = 4 # hours
@@ -652,7 +655,7 @@ process # {{{2
     Write-Verbose "Installing Packer Plugin $Name"
 
     $PackerTools=[IO.Path]::Combine($env:ChocolateyInstall, 'lib', 'packer', 'tools')
-    $PackageLib=[IO.Path]::Combine($env:ChocolateyInstall, 'lib', $Name.ToLower() -replace ' ','-')
+    $PackageLib=[IO.Path]::Combine($env:ChocolateyInstall, 'lib', ($Name.ToLower() -replace ' ','-'))
     $Package=[IO.Path]::Combine($PackageLib, ([Uri] $Url).Segments[-1])
 
     if (! (Test-Path $PackageLib)) { New-Item -Path $PackageLib -ItemType Directory | Out-Null }
@@ -668,7 +671,7 @@ process # {{{2
     if ($Package -match '.*\.(7z|zip|tar|gz|bz2)')
     {
       Write-Verbose " Deploying Packer Plugin $Name"
-      & 7z e -y -o$PackerTools $Package | Out-Null
+      & 7z e -y -o"$PackerTools" $Package | Out-Null
       if (! $?) { Throw "Packer Plugin $Name not installed. Error: $LASTEXITCODE" }
     }
     else
@@ -808,18 +811,27 @@ process # {{{2
       if (! $?) { Throw "Unable to create folder $Destination. Error: $LastExitCode" }
     }
 
-    Write-Verbose "Downloading sources configuration"
-    $config = Join-Path $env:TEMP 'config.json'
-    Write-Verbose "  into $config"
-    if (Test-Path $config)
+    if ($Uri -match 'https?:.*')
     {
-      Write-Verbose "  removing old version"
-      Remove-Item -Path $config -Force
-    }
-    #Start-BitsTransfer -Source $Uri -Destination (Join-Path $env:TEMP 'config.json') -Verbose:$false
-    (New-Object Net.Webclient).DownloadFile($Uri, $config)
+      Write-Verbose "Downloading sources configuration"
+      $config = Join-Path $env:TEMP 'config.json'
+      Write-Verbose "  into $config"
+      if (Test-Path $config)
+      {
+        Write-Verbose "  removing old version"
+        Remove-Item -Path $config -Force
+      }
 
-    $sources          = (Get-Content -Raw -Path $config | ConvertFrom-Json)
+      #Start-BitsTransfer -Source $Uri -Destination (Join-Path $env:TEMP 'config.json') -Verbose:$false
+      (New-Object Net.Webclient).DownloadFile($Uri, $config)
+
+      $sources        = (Get-Content -Raw -Path $config | ConvertFrom-Json)
+    }
+    else
+    {
+      Write-Verbose "Using sources configuration from ${Uri}"
+      $sources        = (Get-Content -Raw -Path $Uri | ConvertFrom-Json)
+    }
     $credentials      = @{}
     $connected_drives = @()
     $missed_sources   = @()
@@ -832,11 +844,18 @@ process # {{{2
       {
         delete
         {
-          $path = Join-Path $Destination $source.destination
-          if (Test-Path $path)
+          if ($CacheKeep)
           {
-            Write-Output "Deleting $($source.Name)..."
-            Remove-Item $path -Recurse
+            Write-Verbose "Keeping old download $($source.Name)"
+          }
+          else
+          {
+            $path = Join-Path $Destination $source.destination
+            if (Test-Path $path)
+            {
+              Write-Output "Deleting $($source.Name)..."
+              Remove-Item $path -Recurse
+            }
           }
         }
         default
@@ -881,7 +900,7 @@ process # {{{2
               continue
             }
             else
-            {
+             {
               Write-Verbose "  $($source.checksum.type) Checksums differ, downloading again..."
               Write-Verbose "    (expected: $($source.checksum), local: $checksum)"
             }
