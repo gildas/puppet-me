@@ -793,16 +793,15 @@ process # {{{2
       [string] $Network
     )
 
+    $ip_addresses = @()
     if ($PSBoundParameters.ContainsKey('Network'))
     {
-      $local_ip_address = $Network
+      $ip_addresses += $Network
     }
-    else
-    {
-      $ipconfig = Get-NetIPAddress | ? { ($_.AddressFamily -eq 'IPv4') -and ($_.PrefixOrigin -eq 'Dhcp') }
-      $local_ip_address = "$($ipconfig.IPAddress)/$($ipconfig.PrefixLength)"
+    Get-NetIPAddress -AddressFamily IPv4 | ForEach {
+      $ip_addresses += "$($_.IPAddress)/$($_.PrefixLength)"
     }
-    Write-Verbose "My address: $local_ip_address"
+    Write-Verbose "My IP addresses: $ip_addresses"
 
     if (! (Test-Path $Destination))
     {
@@ -906,12 +905,12 @@ process # {{{2
             }
           }
           $location=$null
-          foreach ($loc in $source.locations)
+          foreach ($_ in $source.locations)
           {
-            Write-Verbose "  Checking in $($loc.location), regex: $($loc.network)"
-            if ($local_ip_address -match $loc.network)
+            Write-Verbose "  Checking in $($_.location), regex: $($_.network)"
+            if ($ip_addresses -match $_.network)
             {
-              $location=$loc
+              $location=$_
               break
             }
           }
