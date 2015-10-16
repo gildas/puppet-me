@@ -1370,7 +1370,7 @@ function download() # {{{2
   # Validate downloaded target checksum {{{3
   if [[ -r "${target_path}" && -n ${checksum} ]]; then
     verbose "  Calculating checksum of the downloaded file"
-    target_checksum=$(bar -n "$target_path" | $checksum)
+    target_checksum=$(bar -n "$target_path" | $checksum | tr [:lower:] [:upper:])
     trace "  Downloaded checksum: ${target_checksum} (Expected: ${checksum_value})"
     if [[ ! $target_checksum =~ \s*$checksum_value\s* ]]; then
       error "Invalid ${document_checksum_type} checksum for the downloaded document"
