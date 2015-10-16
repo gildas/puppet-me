@@ -37,7 +37,7 @@ MODULE_virtualization_done=0
 MODULES=(homebrew puppet rubytools)
 ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
-CURRENT_VERSION='0.9.1'
+CURRENT_VERSION='0.9.2'
 GITHUB_ROOT='https://raw.githubusercontent.com/inin-apac/puppet-me'
 
 CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
@@ -1370,7 +1370,7 @@ function download() # {{{2
   # Validate downloaded target checksum {{{3
   if [[ -r "${target_path}" && -n ${checksum} ]]; then
     verbose "  Calculating checksum of the downloaded file"
-    target_checksum=$(bar -n "$target_path" | $checksum)
+    target_checksum=$(bar -n "$target_path" | $checksum | tr [:lower:] [:upper:])
     trace "  Downloaded checksum: ${target_checksum} (Expected: ${checksum_value})"
     if [[ ! $target_checksum =~ \s*$checksum_value\s* ]]; then
       error "Invalid ${document_checksum_type} checksum for the downloaded document"

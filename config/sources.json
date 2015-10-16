@@ -228,6 +228,76 @@
     "action": "delete"
   },
   {
+    "name": "Web Applications 2015R4",
+    "id": "WebApplications_2015R4",
+    "checksum": { "type": "MD5", "value": "9E888E87AC644ED9A0E57BCE5F537B41" },
+    "filename": "CIC_Web_Applications_2015_R4.zip",
+    "locations":
+    [
+      {
+        "location": "APAC",
+        "network":  "172.22.(16|32|40|80|81).[0-9]+/21|3",
+        "need_auth": true,
+        "url": "smb://apac.inin.com/Software/ININ/Web%20Applications/2015R4/"
+      },
+      {
+        "location": "EMEA",
+        "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
+        "need_auth": true,
+        "url": "smb://emea.inin.com/Software/ININ/Web%20Applications/2015R4/"
+      },
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "has_resume": true,
+        "need_auth": true,
+        "type": "akamai",
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC_Web_Applications/IC_Web_Packaging_2015r4/P00/"
+      }
+    ]
+  },
+  {
+    "name": "Web Applications 2015R4 Patch 5",
+    "id": "WebApplications_2015R4_Patch5",
+    "checksum": { "type": "MD5", "value": "2D6799F1D5AB4E5849BB7743FE9EA3EC" },
+    "filename": "CIC_Web_Applications_2015_R4_Patch_5.zip",
+    "locations":
+    [
+      {
+        "location": "APAC",
+        "network":  "172.22.(16|32|40|80|81).[0-9]+/21|3",
+        "need_auth": true,
+        "url": "smb://apac.inin.com/Software/ININ/Web%20Applications/2015R4/"
+      },
+      {
+        "location": "EMEA",
+        "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
+        "need_auth": true,
+        "url": "smb://emea.inin.com/Software/ININ/Web%20Applications/2015R4/"
+      },
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "has_resume": true,
+        "need_auth": true,
+        "type": "akamai",
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC_Web_Applications/IC_Web_Packaging_2015r4/P05/"
+      }
+    ]
+  },
+  {
+    "name": "Old Web Applications 2015 releases",
+    "id": "WebApplications_2015R1,R2,R3",
+    "destination": "CIC_Web_Applications_2015_R[1-3].zip*",
+    "action": "delete"
+  },
+  {
+    "name": "Old Web Applications 2015 Patches",
+    "id": "WebApplications_2015R1,R2,R3_Patches",
+    "destination": "CIC_Web_Applications_2015_R[1-3]_Patch*.zip*",
+    "action": "delete"
+  },
+  {
     "name": "IC Server 2015R2",
     "id": "ICServer_2015R2",
     "destination": "ICServer_2015_R2.msi*",
