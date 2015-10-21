@@ -1844,11 +1844,12 @@ function install_homebrew() # {{{2
     verbose "Installing Homebrew..."
     $NOOP ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     status=$? && [[ $status != 0 ]] && return $status
-
-    # Preparing brew for first time or sanitizing it if already installed
-    $NOOP brew doctor
-    status=$? && [[ $status != 0 ]] && return $status
   fi
+
+  # Preparing brew for first time or sanitizing it if already installed
+  verbose "Checking Homebrew's sanity"
+  $NOOP brew doctor
+  status=$? && [[ $status != 0 ]] && return $status
 
   # Installing jq for querying json from bash
   # We need this early so we can query brew via json as well
