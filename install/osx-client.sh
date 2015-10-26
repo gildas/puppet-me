@@ -37,7 +37,7 @@ MODULE_virtualization_done=0
 MODULES=(homebrew puppet rubytools)
 ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
-CURRENT_VERSION='0.9.2'
+CURRENT_VERSION='0.9.3'
 GITHUB_ROOT='https://raw.githubusercontent.com/inin-apac/puppet-me'
 
 CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
@@ -1718,9 +1718,9 @@ function brew_install() # {{{2
   local app_name=$1
   local app_binary=${2:-$1}
 
-  brew_info=$(brew info --json=v1 --installed | jq --raw-output --compact-output 'map(select(.name == "$app_name"))[0]')
+  brew_info=$(brew info --json=v1 --installed | jq --raw-output --compact-output "map(select(.name == \"$app_name\"))[0]")
   if [[ "$brew_info" != "null" ]]; then
-    current=$(echo "$brew_info" | jq '.intalled | select (.poured_from_bottle == true)"')
+    current=$(echo "$brew_info" | jq --raw-output '.installed[0] | .version')
     verbose "$app_name $current is already installed via Homebrew"
     if [[ $upgrade == 1 ]]; then
       if [[ -n $version ]]; then
@@ -1741,7 +1741,7 @@ function brew_install() # {{{2
     return 0
   else
     verbose "Installing $app_name"
-    $NOOP brew install --appdir=/Applications $app_binary
+    $NOOP brew install --appdir=/Applications $app_name
     status=$? && [[ $status != 0 ]] && return $status
   fi
   # Do we want to pin this version?
@@ -1762,6 +1762,20 @@ function cask_install() # {{{2
     verbose "Installing $app_name"
     $NOOP brew cask install --appdir=/Applications "$app_name"
     status=$? && [[ $status != 0 ]] && return $status
+  fi
+  return 0
+} # }}}2
+
+function brew_tap() # {{{2
+{
+  local tap_name=$1
+
+  if [[ -z $(brew tap | grep "$tap_name") ]]; then
+    verbose "Tapping $tap_name"
+    brew tap $tap_name
+    status=$? && [[ $status != 0 ]] && return $status
+  else
+    verbose "$tap_name is already tapped"
   fi
   return 0
 } # }}}2
@@ -1790,10 +1804,13 @@ function install_xcode_tools() # {{{2
     if xcode-select -p > /dev/null 2>&1; then
       verbose "XCode Command Line tools are already installed"
       [[ -n ${NO_UPDATES[xcode]} ]] && echo "Not updating" && return 0
-      verbose "  Checking for updates"
-      product=$(softwareupdate --list 2>&1 | grep "\*.*Command Line" | tail -1 | sed -e 's/^   \* //' | tr -d '\n')
+      verbose "  Checking Apple.com for updates..."
+      updates=$(softwareupdate --list 2>&1)
       status=$? && [[ $status != 0 ]] && error "Cannot contact Apple Software Update. Error: $status" && return $status
+      verbose "Available updates:\n$updates"
+      product=$(echo "$updates" | grep "\*.*Command Line" | tail -1 | sed -e 's/^   \* //' | tr -d '\n')
       [[ -z $product ]] && verbose "All is well in AppleLand, tools are up-to-date!" && return 0
+      verbose "  Product found: $product"
       verbose "  Upgrading via Software Update"
     else
       verbose "  Installing via Software Update"
@@ -1844,11 +1861,12 @@ function install_homebrew() # {{{2
     verbose "Installing Homebrew..."
     $NOOP ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     status=$? && [[ $status != 0 ]] && return $status
-
-    # Preparing brew for first time or sanitizing it if already installed
-    $NOOP brew doctor
-    status=$? && [[ $status != 0 ]] && return $status
   fi
+
+  # Preparing brew for first time or sanitizing it if already installed
+  verbose "Checking Homebrew's sanity"
+  $NOOP brew doctor
+  status=$? && [[ $status != 0 ]] && return $status
 
   # Installing jq for querying json from bash
   # We need this early so we can query brew via json as well
@@ -1858,75 +1876,23 @@ function install_homebrew() # {{{2
     $NOOP brew install jq
     status=$? && [[ $status != 0 ]] && return $status
   else
-    brew_install jq --upgrade
-  fi
-
-  # Installing bash completion
-  if [[ ! -z $(brew info bash-completion | grep '^Not installed$') ]]; then
-    verbose "Installing bash completion..."
-    $NOOP brew install bash-completion
-    status=$? && [[ $status != 0 ]] && return $status
-  else
-    verbose "Homebrew bash completion is already installed"
-  fi
-
-  if [[ -z $(brew tap | grep 'homebrew/completions') ]]; then
-    brew tap homebrew/completions
+    brew_install jq
     status=$? && [[ $status != 0 ]] && return $status
   fi
 
-  if [[ -z $(brew tap | grep 'homebrew/binary') ]]; then
-    brew tap homebrew/binary
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
+  taps=('homebrew/completions' 'homebrew/binary' 'caskroom/cask' 'homebrew/versions' 'caskroom/versions')
+  brews=(bash-completion brew-cask bar p7zip)
 
-  # Installing Cask from http://caskroom.io
-  if [[ -z $(brew tap | grep 'caskroom/cask') ]]; then
-    brew tap caskroom/cask
+  for tap in ${taps[*]} ; do
+    brew_tap $tap
     status=$? && [[ $status != 0 ]] && return $status
-  fi
+  done
 
-  if [[ -z $(brew tap | grep 'homebrew/versions') ]]; then
-    brew tap homebrew/versions
+  for brew in ${brews[*]} ; do
+    brew_install $brew
     status=$? && [[ $status != 0 ]] && return $status
-  fi
+  done
 
-  if [[ -z $(brew tap | grep 'caskroom/versions') ]]; then
-    brew tap caskroom/versions
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
-
-  if [[ ! -z $(brew info brew-cask | grep '^Not installed$') ]]; then
-    verbose "Installing Homebrew Cask..."
-    $NOOP brew install brew-cask
-    status=$? && [[ $status != 0 ]] && return $status
-  else
-    version=$(brew cask --version)
-    latest=$(brew info brew-cask | awk '/^.*brew-cask: .*, .*$/ {print $3}' | sed 's/,//')
-    verbose "Homebrew Cask $version is already installed"
-    if [[ $version != $latest ]]; then
-      verbose "Homebrew Cask ${latest} is available, upgrading..."
-      $NOOP brew upgrade brew-cask
-    fi
-    $NOOP brew cask update
-  fi
-
-  if [[ ! -z $(brew info bar | grep '^Not installed$') ]]; then
-    verbose "Installing bar..."
-    $NOOP brew install bar
-    status=$? && [[ $status != 0 ]] && return $status
-  else
-    verbose "bar is already installed"
-  fi
-
-  # Installing 7zip for querying json from bash
-  if [[ ! -z $(brew info p7zip | grep '^Not installed$') ]]; then
-    verbose "Installing 7-Zip..."
-    $NOOP brew install p7zip
-    status=$? && [[ $status != 0 ]] && return $status
-  else
-    verbose "7-Zip is already installed"
-  fi
   MODULE_homebrew_done=1
   return 0
 } # }}}2
@@ -3141,7 +3107,7 @@ function main() # {{{
   trace_init "$@"
   parse_args "$@"
 
-  verbose "Welcome, $userid!"
+  verbose "Welcome, $userid! Let's prepare your Mac OS X v.$(sw_vers -productVersion)"
   sudo_init
 
   for module in ${MODULES[*]} ; do

@@ -117,10 +117,10 @@
     ]
   },
   {
-    "name": "CIC 2015R4 Patch 5",
-    "id": "CIC_2015R4_Patch5",
-    "checksum": { "type": "MD5", "value": "F37FA7AB3C3E85BFD9A513030F1BD684" },
-    "filename": "CIC_2015_R4_Patch5.iso",
+    "name": "CIC 2015R4 Patch 6",
+    "id": "CIC_2015R4_Patch6",
+    "checksum": { "type": "MD5", "value": "63DB35978802A938204DB494E54179EC" },
+    "filename": "CIC_2015_R4_Patch6.iso",
     "locations":
     [
       {
@@ -141,7 +141,7 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2015r4/P05/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2015r4/P06/"
       }
     ]
   },
@@ -187,10 +187,10 @@
     ]
   },
   {
-    "name": "Dialer 2015R4 Patch 5",
-    "id": "Dialer_2015R4_Patch5",
-    "checksum": { "type": "MD5", "value": "890061F84AF0CA38F0D79170B6F4CAA9" },
-    "filename": "Dialer_2015_R4_Patch5.iso",
+    "name": "Dialer 2015R4 Patch 6",
+    "id": "Dialer_2015R4_Patch6",
+    "checksum": { "type": "MD5", "value": "1B63732FFD559F080B8467CABAD3F1B8" },
+    "filename": "Dialer_2015_R4_Patch6.iso",
     "locations":
     [
       {
@@ -211,7 +211,7 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2015r4/P05/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2015r4/P06/"
       }
     ]
   },
@@ -257,10 +257,10 @@
     ]
   },
   {
-    "name": "Web Applications 2015R4 Patch 5",
-    "id": "WebApplications_2015R4_Patch5",
-    "checksum": { "type": "MD5", "value": "2D6799F1D5AB4E5849BB7743FE9EA3EC" },
-    "filename": "CIC_Web_Applications_2015_R4_Patch_5.zip",
+    "name": "Web Applications 2015R4 Patch 6",
+    "id": "WebApplications_2015R4_Patch6",
+    "checksum": { "type": "MD5", "value": "621628B08DA3B3B82D34DC452B684409" },
+    "filename": "CIC_Web_Applications_2015_R4_Patch_6.zip",
     "locations":
     [
       {
@@ -281,7 +281,7 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC_Web_Applications/IC_Web_Packaging_2015r4/P05/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC_Web_Applications/IC_Web_Packaging_2015r4/P06/"
       }
     ]
   },
