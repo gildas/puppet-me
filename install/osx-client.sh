@@ -1718,9 +1718,9 @@ function brew_install() # {{{2
   local app_name=$1
   local app_binary=${2:-$1}
 
-  brew_info=$(brew info --json=v1 --installed | jq --raw-output --compact-output 'map(select(.name == "$app_name"))[0]')
+  brew_info=$(brew info --json=v1 --installed | jq --raw-output --compact-output "map(select(.name == \"$app_name\"))[0]")
   if [[ "$brew_info" != "null" ]]; then
-    current=$(echo "$brew_info" | jq '.intalled | select (.poured_from_bottle == true)"')
+    current=$(echo "$brew_info" | jq --raw-output '.installed[0] | .version')
     verbose "$app_name $current is already installed via Homebrew"
     if [[ $upgrade == 1 ]]; then
       if [[ -n $version ]]; then
@@ -1741,7 +1741,7 @@ function brew_install() # {{{2
     return 0
   else
     verbose "Installing $app_name"
-    $NOOP brew install --appdir=/Applications $app_binary
+    $NOOP brew install --appdir=/Applications $app_name
     status=$? && [[ $status != 0 ]] && return $status
   fi
   # Do we want to pin this version?
