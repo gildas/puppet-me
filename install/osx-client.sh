@@ -1766,6 +1766,20 @@ function cask_install() # {{{2
   return 0
 } # }}}2
 
+function brew_tap() # {{{2
+{
+  local tap_name=$1
+
+  if [[ -z $(brew tap | grep "$tap_name") ]]; then
+    verbose "Tapping $tap_name"
+    brew tap $tap_name
+    status=$? && [[ $status != 0 ]] && return $status
+  else
+    verbose "$tap_name is already tapped"
+  fi
+  return 0
+} # }}}2
+
 function cask_uninstall() # {{{2
 {
   local app_name=$1
