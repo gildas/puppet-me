@@ -1804,10 +1804,13 @@ function install_xcode_tools() # {{{2
     if xcode-select -p > /dev/null 2>&1; then
       verbose "XCode Command Line tools are already installed"
       [[ -n ${NO_UPDATES[xcode]} ]] && echo "Not updating" && return 0
-      verbose "  Checking for updates"
-      product=$(softwareupdate --list 2>&1 | grep "\*.*Command Line" | tail -1 | sed -e 's/^   \* //' | tr -d '\n')
+      verbose "  Checking Apple.com for updates..."
+      updates=$(softwareupdate --list 2>&1)
       status=$? && [[ $status != 0 ]] && error "Cannot contact Apple Software Update. Error: $status" && return $status
+      verbose "Available updates:\n$updates"
+      product=$(echo "$updates" | grep "\*.*Command Line" | tail -1 | sed -e 's/^   \* //' | tr -d '\n')
       [[ -z $product ]] && verbose "All is well in AppleLand, tools are up-to-date!" && return 0
+      verbose "  Product found: $product"
       verbose "  Upgrading via Software Update"
     else
       verbose "  Installing via Software Update"
