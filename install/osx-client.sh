@@ -1873,75 +1873,23 @@ function install_homebrew() # {{{2
     $NOOP brew install jq
     status=$? && [[ $status != 0 ]] && return $status
   else
-    brew_install jq --upgrade
-  fi
-
-  # Installing bash completion
-  if [[ ! -z $(brew info bash-completion | grep '^Not installed$') ]]; then
-    verbose "Installing bash completion..."
-    $NOOP brew install bash-completion
-    status=$? && [[ $status != 0 ]] && return $status
-  else
-    verbose "Homebrew bash completion is already installed"
-  fi
-
-  if [[ -z $(brew tap | grep 'homebrew/completions') ]]; then
-    brew tap homebrew/completions
+    brew_install jq
     status=$? && [[ $status != 0 ]] && return $status
   fi
 
-  if [[ -z $(brew tap | grep 'homebrew/binary') ]]; then
-    brew tap homebrew/binary
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
+  taps=('homebrew/completions' 'homebrew/binary' 'caskroom/cask' 'homebrew/versions' 'caskroom/versions')
+  brews=(bash-completion brew-cask bar p7zip)
 
-  # Installing Cask from http://caskroom.io
-  if [[ -z $(brew tap | grep 'caskroom/cask') ]]; then
-    brew tap caskroom/cask
+  for tap in ${taps[*]} ; do
+    brew_tap $tap
     status=$? && [[ $status != 0 ]] && return $status
-  fi
+  done
 
-  if [[ -z $(brew tap | grep 'homebrew/versions') ]]; then
-    brew tap homebrew/versions
+  for brew in ${brews[*]} ; do
+    brew_install $brew
     status=$? && [[ $status != 0 ]] && return $status
-  fi
+  done
 
-  if [[ -z $(brew tap | grep 'caskroom/versions') ]]; then
-    brew tap caskroom/versions
-    status=$? && [[ $status != 0 ]] && return $status
-  fi
-
-  if [[ ! -z $(brew info brew-cask | grep '^Not installed$') ]]; then
-    verbose "Installing Homebrew Cask..."
-    $NOOP brew install brew-cask
-    status=$? && [[ $status != 0 ]] && return $status
-  else
-    version=$(brew cask --version)
-    latest=$(brew info brew-cask | awk '/^.*brew-cask: .*, .*$/ {print $3}' | sed 's/,//')
-    verbose "Homebrew Cask $version is already installed"
-    if [[ $version != $latest ]]; then
-      verbose "Homebrew Cask ${latest} is available, upgrading..."
-      $NOOP brew upgrade brew-cask
-    fi
-    $NOOP brew cask update
-  fi
-
-  if [[ ! -z $(brew info bar | grep '^Not installed$') ]]; then
-    verbose "Installing bar..."
-    $NOOP brew install bar
-    status=$? && [[ $status != 0 ]] && return $status
-  else
-    verbose "bar is already installed"
-  fi
-
-  # Installing 7zip for querying json from bash
-  if [[ ! -z $(brew info p7zip | grep '^Not installed$') ]]; then
-    verbose "Installing 7-Zip..."
-    $NOOP brew install p7zip
-    status=$? && [[ $status != 0 ]] && return $status
-  else
-    verbose "7-Zip is already installed"
-  fi
   MODULE_homebrew_done=1
   return 0
 } # }}}2
