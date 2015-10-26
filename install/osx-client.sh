@@ -3142,7 +3142,7 @@ function main() # {{{
   trace_init "$@"
   parse_args "$@"
 
-  verbose "Welcome, $userid!"
+  verbose "Welcome, $userid! Let's prepare your Mac OS X v.$(sw_vers -productVersion)"
   sudo_init
 
   for module in ${MODULES[*]} ; do
