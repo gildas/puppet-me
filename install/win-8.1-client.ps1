@@ -450,6 +450,14 @@ process # {{{2
       return 1
     }
 
+    # Get Hyper-V Integration Services For Linux Guests {{{4
+    if (! (Test-Path (Join-Path $env:WINDIR (Join-Path 'System32' 'lis4-0-11.iso'))))
+    {
+      Write-Verbose "Downloading Hyper-V Integration Services for Linux Guests"
+      Download-File "https://download.microsoft.com/download/F/C/2/FC210204-06E9-4E3B-9B50-08CF5FAB09D9/lis4-0-11.iso" (Join-Path $env:WINDIR (Join-Path 'System32' 'lis4-0-11.iso'))
+    } # }}}4
+
+
     # Set Virtual Machines Home {{{4
     if (! [string]::IsNullOrEmpty($VirtualMachinePath))
     {
