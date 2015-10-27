@@ -417,7 +417,7 @@ process # {{{2
 
   function Enable-HyperV([string] $VirtualMachinePath, [string] $VirtualHardDiskPath) # {{{3
   {
-    $RestartNeeded = false
+    $RestartNeeded = $false
     $hyperv_status = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -Verbose:$False
 
     if ($hyperv_status.State -eq 'Disabled')
@@ -1218,7 +1218,7 @@ process # {{{2
   Install-Package vagrant -Upgrade
   Install-VagrantPlugin 'vagrant-host-shell'
 
-  $RestartNeeded = false
+  $RestartNeeded = $false
   switch ($Virtualization)
   {
     'Hyper-V'
