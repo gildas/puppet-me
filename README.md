@@ -202,7 +202,6 @@ Where *options* are:
   Start-BitsTransfer ... win-8.1-client.ps1 -Credential (Get-Credential ACME\john.doe) [options]
   ```
 - -HyperV
-  When used, [Virtualbox](http://www.virtualbox.org) will be installed and configured.  
   When used, HyperV will be configured. A reboot might be necessary before building the first box.  
   Only one of -HyperV, -Virtualbox, -VMWare can be specified.  
 - -PackerBuild  
