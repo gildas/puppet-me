@@ -177,7 +177,11 @@ Param( # {{{2
   [Parameter(Position=14, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=12, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=14, Mandatory=$false, ParameterSetName='VMWare')]
-  [string] $Network
+  [string] $Network,
+  [Parameter(Position=15, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [Parameter(Position=13, Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=15, Mandatory=$false, ParameterSetName='VMWare')]
+  [string] $Branch
 ) # }}}2
 begin # {{{2
 {
@@ -189,6 +193,10 @@ begin # {{{2
   $PuppetMeShouldUpdate    = $Force -or !(Test-Path $PuppetMeLastUpdate) -or ([DateTime]::Now.AddHours(-$PuppetMeUpdateFrequency) -gt (Get-ChildItem $PuppetMeLastUpdate).LastWriteTime)
   $script:Credential       = $Credential
 
+  if (! [string]::IsNullOrEmpty($Branch))
+  {
+    $CURRENT_VERSION = $Branch
+  }
   if ($PuppetMeShouldUpdate) { Write-Verbose "All installs should be run" } else { Write-Verbose "Installs were checked recently, let's give the Internet a break!" }
   switch($PSCmdlet.ParameterSetName)
   {
