@@ -110,7 +110,7 @@
   Will install all the software and Virtualbox in their default locations.
   Once installed, packer is invoked to build all Vagrant box available with VMWare Workstation.
 .NOTES
-  Version 0.9.3
+  Version 0.9.4
 #>
 [CmdLetBinding(SupportsShouldProcess, DefaultParameterSetName="Usage")]
 Param( # {{{2
@@ -185,7 +185,7 @@ Param( # {{{2
 ) # }}}2
 begin # {{{2
 {
-  $CURRENT_VERSION = '0.9.3'
+  $CURRENT_VERSION = '0.9.4'
   $GitHubRoot      = "https://raw.githubusercontent.com/inin-apac/puppet-me"
   $PuppetMeLastUpdate      = "${env:TEMP}/last_updated-puppetme"
   $PuppetMeUpdateFrequency = 4 # hours
