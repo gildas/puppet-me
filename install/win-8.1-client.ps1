@@ -1236,6 +1236,23 @@ process # {{{2
       {
         $RestartNeeded = $true
       }
+
+      if ($OSVersion.Major -ge 10)
+      {
+        # We might need to patch get_vm_status.ps1
+        $script_path = [IO.Path]::Combine((Split-Path (Split-Path (Get-Command vagrant).Source)), 'embedded','gems','gems',  ((vagrant --version) -replace ' ','-'), 'plugins', 'providers', 'hyperv', 'scripts', 'get_vm_status.ps1')
+        if ((Test-Path $script_path))
+        {
+          $script = Get-Content $script_path
+          $old_exception = 'Microsoft.HyperV.PowerShell.VirtualizationOperationFailedException'
+          if ($script -match $old_exception)
+          {
+            Write-Verbose "Patching Vagrant's scripts for Windows 10 and Hyper-V"
+            $new_exception = 'Microsoft.HyperV.PowerShell.VirtualizationException'
+            Set-Content -Path $vagrant_posh -Value ($script -replace $old_exception,$new_exception) -Force
+          }
+        }
+      }
     }
     'Virtualbox'
     {
