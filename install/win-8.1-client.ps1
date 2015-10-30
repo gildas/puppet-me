@@ -16,6 +16,7 @@
     - Packer Windows building environment
 
   A Virtualization platform will also be installed and/or configured. Supported platforms are:
+    - Hyper-V
     - Virtualbox
     - VMWare Workstation
 
@@ -32,6 +33,9 @@
   Prints this help and exits.
 .PARAMETER Version
   Displays the version of this installer and exists.
+.PARAMETER HyperV
+  When used, HyperV will be configured. A reboot might be necessary before building the first box.
+  Only one of -HyperV, -Virtualbox, -VMWare can be specified.
 .PARAMETER Virtualbox
   When used, Virtualbox will be installed and configured.
   Only one of -HyperV, -Virtualbox, -VMWare can be specified.
@@ -41,10 +45,13 @@
 .PARAMETER VMWareLicense
   Contains the license key to configure VMWare Workstation.  
   If not provided, the license key will have to be entered manually the first time VMWare is used.
-.PARAMETER VirtualMachinesHome
-  Contains the location virtual machines will be stored.  
-  The Default value depends on the Virtualization platform that was chosen.
-  Alias: VMHome
+.PARAMETER VirtualMachinePath
+  Contains the location where virtual machines will be stored.  
+  The Default value depends on the Virtualization platform that was chosen.  
+  Alias: VMHome, VirtualMachines, VirtualMachinesHome  
+.PARAMETER VirtualHardDiskPath
+  Contains the location where virtual hard disks will be stored, this is for Hyper-V only.  
+  Alias: VHDHome, VirtualHardDisks, VirtualHardDisksHome, VirtualHardDisksPath  
 .PARAMETER PackerHome
   Contains the location where the Packer Windows building environment will be stored.
   When used, it will update $env:PACKER_HOME
@@ -103,7 +110,7 @@
   Will install all the software and Virtualbox in their default locations.
   Once installed, packer is invoked to build all Vagrant box available with VMWare Workstation.
 .NOTES
-  Version 0.9.3
+  Version 0.9.4
 #>
 [CmdLetBinding(SupportsShouldProcess, DefaultParameterSetName="Usage")]
 Param( # {{{2
@@ -111,53 +118,74 @@ Param( # {{{2
   [switch] $Usage,
   [Parameter(Position=1,  Mandatory=$true, ParameterSetName='Version')]
   [switch] $Version,
+  [Parameter(Position=1,  Mandatory=$true,  ParameterSetName='Hyper-V')]
+  [Alias('Hyper-V')]
+  [switch] $HyperV,
   [Parameter(Position=1,  Mandatory=$true,  ParameterSetName='Virtualbox')]
   [switch] $Virtualbox,
   [Parameter(Position=1,  Mandatory=$true,  ParameterSetName='VMWare')]
   [switch] $VMWare,
+  [Parameter(Position=2,  Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=2,  Mandatory=$false, ParameterSetName='VMWare')]
   [Parameter(Position=2,  Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Alias('VMHome', 'VirtualMachines')]
-  [string] $VirtualMachinesHome,
-  [Parameter(Position=3,  Mandatory=$false, ParameterSetName='VMWare')]
+  [Alias('VMHome', 'VirtualMachines', 'VirtualMachinesHome', 'VirtualMachinesPath')]
+  [string] $VirtualMachinePath,
+  [Parameter(Position=3,  Mandatory=$false, ParameterSetName='Hyper-V')]
+  [Alias('VHDHome', 'VirtualHardDisks', 'VirtualHardDisksHome', 'VirtualHardDisksPath')]
+  [string] $VirtualHardDiskPath,
+  [Parameter(Position=4,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VMWareLicense,
+  [Parameter(Position=5,  Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=3,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=4,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $PackerHome,
+  [Parameter(Position=6,  Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=4,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=5,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VagrantHome,
   [Parameter(Position=6,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VagrantVMWareLicense,
+  [Parameter(Position=7,  Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=5,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=7,  Mandatory=$false, ParameterSetName='VMWare')]
   [Alias('DaasCache')]
   [string] $CacheRoot,
+  [Parameter(Position=8,  Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=6,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=8,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $CacheConfig,
+  [Parameter(Position=9,  Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=7,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=9,  Mandatory=$false, ParameterSetName='VMWare')]
   [switch] $CacheKeep,
+  [Parameter(Position=10, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=8,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=10, Mandatory=$false, ParameterSetName='VMWare')]
   [Management.Automation.PSCredential] $Credential,
+  [Parameter(Position=11, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=9,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=11, Mandatory=$false, ParameterSetName='VMWare')]
   [string[]] $PackerBuild,
+  [Parameter(Position=12, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=10, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=12, Mandatory=$false, ParameterSetName='VMWare')]
   [string[]] $PackerLoad,
+  [Parameter(Position=13, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=11, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=13, Mandatory=$false, ParameterSetName='VMWare')]
   [switch] $NoUpdateCache,
+  [Parameter(Position=14, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=12, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=14, Mandatory=$false, ParameterSetName='VMWare')]
-  [string] $Network
+  [string] $Network,
+  [Parameter(Position=15, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [Parameter(Position=13, Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=15, Mandatory=$false, ParameterSetName='VMWare')]
+  [string] $Branch
 ) # }}}2
 begin # {{{2
 {
-  $CURRENT_VERSION = '0.9.3'
+  $CURRENT_VERSION = '0.9.4'
   $GitHubRoot      = "https://raw.githubusercontent.com/inin-apac/puppet-me"
   $PuppetMeLastUpdate      = "${env:TEMP}/last_updated-puppetme"
   $PuppetMeUpdateFrequency = 4 # hours
@@ -165,6 +193,10 @@ begin # {{{2
   $PuppetMeShouldUpdate    = $Force -or !(Test-Path $PuppetMeLastUpdate) -or ([DateTime]::Now.AddHours(-$PuppetMeUpdateFrequency) -gt (Get-ChildItem $PuppetMeLastUpdate).LastWriteTime)
   $script:Credential       = $Credential
 
+  if (! [string]::IsNullOrEmpty($Branch))
+  {
+    $CURRENT_VERSION = $Branch
+  }
   if ($PuppetMeShouldUpdate) { Write-Verbose "All installs should be run" } else { Write-Verbose "Installs were checked recently, let's give the Internet a break!" }
   switch($PSCmdlet.ParameterSetName)
   {
@@ -240,6 +272,8 @@ begin # {{{2
   }
   [Environment]::SetEnvironmentVariable('DAAS_CACHE', $CacheRoot, 'User')
 
+  $OSVersion = (Get-WmiObject Win32_OperatingSystem).Version -split '\.'
+  $OSVersion = @{ "Major" = $OSVersion[0]; "Minor" = $OSVersion[1]; "Build" = $OSVersion[2] }
 
   Write-Debug "Installing Virtualization:    $Virtualization"
   Write-Debug "Installing Packer Windows in: $PackerHome"
@@ -391,34 +425,80 @@ process # {{{2
     }
   } # }}}3
 
-  function Enable-HyperV() # {{{3
+  function Enable-HyperV([string] $VirtualMachinePath, [string] $VirtualHardDiskPath) # {{{3
   {
+    $RestartNeeded = $false
     $hyperv_status = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -Verbose:$False
 
     if ($hyperv_status.State -eq 'Disabled')
     {
       Write-Verbose "Enabling Hyper-V"
-      Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All -NoRestart
+      $hyperv_status = Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All -NoRestart
+      if ($hyperv_status.RestartNeeded) { $RestartNeeded = $true }
 
       $hyperv_status = Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -Verbose:$False
       if ($hyperv_status.State -eq 'Disabled')
       {
         Throw "Unable to enable Hyper-V"
       }
-      elseif ($hyperv_status.State -eq 'EnablePending')
+      elseif (($hyperv_status.State -eq 'EnablePending') -or ($hyperv_status.State -eq 'Enabled'))
       {
-        Write-Warning "Hyper-V is enabled, but needs a restart before being usable"
+        Write-Warning "Hyper-V is enabled"
       }
     }
     elseif  ($hyperv_status.State -eq 'Enabled')
     {
       Write-Verbose "Hyper-V is already enabled"
-      return
     }
     elseif ($hyperv_status.State -eq 'EnablePending')
     {
       Write-Warning "Hyper-V is being enabled and needs a restart before being usable"
     }
+    if ($RestartNeeded)
+    {
+      Write-Warning "The Host needs a restart before Hyper-V can be used"
+      return 1
+    }
+
+    # Get Hyper-V Integration Services For Linux Guests {{{4
+    if (! (Test-Path (Join-Path $env:WINDIR (Join-Path 'System32' 'lis4-0-11.iso'))))
+    {
+      Write-Verbose "Downloading Hyper-V Integration Services for Linux Guests"
+      Download-File "https://download.microsoft.com/download/F/C/2/FC210204-06E9-4E3B-9B50-08CF5FAB09D9/lis4-0-11.iso" (Join-Path $env:WINDIR (Join-Path 'System32' 'lis4-0-11.iso'))
+    } # }}}4
+
+    # Set Virtual Machines Home {{{4
+    if (! [string]::IsNullOrEmpty($VirtualMachinePath))
+    {
+      if (! (Test-Path $VirtualMachinePath))
+      {
+        New-Item -Path $VirtualMachinePath -ItemType Directory | Out-Null
+      }
+      $current_home = Get-VMHost | Select -ExpandProperty VirtualMachinePath
+      Write-Verbose "Current Virtual Machines Home: $current_home"
+      if ($current_home -ne $VirtualMachinePath)
+      {
+        Write-Verbose "  Updating to $VirtualMachinePath"
+        Set-VMHost -VirtualMachinePath $VirtualMachinePath -ErrorAction Stop
+      }
+    } # }}}4
+
+    # Set Virtual Hard Disks Home {{{4
+    if (! [string]::IsNullOrEmpty($VirtualHardDiskPath))
+    {
+      if (! (Test-Path $VirtualHardDiskPath))
+      {
+        New-Item -Path $VirtualHardDiskPath -ItemType Directory | Out-Null
+      }
+      $current_home = Get-VMHost | Select -ExpandProperty VirtualHardDiskPath
+      Write-Verbose "Current Virtual Machines Home: $current_home"
+      if ($current_home -ne $VirtualHardDiskPath)
+      {
+        Write-Verbose "  Updating to $VirtualHardDiskPath"
+        Set-VMHost -VirtualHardDiskPath $VirtualHardDiskPath -ErrorAction Stop
+      }
+    } # }}}4
+    return 0
   } # }}}3
 
   function Disable-HyperV() # {{{3
@@ -451,7 +531,7 @@ process # {{{2
     }
   } # }}}3
 
-  function Install-Virtualbox([string] $VirtualMachinesHome) # {{{3
+  function Install-Virtualbox([string] $VirtualMachinePath) # {{{3
   {
     Disable-HyperV
     Install-Package 'virtualbox' -Upgrade
@@ -463,7 +543,7 @@ process # {{{2
     if (! $?) { Throw "Cannot query Virtualbox for its version, Error: $LastExitCode" }
 
     # Set Virtual Machines Home {{{4
-    if (! [string]::IsNullOrEmpty($VirtualMachinesHome))
+    if (! [string]::IsNullOrEmpty($VirtualMachinePath))
     {
       $results = & $vboxManage list systemproperties | Select-String -Pattern '^Default machine folder:\s*(.*)'
 
@@ -471,18 +551,18 @@ process # {{{2
       {
         $current_home = $results.matches[0].Groups[1].Value
         Write-Verbose "Current Virtual Machines Home: $current_home"
-        if ($current_home -ne $VirtualMachinesHome)
+        if ($current_home -ne $VirtualMachinePath)
         {
-          Write-Verbose "  Updating to $VirtualMachinesHome"
-          & $vboxManage setproperty machinefolder "$VirtualMachinesHome"
-          if (! $?) { Throw "Cannot set Virtualbox Virtual Machine home to `"$VirtualMachinesHome`", Error: $LastExitCode" }
+          Write-Verbose "  Updating to $VirtualMachinePath"
+          & $vboxManage setproperty machinefolder "$VirtualMachinePath"
+          if (! $?) { Throw "Cannot set Virtualbox Virtual Machine home to `"$VirtualMachinePath`", Error: $LastExitCode" }
         }
       }
       else
       {
-        Write-Verbose "  Setting to $VirtualMachinesHome"
-        & $vboxManage setproperty machinefolder "$VirtualMachinesHome"
-        if (! $?) { Throw "Cannot set Virtualbox Virtual Machine home to `"$VirtualMachinesHome`", Error: $LastExitCode" }
+        Write-Verbose "  Setting to $VirtualMachinePath"
+        & $vboxManage setproperty machinefolder "$VirtualMachinePath"
+        if (! $?) { Throw "Cannot set Virtualbox Virtual Machine home to `"$VirtualMachinePath`", Error: $LastExitCode" }
       }
     } # }}}4
 
@@ -506,7 +586,7 @@ process # {{{2
     } # }}}4
   } # }}}3
 
-  function Install-VMWare([string] $VirtualMachinesHome, [string] $License) # {{{3
+  function Install-VMWare([string] $VirtualMachinePath, [string] $License) # {{{3
   {
     Disable-HyperV
     if ([string]::IsNullOrEmpty($License))
@@ -519,11 +599,11 @@ process # {{{2
     }
 
     # Set Virtual Machines Home {{{4
-    if (! [string]::IsNullOrEmpty($VirtualMachinesHome))
+    if (! [string]::IsNullOrEmpty($VirtualMachinePath))
     {
-      if (! (Test-Path $VirtualMachinesHome))
+      if (! (Test-Path $VirtualMachinePath))
       {
-        New-Item -Path $VirtualMachinesHome -ItemType Directory | Out-Null
+        New-Item -Path $VirtualMachinePath -ItemType Directory | Out-Null
       }
 
       $filename = Join-Path $env:APPDATA (Join-Path 'VMWare' 'preferences.ini')
@@ -538,10 +618,10 @@ process # {{{2
       $current_home = $preferences['prefvmx.defaultVMPath']
 
       Write-Verbose "Current Virtual Machines Home: $current_home"
-      if (($current_home -eq $null) -or ($current_home -ne $VirtualMachinesHome))
+      if (($current_home -eq $null) -or ($current_home -ne $VirtualMachinePath))
       {
-        Write-Verbose "  Updating to $VirtualMachinesHome"
-        $preferences['prefvmx.defaultVMPath'] = $VirtualMachinesHome
+        Write-Verbose "  Updating to $VirtualMachinePath"
+        $preferences['prefvmx.defaultVMPath'] = $VirtualMachinePath
         If (! (Test-Path (Join-Path $env:APPDATA 'VMWare')))
         {
           New-Item -Path (Join-Path $env:APPDATA 'VMWare') -ItemType Directory | Out-Null
@@ -1155,19 +1235,40 @@ process # {{{2
   Install-Package vagrant -Upgrade
   Install-VagrantPlugin 'vagrant-host-shell'
 
+  $RestartNeeded = $false
   switch ($Virtualization)
   {
     'Hyper-V'
     {
-      Enable-HyperV
+      if ((Enable-HyperV $VirtualMachinePath $VirtualHardDiskPath) -eq 1)
+      {
+        $RestartNeeded = $true
+      }
+
+      if ($OSVersion.Major -ge 10)
+      {
+        # We might need to patch get_vm_status.ps1
+        $script_path = [IO.Path]::Combine((Split-Path (Split-Path (Get-Command vagrant).Source)), 'embedded','gems','gems',  ((vagrant --version) -replace ' ','-'), 'plugins', 'providers', 'hyperv', 'scripts', 'get_vm_status.ps1')
+        if ((Test-Path $script_path))
+        {
+          $script = Get-Content $script_path
+          $old_exception = 'Microsoft.HyperV.PowerShell.VirtualizationOperationFailedException'
+          if ($script -match $old_exception)
+          {
+            Write-Verbose "Patching Vagrant's scripts for Windows 10 and Hyper-V"
+            $new_exception = 'Microsoft.HyperV.PowerShell.VirtualizationException'
+            Set-Content -Path $vagrant_posh -Value ($script -replace $old_exception,$new_exception) -Force
+          }
+        }
+      }
     }
     'Virtualbox'
     {
-      Install-Virtualbox $VirtualMachinesHome
+      Install-Virtualbox $VirtualMachinePath
     }
     'VMWare'
     {
-      Install-VMWare $VirtualMachinesHome $VMWareLicense
+      Install-VMWare $VirtualMachinePath $VMWareLicense
       $args = @{}
       if ($PSBoundParameters.ContainsKey('VagrantVMWareLicense')) { $args['License'] = $VagrantVMWareLicense }
       Install-VagrantPlugin 'vagrant-vmware-workstation' @args
@@ -1176,7 +1277,12 @@ process # {{{2
   Update-VagrantPlugin -All
 
   Install-Package packer -Upgrade
-  
+
+  if ($Virtualization -eq 'Hyper-V')
+  {
+    Install-PackerPlugin -Name 'Hyper-V' -Url "${GitHubRoot}/${CURRENT_VERSION}/config/windows/hyper-v/packer-hyper-v.7z"
+  }
+
   Install-PackerPlugin -Name 'Provisioner Wait' -Url https://github.com/gildas/packer-provisioner-wait/releases/download/v0.1.0/packer-provisioner-wait-0.1.0-win.7z
 
   Install-Package puppet
@@ -1233,6 +1339,12 @@ process # {{{2
     $args = @{}
     if ($PSBoundParameters.ContainsKey('Network')) { $args['Network'] = $Network }
     Cache-Source -Uri $CacheConfig -Destination $CacheRoot @args
+  }
+
+  if ($RestartNeeded)
+  {
+     Write-Warn "Your computer is not ready yet and cannot build boxes, please reboot and rerun this script"
+     return 1
   }
 
   if ($PackerBuild.Length -gt 0)

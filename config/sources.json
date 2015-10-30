@@ -42,7 +42,7 @@
     [
       {
         "location": "APAC",
-        "network":  "172.22.(16|32|40|80|81).[0-9]+/21|3",
+        "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
         "url": "smb://apac.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/"
       },
@@ -69,7 +69,7 @@
     [
       {
         "location": "APAC",
-        "network":  "172.22.(16|32|40|80|81).[0-9]+/21|3",
+        "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
         "url": "smb://apac.inin.com/Software/Microsoft/Evaluation/SQLServer/2014/"
       },
@@ -96,7 +96,7 @@
     [
       {
         "location": "APAC",
-        "network":  "172.22.(16|32|40|80|81).[0-9]+/21|3",
+        "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
         "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R4/"
       },
@@ -125,7 +125,7 @@
     [
       {
         "location": "APAC",
-        "network":  "172.22.(16|32|40|80|81).[0-9]+/21|3",
+        "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
         "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R4/"
       },
@@ -166,7 +166,7 @@
     [
       {
         "location": "APAC",
-        "network":  "172.22.(16|32|40|80|81).[0-9]+/21|3",
+        "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
         "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2015R4/"
       },
@@ -195,7 +195,7 @@
     [
       {
         "location": "APAC",
-        "network":  "172.22.(16|32|40|80|81).[0-9]+/21|3",
+        "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
         "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2015R4/"
       },
@@ -236,7 +236,7 @@
     [
       {
         "location": "APAC",
-        "network":  "172.22.(16|32|40|80|81).[0-9]+/21|3",
+        "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
         "url": "smb://apac.inin.com/Software/ININ/Web%20Applications/2015R4/"
       },
@@ -265,7 +265,7 @@
     [
       {
         "location": "APAC",
-        "network":  "172.22.(16|32|40|80|81).[0-9]+/21|3",
+        "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
         "url": "smb://apac.inin.com/Software/ININ/Web%20Applications/2015R4/"
       },

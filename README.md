@@ -201,6 +201,10 @@ Where *options* are:
   ```powershell
   Start-BitsTransfer ... win-8.1-client.ps1 -Credential (Get-Credential ACME\john.doe) [options]
   ```
+- -HyperV  
+  When used, Hyper-V will be configured.  
+  A reboot might be necessary before building the first box.  
+  Only one of -HyperV, -Virtualbox, -VMWare can be specified.  
 - -PackerBuild  
   When all software is installed, [packer-windows](https://github.com/gildas/packer-windows) will build the given list of [Vagrant](http://vagrantup.com) boxes.  
 - -PackerHome *path*  
@@ -224,10 +228,13 @@ Where *options* are:
 - -Virtualbox  
   When used, [Virtualbox](http://www.virtualbox.org) will be installed and configured.  
   Only one of -HyperV, -Virtualbox, -VMWare can be specified.  
-- -VirtualMachinesHome *path*  
+- -VirtualHardDiskPath *path*  
+  Contains the location where virtual hard disks will be stored, this is for Hyper-V only.  
+  Alias: VHDHome, VirtualHardDisks, VirtualHardDisksHome, VirtualHardDisksPath  
+- -VirtualMachinePath *path*  
   Contains the location virtual machines will be stored.    
   The Default value depends on the Virtualization platform that was chosen.  
-  Alias: VMHome  
+  Alias: VMHome, VirtualMachines, VirtualMachinesHome  
 - -VMWare  
   When used, [VMWare Workstation](http://www.vmware.com/products/workstation) will be installed and configured.  
   Only one of -HyperV, -Virtualbox, -VMWare can be specified.  

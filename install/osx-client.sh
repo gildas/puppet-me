@@ -37,7 +37,7 @@ MODULE_virtualization_done=0
 MODULES=(homebrew puppet rubytools)
 ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
-CURRENT_VERSION='0.9.3'
+CURRENT_VERSION='0.9.4'
 GITHUB_ROOT='https://raw.githubusercontent.com/inin-apac/puppet-me'
 
 CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
@@ -2722,6 +2722,18 @@ function parse_args() # {{{2
   while :; do
     trace "Analyzing option \"$1\""
     case $1 in
+      --branch)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing"
+        CURRENT_VERSION=$2
+        shift 2
+        continue
+      ;;
+      --branch=*?)
+        CURRENT_VERSION=${1#*=} # delete everything up to =
+      ;;
+      --branch=)
+        die "Argument for option $1 is missing"
+        ;;
       --credentials|--creds)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing"
         keychain_set_password --kind=internet --url=$2
@@ -3080,6 +3092,9 @@ function parse_args() # {{{2
     esac
     shift
   done
+
+  CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
+  MODULE_updateme_source="${GITHUB_ROOT}/${CURRENT_VERSION}/config/osx/UpdateMe.7z"
 
   if [[ -z $PROMPT_USE_GUI ]]; then
     trace "PROMPT_USE_GUI was not set, detecting..."
