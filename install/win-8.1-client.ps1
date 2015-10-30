@@ -86,6 +86,8 @@
   Without Force, the script will try to perform these only once every few hours.
   The idea behind is software and downloads do not change very often, so if they are locally stored in the last 4 hours,
   there is a high chance they are up-to-date. This flash allows to override this assumption.
+.PARAMETER Branch
+  Can be used to try in-development code (sources, etc)
 .EXAMPLE
   Start-BitsTransfer http://tinyurl.com/win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -Version
   Will print the current version of Puppet-Me
