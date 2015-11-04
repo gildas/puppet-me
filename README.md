@@ -186,6 +186,8 @@ Where *options* are:
 - -Branch *name*  
   Use a different git branch to run puppet-me.  
   This is used for Beta, Release Candidate phases.  
+- -BridgedNetAdapterName  
+  Contains the name of the network adapter to build a bridged switch for the Virtual Machines.  
 - -CacheKeep  
   Keep previous versions of downloads (e.g., keep CIC 2015R1, 2015R2, patches)  
   Default: previous versions are deleted  

@@ -45,6 +45,8 @@
 .PARAMETER VMWareLicense
   Contains the license key to configure VMWare Workstation.  
   If not provided, the license key will have to be entered manually the first time VMWare is used.
+.PARAMETER BridgedNetAdapterName
+  Contains the name of the network adapter to build a bridged switch for the Virtual Machines
 .PARAMETER VirtualMachinePath
   Contains the location where virtual machines will be stored.  
   The Default value depends on the Virtualization platform that was chosen.  
@@ -135,54 +137,58 @@ Param( # {{{2
   [Parameter(Position=3,  Mandatory=$false, ParameterSetName='Hyper-V')]
   [Alias('VHDHome', 'VirtualHardDisks', 'VirtualHardDisksHome', 'VirtualHardDisksPath')]
   [string] $VirtualHardDiskPath,
+  [Parameter(Position=4,  Mandatory=$false, ParameterSetName='Hyper-V')]
+  [Parameter(Position=3,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=3,  Mandatory=$false, ParameterSetName='VMWare')]
+  [string] $BridgedNetAdapterName = 'Ethernet',
   [Parameter(Position=4,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VMWareLicense,
   [Parameter(Position=5,  Mandatory=$false, ParameterSetName='Hyper-V')]
-  [Parameter(Position=3,  Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Parameter(Position=4,  Mandatory=$false, ParameterSetName='VMWare')]
-  [string] $PackerHome,
-  [Parameter(Position=6,  Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=4,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=5,  Mandatory=$false, ParameterSetName='VMWare')]
-  [string] $VagrantHome,
+  [string] $PackerHome,
+  [Parameter(Position=6,  Mandatory=$false, ParameterSetName='Hyper-V')]
+  [Parameter(Position=5,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=6,  Mandatory=$false, ParameterSetName='VMWare')]
+  [string] $VagrantHome,
+  [Parameter(Position=7,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VagrantVMWareLicense,
   [Parameter(Position=7,  Mandatory=$false, ParameterSetName='Hyper-V')]
-  [Parameter(Position=5,  Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Parameter(Position=7,  Mandatory=$false, ParameterSetName='VMWare')]
+  [Parameter(Position=6,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=8,  Mandatory=$false, ParameterSetName='VMWare')]
   [Alias('DaasCache')]
   [string] $CacheRoot,
   [Parameter(Position=8,  Mandatory=$false, ParameterSetName='Hyper-V')]
-  [Parameter(Position=6,  Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Parameter(Position=8,  Mandatory=$false, ParameterSetName='VMWare')]
-  [string] $CacheConfig,
-  [Parameter(Position=9,  Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=7,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=9,  Mandatory=$false, ParameterSetName='VMWare')]
-  [switch] $CacheKeep,
-  [Parameter(Position=10, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [string] $CacheConfig,
+  [Parameter(Position=9,  Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=8,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=10, Mandatory=$false, ParameterSetName='VMWare')]
-  [Management.Automation.PSCredential] $Credential,
-  [Parameter(Position=11, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [switch] $CacheKeep,
+  [Parameter(Position=10, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=9,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=11, Mandatory=$false, ParameterSetName='VMWare')]
-  [string[]] $PackerBuild,
-  [Parameter(Position=12, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [Management.Automation.PSCredential] $Credential,
+  [Parameter(Position=11, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=10, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=12, Mandatory=$false, ParameterSetName='VMWare')]
-  [string[]] $PackerLoad,
-  [Parameter(Position=13, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [string[]] $PackerBuild,
+  [Parameter(Position=12, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=11, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=13, Mandatory=$false, ParameterSetName='VMWare')]
-  [switch] $NoUpdateCache,
-  [Parameter(Position=14, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [string[]] $PackerLoad,
+  [Parameter(Position=13, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=12, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=14, Mandatory=$false, ParameterSetName='VMWare')]
-  [string] $Network,
-  [Parameter(Position=15, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [switch] $NoUpdateCache,
+  [Parameter(Position=14, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=13, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=15, Mandatory=$false, ParameterSetName='VMWare')]
+  [string] $Network,
+  [Parameter(Position=15, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [Parameter(Position=14, Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=16, Mandatory=$false, ParameterSetName='VMWare')]
   [string] $Branch
 ) # }}}2
 begin # {{{2
@@ -215,6 +221,8 @@ begin # {{{2
     'Hyper-V'
     {
       $Virtualization = 'Hyper-V'
+      $HyperVBridgedSwitch = 'Bridged Switch'
+      $HyperVPrivateSwitch = 'Private Switch'
     }
     'Virtualbox'
     {
@@ -1259,6 +1267,27 @@ process # {{{2
       if ((Enable-HyperV $VirtualMachinePath $VirtualHardDiskPath) -eq 1)
       {
         $RestartNeeded = $true
+      }
+
+      if (Get-VMSwitch -Name $HyperVPrivateSwitch -ErrorAction SilentlyContinue)
+      {
+        Write-Verbose "Hyper-V already has a Private Switch"
+      }
+      else
+      {
+        New-VMSwitch -Name $HyperVPrivateSwitch -SwitchType Internal -Notes 'Private Switch'
+      }
+
+      if (Get-VMSwitch -Name $HyperVBridgedSwitch -ErrorAction SilentlyContinue)
+      {
+        Write-Verbose "Hyper-V already has a Bridged Switch"
+      }
+      else
+      {
+        $nic = Get-NetAdapter -Name $BridgedNetAdapterName -ErrorAction SilentlyContinue
+        if ($nic -eq $null) { Throw "Cannot find Network Adapter: $BridgedNetAdapterName, error: $LastExitCode" }
+        if ($nic.Status -ne 'UP') { Throw "Network Adapter '$BridgedNetAdapterName' is not connected, error: $LastExitCode" }
+        New-VMSwitch -Name $HyperVBridgedSwitch -SwitchType External -NetAdapterName $nic.Name -AllowManagementOS $true -Notes 'Bridged Switch'
       }
 
       if ($OSVersion.Major -ge 10)
