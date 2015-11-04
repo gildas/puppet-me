@@ -1282,7 +1282,7 @@ process # {{{2
 
   if ($Virtualization -eq 'Hyper-V')
   {
-    Install-PackerPlugin -Name 'Hyper-V' -Url "${GitHubRoot}/${CURRENT_VERSION}/config/windows/hyper-v/packer-hyper-v.7z"
+    Install-PackerPlugin -Name 'Hyper-V' -Url "${GitHubRoot}/${CURRENT_VERSION}/config/windows/hyper-v/packer-builder-hyperv-0.1.0-win.7z"
   }
 
   Install-PackerPlugin -Name 'Provisioner Wait' -Url https://github.com/gildas/packer-provisioner-wait/releases/download/v0.1.0/packer-provisioner-wait-0.1.0-win.7z
