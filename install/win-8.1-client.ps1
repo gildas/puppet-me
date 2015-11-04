@@ -1133,6 +1133,28 @@ process # {{{2
                 try
                 {
                   Start-BitsTransfer -Source $source_url -Destination $source_destination @request_args -ErrorAction Stop
+                  Write-Verbose "Successful download"
+                  if ($creds -ne $null)
+                  {
+                    Set-VaultCredential -Resource $source_root -Credential $creds
+                  }
+                  if ((Test-Path $source_destination) -and ($source.checksum -ne $null))
+                  {
+                    Write-Verbose "  Calculating $($source.checksum.type) checksum"
+                    $checksum = (Get-FileHash $source_destination -Algorithm $source.checksum.type).Hash
+                    if ($checksum -eq $source.checksum.value)
+                    {
+                      Write-Output "  Verified ($($source.checksum.type))"
+                      Write-Verbose "  Exporting its $($source.checksum.type) checksum"
+                      Write-Output $checksum | Set-Content "${source_destination}.$($source.checksum.type)" -Encoding Ascii
+                    }
+                    else
+                    {
+                      Write-Verbose "  $($source.checksum.type) Checksums differ, downloading again..."
+                      Write-Verbose "    (expected: $($source.checksum), local: $checksum)"
+                      break
+                    }
+                  }
                   $downloaded=$true
                 }
                 catch
@@ -1158,14 +1180,6 @@ process # {{{2
                   {
                     break
                   }
-                }
-              }
-              if ($downloaded)
-              {
-                Write-Verbose "Successful download"
-                if ($creds -ne $null)
-                {
-                  Set-VaultCredential -Resource $source_root -Credential $creds
                 }
               }
               if (! $downloaded)
