@@ -183,6 +183,9 @@ Start-BitsTransfer http://tinyurl.com/puppet-me-win-8 $env:TEMP\_.ps1 ; & $env:T
 
 Where *options* are:
 
+- -Branch *name*  
+  Use a different git branch to run puppet-me.  
+  This is used for Beta, Release Candidate phases.  
 - -CacheKeep  
   Keep previous versions of downloads (e.g., keep CIC 2015R1, 2015R2, patches)  
   Default: previous versions are deleted  
@@ -247,7 +250,7 @@ Note:
 
 To use the development version, use this command instead:
 ```powershell
-Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-dev $env:TEMP\_.ps1 ; & $env:TEMP\_.ps1 -CacheConfig https://raw.githubusercontent.com/inin-apac/puppet-me/dev/config/sources.json [options]
+Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-dev $env:TEMP\_.ps1 ; & $env:TEMP\_.ps1 -Branch dev [options]
 ```
 
 AUTHORS
