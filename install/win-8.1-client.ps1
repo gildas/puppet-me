@@ -326,6 +326,8 @@ process # {{{2
       [Parameter(Mandatory=$true,ValueFromPipeline=$true)]
       [string] $Package,
       [Parameter(Mandatory=$false)]
+      [string] $PackageParameters,
+      [Parameter(Mandatory=$false)]
       [string] $InstallArguments,
       [Parameter(Mandatory=$false)]
       [string] $AddPath,
@@ -369,14 +371,10 @@ process # {{{2
     else
     {
       Write-Verbose "Installing $Package"
-      if ($PSBoundParameters.ContainsKey('InstallArguments'))
-      {
-        chocolatey install -y $Package --installarguments $InstallArguments
-      }
-      else
-      {
-        chocolatey install -y $Package
-      }
+      $choco_params = @{}
+      if ($PSBoundParameters.ContainsKey('PackageParameters')) { $choco_params['package-parameters'] = $PackageParameters }
+      if ($PSBoundParameters.ContainsKey('InstallArguments'))  { $choco_params['install-arguments']  = $InstallArguments }
+      chocolatey install -y $Package @choco_params
       if (! $?) { Throw "$Package not installed. Error: $LASTEXITCODE" }
     }
 
@@ -789,7 +787,7 @@ process # {{{2
     }
     if (! (Get-Command git -ErrorAction SilentlyContinue))
     {
-      Install-Package git -Force
+      Install-Package git -PackageParameters '/GitOnlyOnPath' -Force
     }
     if (! (Get-Command bundle -ErrorAction SilentlyContinue))
     {
