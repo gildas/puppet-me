@@ -230,16 +230,19 @@ begin # {{{2
     'Hyper-V'
     {
       $Virtualization = 'Hyper-V'
+      $PackerVirtualization = 'hyperv'
       $HyperVBridgedSwitch = 'Bridged Switch'
       $HyperVPrivateSwitch = 'Private Switch'
     }
     'Virtualbox'
     {
       $Virtualization = 'Virtualbox'
+      $PackerVirtualization = 'virtualbox'
     }
     'VMWare'
     {
       $Virtualization = 'VMWare'
+      $PackerVirtualization = 'vmware'
     }
   }
 
@@ -1429,7 +1432,7 @@ process # {{{2
   {
     Push-Location $PackerHome\packer-windows
     $PackerBuild | Foreach {
-      $rake_rule="build:$($Virtualization.ToLower()):$_"
+      $rake_rule="build:$($PackerVirtualization.ToLower()):$_"
       Write-Verbose "Raking $rake_rule"
       rake $rake_rule
     }
@@ -1439,7 +1442,7 @@ process # {{{2
   {
     Push-Location $PackerHome\packer-windows
     $PackerLoad | Foreach {
-      $rake_rule="load:$($Virtualization.ToLower()):$_"
+      $rake_rule="load:$($PackerVirtualization.ToLower()):$_"
       Write-Verbose "Raking $rake_rule"
       rake $rake_rule
     }
