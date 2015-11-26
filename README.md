@@ -196,6 +196,10 @@ Where *options* are:
   When used, it will update $env:DAAS_CACHE  
   Alias: DaasCache  
   Default: $env:DAAS_CACHE or $env:ProgramData\DaaS\Cache  
+- -CacheSource *list of path_or_url*  
+  Contains a comma separated list of URLs or paths where the sources can be downloaded before the configuration.  
+  Alias: CacheSources  
+  Default: None  
 - -Credential *credential*  
   Contains some **[PSCredential](https://msdn.microsoft.com/en-us/library/system.management.automation.pscredential.aspx)** to use by default when connecting to VPNs, Windows Share, etc.  
   To get a dialog box that queries for the credentials, use the following:  

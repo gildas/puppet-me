@@ -75,6 +75,10 @@
   Contains the location of the JSON document that describe the Cache source locations.
   By Default, this document is downloaded from the Internet.
   Using this parameter is for debugging purposes.
+.PARAMETER CacheSource
+  Contains a comma separated list of URLs or paths where the sources can be downloaded before the configuration.  
+  Alias: CacheSources  
+  Default: None  
 .PARAMETER PackerBuild
   When all software is installed, Packer will be executed to build the given list of Vagrant boxes.
 .PARAMETER PackerLoad
@@ -169,26 +173,31 @@ Param( # {{{2
   [Parameter(Position=10, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=9,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=11, Mandatory=$false, ParameterSetName='VMWare')]
-  [Management.Automation.PSCredential] $Credential,
+  [Alias('CacheSources')]
+  [string[]] $CacheSource,
   [Parameter(Position=11, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=10, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=12, Mandatory=$false, ParameterSetName='VMWare')]
-  [string[]] $PackerBuild,
+  [Management.Automation.PSCredential] $Credential,
   [Parameter(Position=12, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=11, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=13, Mandatory=$false, ParameterSetName='VMWare')]
-  [string[]] $PackerLoad,
+  [string[]] $PackerBuild,
   [Parameter(Position=13, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=12, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=14, Mandatory=$false, ParameterSetName='VMWare')]
-  [switch] $NoUpdateCache,
+  [string[]] $PackerLoad,
   [Parameter(Position=14, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=13, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=15, Mandatory=$false, ParameterSetName='VMWare')]
-  [string] $Network,
+  [switch] $NoUpdateCache,
   [Parameter(Position=15, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=14, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=16, Mandatory=$false, ParameterSetName='VMWare')]
+  [string] $Network,
+  [Parameter(Position=16, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [Parameter(Position=15, Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=17, Mandatory=$false, ParameterSetName='VMWare')]
   [string] $Branch
 ) # }}}2
 begin # {{{2
@@ -992,6 +1001,17 @@ process # {{{2
               Write-Verbose "    (expected: $($source.checksum), local: $checksum)"
             }
           }
+          $locations=@()
+          if ($CacheSources -ne $nuul)
+          {
+            foreach ($_ in $CacheSources)
+            {
+              Write-Verbe "Adding $_ to the locations"
+              $locations += @{ location='local';  network='.*'; need_auth=$false; url = $_ }
+            }
+          }
+          $locations += $source.locations
+
           $location=$null
           foreach ($_ in $source.locations)
           {
