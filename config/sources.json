@@ -259,10 +259,10 @@
     ]
   },
   {
-    "name": "Web Applications 2016R1 Patch 1",
-    "id": "WebApplications_2016R1_Patch1",
-    "checksum": { "type": "MD5", "value": "D1F96B10A5FDF229A5586994F5D143EE" },
-    "filename": "CIC_Web_Applications_2016_R1_Patch_1.zip",
+    "name": "Web Applications 2016R1 Patch 2",
+    "id": "WebApplications_2016R1_Patch2",
+    "checksum": { "type": "MD5", "value": "DDF194B4F32758DEA5E03ABEB5851FA0" },
+    "filename": "CIC_Web_Applications_2016_R1_Patch_2.zip",
     "locations":
     [
       {
@@ -283,7 +283,7 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC_Web_Applications/IC_Web_Packaging_2016r1/P01/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC_Web_Applications/IC_Web_Packaging_2016r1/P02/"
       }
     ]
   },
