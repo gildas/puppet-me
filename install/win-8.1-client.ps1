@@ -1134,11 +1134,20 @@ process # {{{2
                 }
               }
 
+              $UseBITS = ($source.bits -eq $null) -or !$source.bits
               for($try=0; $try -lt 2; $try++)
               {
                 try
                 {
-                  Start-BitsTransfer -Source $source_url -Destination $source_destination @request_args -ErrorAction Stop
+                  if ($UseBITS)
+                  {
+                    Start-BitsTransfer -Source $source_url -Destination $source_destination @request_args -ErrorAction Stop
+                  }
+                  else
+                  {
+                    $Webclient = New-Object System.Net.WebClient
+                    $Webclient.DownloadFile($source_url, $source_destination)
+                  }
                   Write-Verbose "Successful download"
                   if ($creds -ne $null)
                   {
@@ -1162,6 +1171,12 @@ process # {{{2
                     }
                   }
                   $downloaded=$true
+                }
+                catch [System.Management.Automation.ErrorRecord]
+                {
+                  Write-Warning "$source_host does not support BITS transfer, switching to normal download"
+                  $UseBITS = $false
+                  $try--
                 }
                 catch
                 {
