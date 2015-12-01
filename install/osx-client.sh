@@ -37,7 +37,7 @@ MODULE_virtualization_done=0
 MODULES=(homebrew rubytools)
 ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
-CURRENT_VERSION='0.9.4'
+CURRENT_VERSION='0.9.5'
 GITHUB_ROOT='https://raw.githubusercontent.com/inin-apac/puppet-me'
 
 CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
@@ -2640,16 +2640,16 @@ function usage() # {{{2
   echo " --help  "
   echo "   Prints some help on the output."
   echo " --macmini-parallels  "
-  echo "   will install these modules: noidle homebrew rubytools puppet parallels vagrant cache packer"
+  echo "   will install these modules: noidle homebrew rubytools parallels vagrant cache packer"
   echo " --macmini-virtualbox  "
-  echo "   will install these modules: noidle homebrew rubytools puppet virtualbox vagrant cache packer"
+  echo "   will install these modules: noidle homebrew rubytools virtualbox vagrant cache packer"
   echo " --macmini-vmware or --macmini  "
-  echo "   will install these modules: noidle homebrew rubytools puppet vmware vagrant cache packer"
+  echo "   will install these modules: noidle homebrew rubytools vmware vagrant cache packer"
   echo " --modules  "
   echo "   contains a comma-separated list of modules to install.  "
   echo "   The complete list can be obtained with --help.  "
   echo "   The --macmini options will change that list.  "
-  echo "   Default: homebrew,puppet,rubytools"
+  echo "   Default: homebrew,rubytools"
   echo " --network  *ip_address*/*cidr*"
   echo "   can be used to force the script to believe it is run in a given network.  "
   echo "   Both an ip address and a network (in the cidr form) must be given.  "
