@@ -28,13 +28,13 @@ As of today, the following modules can be installed:
 The module list can be bundled using the special --macmini options.
 
 - --macmini-vmware  
-  => homebrew, rubytools, puppet, vmware, vagrant, cache, and packer.
+  => homebrew, rubytools, vmware, vagrant, cache, and packer.
 - --macmini-parallels  
-  => homebrew, rubytools, puppet, parallels, vagrant, cache, and packer.
+  => homebrew, rubytools, parallels, vagrant, cache, and packer.
 - --macmini-virtualbox  
-  => homebrew, rubytools, puppet, virtualbox, vagrant, cache, and packer.
+  => homebrew, rubytools, virtualbox, vagrant, cache, and packer.
 - --macmini-all  
-  => homebrew, rubytools, puppet, parallels, virtualbox, vmware, vagrant, cache, and packer.
+  => homebrew, rubytools, parallels, virtualbox, vmware, vagrant, cache, and packer.
 - --macmini  
   is an alias to --macmini-vmware
 
@@ -97,7 +97,7 @@ The possible options are:
   contains a comma-separated list of modules to install.  
   The complete list can be obtained with --help.  
   The --macmini options will change that list.  
-  Default: homebrew,puppet,rubytools
+  Default: homebrew,rubytools
 - --network  *ip_address*/*cidr*
   can be used to force the script to believe it is run in a given network.  
   Both an ip address and a network (in the cidr form) must be given.  
