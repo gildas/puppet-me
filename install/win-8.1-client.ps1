@@ -1323,7 +1323,7 @@ process # {{{2
         $nic = Get-NetAdapter -Name $BridgedNetAdapterName -ErrorAction SilentlyContinue
         if ($nic -eq $null) { Throw "Cannot find Network Adapter: $BridgedNetAdapterName, error: $LastExitCode" }
         if ($nic.Status -ne 'UP') { Throw "Network Adapter '$BridgedNetAdapterName' is not connected, error: $LastExitCode" }
-        New-VMSwitch -Name $HyperVBridgedSwitch -SwitchType External -NetAdapterName $nic.Name -AllowManagementOS $true -Notes 'Bridged Switch'
+        New-VMSwitch -Name $HyperVBridgedSwitch -NetAdapterName $nic.Name -AllowManagementOS $true -Notes 'Bridged Switch'
       }
 
       if ($OSVersion.Major -ge 10)
