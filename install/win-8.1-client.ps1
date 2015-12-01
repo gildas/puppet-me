@@ -1291,7 +1291,7 @@ process # {{{2
   }
 
   Install-Package 7zip -AddPath (Join-Path $env:ProgramFiles '7-Zip')
-  Install-Package git -Upgrade
+  Install-Package git -Upgrade -PackageParameters '/GitOnlyOnPath'
   Install-Package vagrant -Upgrade
   Install-VagrantPlugin 'vagrant-host-shell'
 
