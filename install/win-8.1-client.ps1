@@ -295,7 +295,7 @@ begin # {{{2
   [Environment]::SetEnvironmentVariable('DAAS_CACHE', $CacheRoot, 'User')
 
   $OSVersion = (Get-WmiObject Win32_OperatingSystem).Version -split '\.'
-  $OSVersion = @{ "Major" = $OSVersion[0]; "Minor" = $OSVersion[1]; "Build" = $OSVersion[2] }
+  $OSVersion = @{ "Major" = [int]$OSVersion[0]; "Minor" = [int]$OSVersion[1]; "Build" = [int]$OSVersion[2] }
 
   Write-Debug "Installing Virtualization:    $Virtualization"
   Write-Debug "Installing Packer Windows in: $PackerHome"
