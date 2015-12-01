@@ -34,7 +34,7 @@ MODULE_virtualbox_done=0
 MODULE_vmware_done=0
 MODULE_virtualization_done=0
 
-MODULES=(homebrew puppet rubytools)
+MODULES=(homebrew rubytools)
 ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
 CURRENT_VERSION='0.9.4'
@@ -2774,19 +2774,19 @@ function parse_args() # {{{2
         die "Argument for option $1 is missing"
         ;;
       --macmini|--macmini-vmware)
-        MODULES=(noidle homebrew updateme rubytools puppet vmware vagrant cache packer)
+        MODULES=(noidle homebrew updateme rubytools vmware vagrant cache packer)
         MODULE_updateme_args="${MODULE_updateme_args} --macmini-vmware"
         ;;
       --macmini-parallels)
-        MODULES=(noidle homebrew updateme rubytools puppet parallels vagrant cache packer)
+        MODULES=(noidle homebrew updateme rubytools parallels vagrant cache packer)
         MODULE_updateme_args="${MODULE_updateme_args} --macmini-parallels"
         ;;
       --macmini-virtualbox)
-        MODULES=(noidle homebrew updateme rubytools puppet virtualbox vagrant cache packer)
+        MODULES=(noidle homebrew updateme rubytools virtualbox vagrant cache packer)
         MODULE_updateme_args="${MODULE_updateme_args} --macmini-virtualbox"
         ;;
       --macmini-all)
-        MODULES=(noidle homebrew updateme rubytools puppet parallels virtualbox vmware vagrant cache packer)
+        MODULES=(noidle homebrew updateme rubytools parallels virtualbox vmware vagrant cache packer)
         MODULE_updateme_args="${MODULE_updateme_args} --macmini-all"
         ;;
       --modules)
