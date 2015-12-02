@@ -2368,6 +2368,7 @@ function cache_stuff() # {{{2
   local nic_names nic_name nic_info nic_ip nic_mask ip_addresses ip_address ip_masks ip_mask
 
   verbose "Caching ISO files"
+  trace "Fetching $CACHE_CONFIG"
   [[ -d "$CACHE_ROOT" ]]                          || $NOOP $SUDO mkdir -p "$CACHE_ROOT"
   status=$? && [[ $status != 0 ]] && return $status
   [[ $(stat -f "%Sg" "$CACHE_ROOT") == 'admin' ]] || $NOOP $SUDO chgrp -R admin "$CACHE_ROOT"
@@ -2376,7 +2377,10 @@ function cache_stuff() # {{{2
   status=$? && [[ $status != 0 ]] && return $status
   download "$CACHE_CONFIG" "${CACHE_ROOT}"
   status=$? && [[ $status != 0 ]] && return $status
-  document_catalog="${CACHE_ROOT}/sources.json"
+  cache_config_path=${CACHE_CONFIG#*\?}                       # extract file in archive
+  cache_config_filename=${cache_config_path##*/}              # remove path
+  document_catalog="${CACHE_ROOT}/${cache_config_filename}"
+  trace "Caching sources defined in $document_catalog"
 
   ip_addresses=( $NETWORK )
   ip_masks=()
