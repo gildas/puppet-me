@@ -2725,11 +2725,19 @@ function parse_args() # {{{2
       --branch)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing"
         CURRENT_VERSION=$2
+        verbose "Using branch ${CURRENT_VERSION}"
+        [[ $CACHE_CONFIG =~ ^${GITHUB_ROOT}.* ]] && CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
+        MODULE_updateme_source="${GITHUB_ROOT}/${CURRENT_VERSION}/config/osx/UpdateMe.7z"
+        trace "Cache config is now: $CACHE_CONFIG"
         shift 2
         continue
       ;;
       --branch=*?)
         CURRENT_VERSION=${1#*=} # delete everything up to =
+        verbose "Using branch ${CURRENT_VERSION}"
+        [[ $CACHE_CONFIG =~ ^${GITHUB_ROOT}.* ]] && CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
+        MODULE_updateme_source="${GITHUB_ROOT}/${CURRENT_VERSION}/config/osx/UpdateMe.7z"
+        trace "Cache config is now: $CACHE_CONFIG"
       ;;
       --branch=)
         die "Argument for option $1 is missing"
@@ -3092,9 +3100,6 @@ function parse_args() # {{{2
     esac
     shift
   done
-
-  CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
-  MODULE_updateme_source="${GITHUB_ROOT}/${CURRENT_VERSION}/config/osx/UpdateMe.7z"
 
   if [[ -z $PROMPT_USE_GUI ]]; then
     trace "PROMPT_USE_GUI was not set, detecting..."
