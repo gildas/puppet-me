@@ -1350,6 +1350,14 @@ function download() # {{{2
           $NOOP $_SUDO chmod 664 "${target_path}"
           break
         ;;
+        18)
+          if [[ -n "$has_resume" ]]; then
+            verbose "  Download interrupted by the server, resuming ..."
+          else
+            error "  Unable to download from ${source}\nError $status: $(curl_get_error $status)"
+  	    ((attempt++))
+          fi
+        ;;
         67)
           error "  Wrong credentials, please enter new credentials"
           source_password=''
@@ -2482,6 +2490,7 @@ function cache_stuff() # {{{2
             case $source_type in
               akamai)
                 source_auth='--ntlm'
+                source_has_resume='--has_resume'
               ;;
             esac
           fi
