@@ -304,6 +304,22 @@ begin # {{{2
 } # }}}2
 process # {{{2
 {
+  function DisplayBytes([Int64] $bytes) # {{{3
+  {
+        if ($bytes / 1GB -ge 1) { "{0:n2} GBytes" -f ($bytes / 1GB) }
+    elseif ($bytes / 1MB -ge 1) { "{0:n2} MBytes" -f ($bytes / 1MB) }
+    elseif ($bytes / 1KB -ge 1) { "{0:n2} KBytes" -f ($bytes / 1KB) }
+    else                        { "{0:n2} Bytes" -f $bytes }
+  } # }}}3
+
+  function DisplaySpeed([double] $speed) # {{{3
+  {
+        if ($speed / 1GB -ge 1) { "{0:n2} GBps" -f ($speed / 1GB) }
+    elseif ($speed / 1MB -ge 1) { "{0:n2} MBps" -f ($speed / 1MB) }
+    elseif ($speed / 1KB -ge 1) { "{0:n2} KBps" -f ($speed / 1KB) }
+    else                        { "{0:n2} Bps" -f $speed }
+  } # }}}3
+
   function Download-File([string] $Source, [string] $Destination) # {{{3
   {
     Start-BitsTransfer -Source $Source -Destination $Destination -ErrorAction Stop
@@ -1158,22 +1174,68 @@ process # {{{2
               }
 
               $UseBITS = ($source.bits -eq $null) -or !$source.bits
-              for($try=0; $try -lt 2; $try++)
+              $progress_title = "Downloading $($source.Name) from $($location.location)"
+              for($try=0; $try -lt 2 -and -not $downloaded; $try++)
               {
                 try
                 {
-                  $start_time = Get-Date
+                  $watch = [System.Diagnostics.StopWatch]::StartNew()
+                  $elapsed     = $watch.Elapsed
+                  $transferred = 0
+                  $speed       = 0
                   if ($UseBITS)
                   {
-                    Start-BitsTransfer -Source $source_url -Destination $source_destination @request_args -ErrorAction Stop
+                    Write-Verbose "  Waiting for download to start..."
+                    $job = Start-BitsTransfer -Source $source_url -Destination $source_destination @request_args -Asynchronous -RetryInterval 60 -RetryTimeout 86400
+                    Write-Progress -Activity $progress_title -Status "Connecting..." -CurrentOperation $job.JobState -PercentComplete 0
+                    $job_state = $job.JobState
+                    do
+                    {
+                      if ($job_state -ne $job.JobState)
+                      {
+                        $job_state = $job.JobState
+                      }
+
+                      if ($job_state -like "*Error*")
+                      {
+                        Remove-BitsTransfer $job
+                        Throw $job_state
+                      }
+                    } while ($job_state -ne 'Transferring')
+
+                    do
+                    {
+                      $elapsed     = $watch.Elapsed
+                      $transferred = $job.BytesTransferred
+                      $total       = $job.BytesTotal
+                      $percent     = [double]($transferred / $job.BytesTotal)
+                      $speed       = [double]($transferred / $elapsed.TotalSeconds)
+                      $eta         = [TimeSpan]::FromSeconds($total / $speed)
+                      $progress_text = "Downloaded {0} of {1} ({2:p}) at {3}. ETA: {4:g}." -f (DisplayBytes($transferred)),(DisplayBytes($total)),$percent,(DisplaySpeed($speed)),$eta
+                      Write-Progress -Activity $progress_title -Status $progress_text -CurrentOperation $job.JobState -PercentComplete ($percent * 100)
+                      Start-Sleep -s 5
+                    } while ($job.BytesTransferred -lt $job.BytesTotal)
+                    $elapsed     = $watch.Elapsed
+                    $transferred = $job.BytesTransferred
+                    $speed       = [int]($transferred / $elapsed.TotalSeconds)
+                    $progress_text = "Downloaded {0} in {1:g} at {2}." -f (DisplayBytes($transferred)),$elapsed,(DisplaySpeed($speed))
+                    Write-Progress -Activity $progress_title -Status $progress_text -CurrentOperation $job.JobState -Percent 100
+                    Start-Sleep -s 1
+                    Write-Progress -Activity $progress_title -Status $progress_text -CurrentOperation $job.JobState -Completed
+                    Complete-BitsTransfer $job
+                    # TODO: and in case of error?!?
                   }
                   else
                   {
                     $Webclient = New-Object System.Net.WebClient
                     $Webclient.DownloadFile($source_url, $source_destination)
+                    $elapsed     = $watch.Elapsed
+                    $transferred = (Get-Item $source_destination).length
+                    $speed       = [int]($transferred / $elapsed.TotalSeconds)
                   }
-                  $elapsed = $((Get-Data).Substract($start_time).Seconds)
-                  Write-Verbose "Successful download in $elapsed seconds"
+                  $watch.Stop()
+                  $progress_text = "Successfully downloaded {0} in {1:g} at {2}" -f (DisplayBytes($transferred)),$elapsed,(DisplaySpeed($speed))
+                  Write-Verbose $progress_text
                   if ($creds -ne $null)
                   {
                     Set-VaultCredential -Resource $source_root -Credential $creds
