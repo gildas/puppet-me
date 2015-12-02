@@ -1246,7 +1246,7 @@ function download() # {{{2
           ;;
           *)
             error "  Cannot mount ${source_share} on ${source_host} as ${source_user}\nError: $status"
-	    ((attempt++))
+            ((attempt++))
           ;;
         esac
       done
@@ -1355,7 +1355,7 @@ function download() # {{{2
             verbose "  Download interrupted by the server, resuming ..."
           else
             error "  Unable to download from ${source}\nError $status: $(curl_get_error $status)"
-  	    ((attempt++))
+            ((attempt++))
           fi
         ;;
         67)
@@ -1365,7 +1365,7 @@ function download() # {{{2
         ;;
         *)
           error "  Unable to download from ${source}\nError $status: $(curl_get_error $status)"
-	  ((attempt++))
+          ((attempt++))
         ;;
       esac
     done
