@@ -1162,6 +1162,7 @@ process # {{{2
               {
                 try
                 {
+                  $start_time = Get-Date
                   if ($UseBITS)
                   {
                     Start-BitsTransfer -Source $source_url -Destination $source_destination @request_args -ErrorAction Stop
@@ -1171,7 +1172,8 @@ process # {{{2
                     $Webclient = New-Object System.Net.WebClient
                     $Webclient.DownloadFile($source_url, $source_destination)
                   }
-                  Write-Verbose "Successful download"
+                  $elapsed = $((Get-Data).Substract($start_time).Seconds)
+                  Write-Verbose "Successful download in $elapsed seconds"
                   if ($creds -ne $null)
                   {
                     Set-VaultCredential -Resource $source_root -Credential $creds
