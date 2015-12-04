@@ -119,10 +119,10 @@
     ]
   },
   {
-    "name": "CIC 2016R1 Patch 2",
-    "id": "CIC_2016R1_Patch2",
-    "checksum": { "type": "MD5", "value": "DE10DACC542E292710934B7004EA4C80" },
-    "filename": "CIC_2016_R1_Patch2.iso",
+    "name": "CIC 2016R1 Patch 3",
+    "id": "CIC_2016R1_Patch3",
+    "checksum": { "type": "MD5", "value": "73f06558141626dfd5407c579028961b" },
+    "filename": "CIC_2016_R1_Patch3.iso",
     "locations":
     [
       {
@@ -143,7 +143,7 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2016r1/P02/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2016r1/P03/"
       }
     ]
   },
@@ -189,10 +189,10 @@
     ]
   },
   {
-    "name": "Dialer 2016R1 Patch 2",
-    "id": "Dialer_2016R1_Patch2",
-    "checksum": { "type": "MD5", "value": "3BB3EBE4C4C985FDAAAEFAA1243BA860" },
-    "filename": "Dialer_2016_R1_Patch2.iso",
+    "name": "Dialer 2016R1 Patch 3",
+    "id": "Dialer_2016R1_Patch3",
+    "checksum": { "type": "MD5", "value": "77aed822ad37043819ecb7ccfffe662b" },
+    "filename": "Dialer_2016_R1_Patch3.iso",
     "locations":
     [
       {
@@ -213,7 +213,7 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2016r1/P02/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2016r1/P03/"
       }
     ]
   },
