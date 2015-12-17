@@ -56,6 +56,7 @@
         "location": "Internet",
         "network":  ".*",
         "has_resume": true,
+        "bits": false,
         "url": "http://download.microsoft.com/download/6/2/A/62A76ABB-9990-4EFC-A4FE-C7D698DAEB96/"
       }
     ]
@@ -83,28 +84,29 @@
         "location": "Internet",
         "network":  ".*",
         "has_resume": true,
+        "bits": false,
         "url": "http://download.microsoft.com/download/E/A/E/EAE6F7FC-767A-4038-A954-49B8B05D04EB/ExpressAndTools%2064BIT/"
       }
     ]
   },
   {
-    "name": "CIC 2015R4",
-    "id": "CIC_2015R4",
-    "checksum": { "type": "MD5", "value": "e4e4a47b7044858f3f64f5981a361404" },
-    "filename": "CIC_2015_R4.iso",
+    "name": "CIC 2016R1",
+    "id": "CIC_2016R1",
+    "checksum": { "type": "MD5", "value": "46D62B7237B2D3BBD2794DD1812BDAAE" },
+    "filename": "CIC_2016_R1.iso",
     "locations":
     [
       {
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R4/"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2016R1/"
       },
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R4/"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2016R1/"
       },
       {
         "location": "Internet",
@@ -112,28 +114,28 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2015r4/P00/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2016r1/P00/"
       }
     ]
   },
   {
-    "name": "CIC 2015R4 Patch 6",
-    "id": "CIC_2015R4_Patch6",
-    "checksum": { "type": "MD5", "value": "63DB35978802A938204DB494E54179EC" },
-    "filename": "CIC_2015_R4_Patch6.iso",
+    "name": "CIC 2016R1 Patch 3",
+    "id": "CIC_2016R1_Patch3",
+    "checksum": { "type": "MD5", "value": "73f06558141626dfd5407c579028961b" },
+    "filename": "CIC_2016_R1_Patch3.iso",
     "locations":
     [
       {
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2015R4/"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2016R1/"
       },
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2015R4/"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2016R1/"
       },
       {
         "location": "Internet",
@@ -141,40 +143,40 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2015r4/P06/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2016r1/P03/"
       }
     ]
   },
   {
     "name": "Old CIC 2015 releases",
-    "id": "CIC_2015R1,R2,R3",
-    "destination": "CIC_2015_R[1-3].iso*",
+    "id": "CIC_2015R1,R2,R3,R4",
+    "destination": "CIC_2015_R[1-4].iso*",
     "action": "delete"
   },
   {
     "name": "Old CIC 2015 Patches",
-    "id": "CIC_2015R1,R2,R3_Patches",
-    "destination": "CIC_2015_R[1-3]_Patch*.iso*",
+    "id": "CIC_2015R1,R2,R3,R4_Patches",
+    "destination": "CIC_2015_R[1-4]_Patch*.iso*",
     "action": "delete"
   },
   {
-    "name": "Dialer 2015R4",
-    "id": "Dialer_2015R4",
-    "checksum": { "type": "MD5", "value": "4f12f9e8230365de710f9984309e5ab2" },
-    "filename": "Dialer_2015_R4.iso",
+    "name": "Dialer 2016R1",
+    "id": "Dialer_2016R1",
+    "checksum": { "type": "MD5", "value": "7B6D941B370C56FA26BE57600400A43F" },
+    "filename": "Dialer_2016_R1.iso",
     "locations":
     [
       {
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2015R4/"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2016R1/"
       },
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R4/"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2016R1/"
       },
       {
         "location": "Internet",
@@ -182,28 +184,28 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2015r4/P00/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2016r1/P00/"
       }
     ]
   },
   {
-    "name": "Dialer 2015R4 Patch 6",
-    "id": "Dialer_2015R4_Patch6",
-    "checksum": { "type": "MD5", "value": "1B63732FFD559F080B8467CABAD3F1B8" },
-    "filename": "Dialer_2015_R4_Patch6.iso",
+    "name": "Dialer 2016R1 Patch 3",
+    "id": "Dialer_2016R1_Patch3",
+    "checksum": { "type": "MD5", "value": "77aed822ad37043819ecb7ccfffe662b" },
+    "filename": "Dialer_2016_R1_Patch3.iso",
     "locations":
     [
       {
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2015R4/"
+        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2016R1/"
       },
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2015R4/"
+        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2016R1/"
       },
       {
         "location": "Internet",
@@ -211,40 +213,40 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2015r4/P06/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2016r1/P03/"
       }
     ]
   },
   {
     "name": "Old Dialer 2015 releases",
-    "id": "Dialer_2015R1,R2,R3",
-    "destination": "Dialer_2015_R[1-3].iso*",
+    "id": "Dialer_2015R1,R2,R3,R4",
+    "destination": "Dialer_2015_R[1-4].iso*",
     "action": "delete"
   },
   {
     "name": "Old Dialer 2015 Patches",
-    "id": "Dialer_2015R1,R2,R3_Patches",
-    "destination": "Dialer_2015_R[1-3]_Patch*.iso*",
+    "id": "Dialer_2015R1,R2,R3,R4_Patches",
+    "destination": "Dialer_2015_R[1-4]_Patch*.iso*",
     "action": "delete"
   },
   {
-    "name": "Web Applications 2015R4",
-    "id": "WebApplications_2015R4",
-    "checksum": { "type": "MD5", "value": "9E888E87AC644ED9A0E57BCE5F537B41" },
-    "filename": "CIC_Web_Applications_2015_R4.zip",
+    "name": "Web Applications 2016R1",
+    "id": "WebApplications_2016R1",
+    "checksum": { "type": "MD5", "value": "C6B7062F92309FF03B35EC6F9659FBAD" },
+    "filename": "CIC_Web_Applications_2016_R1.zip",
     "locations":
     [
       {
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Web%20Applications/2015R4/"
+        "url": "smb://apac.inin.com/Software/ININ/Web%20Applications/2016R1/"
       },
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Web%20Applications/2015R4/"
+        "url": "smb://emea.inin.com/Software/ININ/Web%20Applications/2016R1/"
       },
       {
         "location": "Internet",
@@ -252,28 +254,28 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC_Web_Applications/IC_Web_Packaging_2015r4/P00/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC_Web_Applications/IC_Web_Packaging_2016r1/P00/"
       }
     ]
   },
   {
-    "name": "Web Applications 2015R4 Patch 6",
-    "id": "WebApplications_2015R4_Patch6",
-    "checksum": { "type": "MD5", "value": "621628B08DA3B3B82D34DC452B684409" },
-    "filename": "CIC_Web_Applications_2015_R4_Patch_6.zip",
+    "name": "Web Applications 2016R1 Patch 3",
+    "id": "WebApplications_2016R1_Patch3",
+    "checksum": { "type": "MD5", "value": "7AC803EAAFFEC4F855EAE33B4D6FBB04" },
+    "filename": "CIC_Web_Applications_2016_R1_Patch_3.zip",
     "locations":
     [
       {
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Web%20Applications/2015R4/"
+        "url": "smb://apac.inin.com/Software/ININ/Web%20Applications/2016R1/"
       },
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Web%20Applications/2015R4/"
+        "url": "smb://emea.inin.com/Software/ININ/Web%20Applications/2016R1/"
       },
       {
         "location": "Internet",
@@ -281,20 +283,20 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC_Web_Applications/IC_Web_Packaging_2015r4/P06/"
+        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC_Web_Applications/IC_Web_Packaging_2016r1/P03/"
       }
     ]
   },
   {
     "name": "Old Web Applications 2015 releases",
-    "id": "WebApplications_2015R1,R2,R3",
-    "destination": "CIC_Web_Applications_2015_R[1-3].zip*",
+    "id": "WebApplications_2015R1,R2,R3,R4",
+    "destination": "CIC_Web_Applications_2015_R[1-4].zip*",
     "action": "delete"
   },
   {
     "name": "Old Web Applications 2015 Patches",
-    "id": "WebApplications_2015R1,R2,R3_Patches",
-    "destination": "CIC_Web_Applications_2015_R[1-3]_Patch*.zip*",
+    "id": "WebApplications_2015R1,R2,R3,R4_Patches",
+    "destination": "CIC_Web_Applications_2015_R[1-4]_Patch*.zip*",
     "action": "delete"
   },
   {

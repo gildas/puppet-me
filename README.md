@@ -183,6 +183,11 @@ Start-BitsTransfer http://tinyurl.com/puppet-me-win-8 $env:TEMP\_.ps1 ; & $env:T
 
 Where *options* are:
 
+- -Branch *name*  
+  Use a different git branch to run puppet-me.  
+  This is used for Beta, Release Candidate phases.  
+- -BridgedNetAdapterName  
+  Contains the name of the network adapter to build a bridged switch for the Virtual Machines.  
 - -CacheKeep  
   Keep previous versions of downloads (e.g., keep CIC 2015R1, 2015R2, patches)  
   Default: previous versions are deleted  
@@ -191,6 +196,10 @@ Where *options* are:
   When used, it will update $env:DAAS_CACHE  
   Alias: DaasCache  
   Default: $env:DAAS_CACHE or $env:ProgramData\DaaS\Cache  
+- -CacheSource *list of path_or_url*  
+  Contains a comma separated list of URLs or paths where the sources can be downloaded before the configuration.  
+  Alias: CacheSources  
+  Default: None  
 - -Credential *credential*  
   Contains some **[PSCredential](https://msdn.microsoft.com/en-us/library/system.management.automation.pscredential.aspx)** to use by default when connecting to VPNs, Windows Share, etc.  
   To get a dialog box that queries for the credentials, use the following:  
@@ -247,7 +256,7 @@ Note:
 
 To use the development version, use this command instead:
 ```powershell
-Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-dev $env:TEMP\_.ps1 ; & $env:TEMP\_.ps1 -CacheConfig https://raw.githubusercontent.com/inin-apac/puppet-me/dev/config/sources.json [options]
+Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-dev $env:TEMP\_.ps1 ; & $env:TEMP\_.ps1 -Branch dev [options]
 ```
 
 AUTHORS

@@ -45,6 +45,8 @@
 .PARAMETER VMWareLicense
   Contains the license key to configure VMWare Workstation.  
   If not provided, the license key will have to be entered manually the first time VMWare is used.
+.PARAMETER BridgedNetAdapterName
+  Contains the name of the network adapter to build a bridged switch for the Virtual Machines
 .PARAMETER VirtualMachinePath
   Contains the location where virtual machines will be stored.  
   The Default value depends on the Virtualization platform that was chosen.  
@@ -73,6 +75,10 @@
   Contains the location of the JSON document that describe the Cache source locations.
   By Default, this document is downloaded from the Internet.
   Using this parameter is for debugging purposes.
+.PARAMETER CacheSource
+  Contains a comma separated list of URLs or paths where the sources can be downloaded before the configuration.  
+  Alias: CacheSources  
+  Default: None  
 .PARAMETER PackerBuild
   When all software is installed, Packer will be executed to build the given list of Vagrant boxes.
 .PARAMETER PackerLoad
@@ -86,6 +92,8 @@
   Without Force, the script will try to perform these only once every few hours.
   The idea behind is software and downloads do not change very often, so if they are locally stored in the last 4 hours,
   there is a high chance they are up-to-date. This flash allows to override this assumption.
+.PARAMETER Branch
+  Can be used to try in-development code (sources, etc)
 .EXAMPLE
   Start-BitsTransfer http://tinyurl.com/win-8-1 $env:TEMP ; & $env:TEMP\win-8.1-client.ps1 -Version
   Will print the current version of Puppet-Me
@@ -110,7 +118,7 @@
   Will install all the software and Virtualbox in their default locations.
   Once installed, packer is invoked to build all Vagrant box available with VMWare Workstation.
 .NOTES
-  Version 0.9.5
+  Version 0.9.6
 #>
 [CmdLetBinding(SupportsShouldProcess, DefaultParameterSetName="Usage")]
 Param( # {{{2
@@ -133,59 +141,68 @@ Param( # {{{2
   [Parameter(Position=3,  Mandatory=$false, ParameterSetName='Hyper-V')]
   [Alias('VHDHome', 'VirtualHardDisks', 'VirtualHardDisksHome', 'VirtualHardDisksPath')]
   [string] $VirtualHardDiskPath,
+  [Parameter(Position=4,  Mandatory=$false, ParameterSetName='Hyper-V')]
+  [Parameter(Position=3,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=3,  Mandatory=$false, ParameterSetName='VMWare')]
+  [string] $BridgedNetAdapterName = 'Ethernet',
   [Parameter(Position=4,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VMWareLicense,
   [Parameter(Position=5,  Mandatory=$false, ParameterSetName='Hyper-V')]
-  [Parameter(Position=3,  Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Parameter(Position=4,  Mandatory=$false, ParameterSetName='VMWare')]
-  [string] $PackerHome,
-  [Parameter(Position=6,  Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=4,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=5,  Mandatory=$false, ParameterSetName='VMWare')]
-  [string] $VagrantHome,
+  [string] $PackerHome,
+  [Parameter(Position=6,  Mandatory=$false, ParameterSetName='Hyper-V')]
+  [Parameter(Position=5,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=6,  Mandatory=$false, ParameterSetName='VMWare')]
+  [string] $VagrantHome,
+  [Parameter(Position=7,  Mandatory=$false, ParameterSetName='VMWare')]
   [string] $VagrantVMWareLicense,
   [Parameter(Position=7,  Mandatory=$false, ParameterSetName='Hyper-V')]
-  [Parameter(Position=5,  Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Parameter(Position=7,  Mandatory=$false, ParameterSetName='VMWare')]
+  [Parameter(Position=6,  Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=8,  Mandatory=$false, ParameterSetName='VMWare')]
   [Alias('DaasCache')]
   [string] $CacheRoot,
   [Parameter(Position=8,  Mandatory=$false, ParameterSetName='Hyper-V')]
-  [Parameter(Position=6,  Mandatory=$false, ParameterSetName='Virtualbox')]
-  [Parameter(Position=8,  Mandatory=$false, ParameterSetName='VMWare')]
-  [string] $CacheConfig,
-  [Parameter(Position=9,  Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=7,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=9,  Mandatory=$false, ParameterSetName='VMWare')]
-  [switch] $CacheKeep,
-  [Parameter(Position=10, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [string] $CacheConfig,
+  [Parameter(Position=9,  Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=8,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=10, Mandatory=$false, ParameterSetName='VMWare')]
-  [Management.Automation.PSCredential] $Credential,
-  [Parameter(Position=11, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [switch] $CacheKeep,
+  [Parameter(Position=10, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=9,  Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=11, Mandatory=$false, ParameterSetName='VMWare')]
-  [string[]] $PackerBuild,
-  [Parameter(Position=12, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [Alias('CacheSources')]
+  [string[]] $CacheSource,
+  [Parameter(Position=11, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=10, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=12, Mandatory=$false, ParameterSetName='VMWare')]
-  [string[]] $PackerLoad,
-  [Parameter(Position=13, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [Management.Automation.PSCredential] $Credential,
+  [Parameter(Position=12, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=11, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=13, Mandatory=$false, ParameterSetName='VMWare')]
-  [switch] $NoUpdateCache,
-  [Parameter(Position=14, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [string[]] $PackerBuild,
+  [Parameter(Position=13, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=12, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=14, Mandatory=$false, ParameterSetName='VMWare')]
-  [string] $Network,
-  [Parameter(Position=15, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [string[]] $PackerLoad,
+  [Parameter(Position=14, Mandatory=$false, ParameterSetName='Hyper-V')]
   [Parameter(Position=13, Mandatory=$false, ParameterSetName='Virtualbox')]
   [Parameter(Position=15, Mandatory=$false, ParameterSetName='VMWare')]
+  [switch] $NoUpdateCache,
+  [Parameter(Position=15, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [Parameter(Position=14, Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=16, Mandatory=$false, ParameterSetName='VMWare')]
+  [string] $Network,
+  [Parameter(Position=16, Mandatory=$false, ParameterSetName='Hyper-V')]
+  [Parameter(Position=15, Mandatory=$false, ParameterSetName='Virtualbox')]
+  [Parameter(Position=17, Mandatory=$false, ParameterSetName='VMWare')]
   [string] $Branch
 ) # }}}2
 begin # {{{2
 {
-  $CURRENT_VERSION = '0.9.5'
+  $CURRENT_VERSION = '0.9.6'
   $GitHubRoot      = "https://raw.githubusercontent.com/inin-apac/puppet-me"
   $PuppetMeLastUpdate      = "${env:TEMP}/last_updated-puppetme"
   $PuppetMeUpdateFrequency = 4 # hours
@@ -213,14 +230,19 @@ begin # {{{2
     'Hyper-V'
     {
       $Virtualization = 'Hyper-V'
+      $PackerVirtualization = 'hyperv'
+      $HyperVBridgedSwitch = 'Bridged Switch'
+      $HyperVPrivateSwitch = 'Private Switch'
     }
     'Virtualbox'
     {
       $Virtualization = 'Virtualbox'
+      $PackerVirtualization = 'virtualbox'
     }
     'VMWare'
     {
       $Virtualization = 'VMWare'
+      $PackerVirtualization = 'vmware'
     }
   }
 
@@ -273,7 +295,7 @@ begin # {{{2
   [Environment]::SetEnvironmentVariable('DAAS_CACHE', $CacheRoot, 'User')
 
   $OSVersion = (Get-WmiObject Win32_OperatingSystem).Version -split '\.'
-  $OSVersion = @{ "Major" = $OSVersion[0]; "Minor" = $OSVersion[1]; "Build" = $OSVersion[2] }
+  $OSVersion = @{ "Major" = [int]$OSVersion[0]; "Minor" = [int]$OSVersion[1]; "Build" = [int]$OSVersion[2] }
 
   Write-Debug "Installing Virtualization:    $Virtualization"
   Write-Debug "Installing Packer Windows in: $PackerHome"
@@ -282,6 +304,22 @@ begin # {{{2
 } # }}}2
 process # {{{2
 {
+  function DisplayBytes([Int64] $bytes) # {{{3
+  {
+        if ($bytes / 1GB -ge 1) { "{0:n2} GBytes" -f ($bytes / 1GB) }
+    elseif ($bytes / 1MB -ge 1) { "{0:n2} MBytes" -f ($bytes / 1MB) }
+    elseif ($bytes / 1KB -ge 1) { "{0:n2} KBytes" -f ($bytes / 1KB) }
+    else                        { "{0:n2} Bytes" -f $bytes }
+  } # }}}3
+
+  function DisplaySpeed([double] $speed) # {{{3
+  {
+        if ($speed / 1GB -ge 1) { "{0:n2} GBps" -f ($speed / 1GB) }
+    elseif ($speed / 1MB -ge 1) { "{0:n2} MBps" -f ($speed / 1MB) }
+    elseif ($speed / 1KB -ge 1) { "{0:n2} KBps" -f ($speed / 1KB) }
+    else                        { "{0:n2} Bps" -f $speed }
+  } # }}}3
+
   function Download-File([string] $Source, [string] $Destination) # {{{3
   {
     Start-BitsTransfer -Source $Source -Destination $Destination -ErrorAction Stop
@@ -315,6 +353,8 @@ process # {{{2
     Param(
       [Parameter(Mandatory=$true,ValueFromPipeline=$true)]
       [string] $Package,
+      [Parameter(Mandatory=$false)]
+      [string] $PackageParameters,
       [Parameter(Mandatory=$false)]
       [string] $InstallArguments,
       [Parameter(Mandatory=$false)]
@@ -359,14 +399,10 @@ process # {{{2
     else
     {
       Write-Verbose "Installing $Package"
-      if ($PSBoundParameters.ContainsKey('InstallArguments'))
-      {
-        chocolatey install -y $Package --installarguments $InstallArguments
-      }
-      else
-      {
-        chocolatey install -y $Package
-      }
+      $choco_params = @{}
+      if ($PSBoundParameters.ContainsKey('PackageParameters')) { $choco_params['package-parameters'] = $PackageParameters }
+      if ($PSBoundParameters.ContainsKey('InstallArguments'))  { $choco_params['install-arguments']  = $InstallArguments }
+      chocolatey install -y $Package @choco_params
       if (! $?) { Throw "$Package not installed. Error: $LASTEXITCODE" }
     }
 
@@ -779,7 +815,7 @@ process # {{{2
     }
     if (! (Get-Command git -ErrorAction SilentlyContinue))
     {
-      Install-Package git -Force
+      Install-Package git -PackageParameters '/GitOnlyOnPath' -Force
     }
     if (! (Get-Command bundle -ErrorAction SilentlyContinue))
     {
@@ -984,6 +1020,17 @@ process # {{{2
               Write-Verbose "    (expected: $($source.checksum), local: $checksum)"
             }
           }
+          $locations=@()
+          if ($CacheSources -ne $nuul)
+          {
+            foreach ($_ in $CacheSources)
+            {
+              Write-Verbe "Adding $_ to the locations"
+              $locations += @{ location='local';  network='.*'; need_auth=$false; url = $_ }
+            }
+          }
+          $locations += $source.locations
+
           $location=$null
           foreach ($_ in $source.locations)
           {
@@ -1126,12 +1173,97 @@ process # {{{2
                 }
               }
 
-              for($try=0; $try -lt 2; $try++)
+              $UseBITS = ($source.bits -eq $null) -or !$source.bits
+              $progress_title = "Downloading $($source.Name) from $($location.location)"
+              for($try=0; $try -lt 2 -and -not $downloaded; $try++)
               {
                 try
                 {
-                  Start-BitsTransfer -Source $source_url -Destination $source_destination @request_args -ErrorAction Stop
+                  $watch = [System.Diagnostics.StopWatch]::StartNew()
+                  $elapsed     = $watch.Elapsed
+                  $transferred = 0
+                  $speed       = 0
+                  if ($UseBITS)
+                  {
+                    Write-Verbose "  Waiting for download to start..."
+                    $job = Start-BitsTransfer -Source $source_url -Destination $source_destination @request_args -Asynchronous -RetryInterval 60 -RetryTimeout 86400
+                    Write-Progress -Activity $progress_title -Status "Connecting..." -CurrentOperation $job.JobState -PercentComplete 0
+                    $job_state = $job.JobState
+                    do
+                    {
+                      if ($job_state -ne $job.JobState)
+                      {
+                        $job_state = $job.JobState
+                      }
+
+                      if ($job_state -like "*Error*")
+                      {
+                        Remove-BitsTransfer $job
+                        Throw $job_state
+                      }
+                    } while ($job_state -ne 'Transferring')
+
+                    do
+                    {
+                      $elapsed     = $watch.Elapsed
+                      $transferred = $job.BytesTransferred
+                      $total       = $job.BytesTotal
+                      $percent     = [double]($transferred / $job.BytesTotal)
+                      $speed       = [double]($transferred / $elapsed.TotalSeconds)
+                      $eta         = [TimeSpan]::FromSeconds($total / $speed)
+                      $progress_text = "Downloaded {0} of {1} ({2:p}) at {3}. ETA: {4:g}." -f (DisplayBytes($transferred)),(DisplayBytes($total)),$percent,(DisplaySpeed($speed)),$eta
+                      Write-Progress -Activity $progress_title -Status $progress_text -CurrentOperation $job.JobState -PercentComplete ($percent * 100)
+                      Start-Sleep -s 5
+                    } while ($job.BytesTransferred -lt $job.BytesTotal)
+                    $elapsed     = $watch.Elapsed
+                    $transferred = $job.BytesTransferred
+                    $speed       = [int]($transferred / $elapsed.TotalSeconds)
+                    $progress_text = "Downloaded {0} in {1:g} at {2}." -f (DisplayBytes($transferred)),$elapsed,(DisplaySpeed($speed))
+                    Write-Progress -Activity $progress_title -Status $progress_text -CurrentOperation $job.JobState -Percent 100
+                    Start-Sleep -s 1
+                    Write-Progress -Activity $progress_title -Status $progress_text -CurrentOperation $job.JobState -Completed
+                    Complete-BitsTransfer $job
+                    # TODO: and in case of error?!?
+                  }
+                  else
+                  {
+                    $Webclient = New-Object System.Net.WebClient
+                    $Webclient.DownloadFile($source_url, $source_destination)
+                    $elapsed     = $watch.Elapsed
+                    $transferred = (Get-Item $source_destination).length
+                    $speed       = [int]($transferred / $elapsed.TotalSeconds)
+                  }
+                  $watch.Stop()
+                  $progress_text = "Successfully downloaded {0} in {1:g} at {2}" -f (DisplayBytes($transferred)),$elapsed,(DisplaySpeed($speed))
+                  Write-Verbose $progress_text
+                  if ($creds -ne $null)
+                  {
+                    Set-VaultCredential -Resource $source_root -Credential $creds
+                  }
+                  if ((Test-Path $source_destination) -and ($source.checksum -ne $null))
+                  {
+                    Write-Verbose "  Calculating $($source.checksum.type) checksum"
+                    $checksum = (Get-FileHash $source_destination -Algorithm $source.checksum.type).Hash
+                    if ($checksum -eq $source.checksum.value)
+                    {
+                      Write-Output "  Verified ($($source.checksum.type))"
+                      Write-Verbose "  Exporting its $($source.checksum.type) checksum"
+                      Write-Output $checksum | Set-Content "${source_destination}.$($source.checksum.type)" -Encoding Ascii
+                    }
+                    else
+                    {
+                      Write-Verbose "  $($source.checksum.type) Checksums differ, downloading again..."
+                      Write-Verbose "    (expected: $($source.checksum), local: $checksum)"
+                      break
+                    }
+                  }
                   $downloaded=$true
+                }
+                catch [System.Management.Automation.ErrorRecord]
+                {
+                  Write-Warning "$source_host does not support BITS transfer, switching to normal download"
+                  $UseBITS = $false
+                  $try--
                 }
                 catch
                 {
@@ -1156,14 +1288,6 @@ process # {{{2
                   {
                     break
                   }
-                }
-              }
-              if ($downloaded)
-              {
-                Write-Verbose "Successful download"
-                if ($creds -ne $null)
-                {
-                  Set-VaultCredential -Resource $source_root -Credential $creds
                 }
               }
               if (! $downloaded)
@@ -1231,7 +1355,7 @@ process # {{{2
   }
 
   Install-Package 7zip -AddPath (Join-Path $env:ProgramFiles '7-Zip')
-  Install-Package git -Upgrade
+  Install-Package git -Upgrade -PackageParameters '/GitOnlyOnPath'
   Install-Package vagrant -Upgrade
   Install-VagrantPlugin 'vagrant-host-shell'
 
@@ -1243,6 +1367,27 @@ process # {{{2
       if ((Enable-HyperV $VirtualMachinePath $VirtualHardDiskPath) -eq 1)
       {
         $RestartNeeded = $true
+      }
+
+      if (Get-VMSwitch -Name $HyperVPrivateSwitch -ErrorAction SilentlyContinue)
+      {
+        Write-Verbose "Hyper-V already has a Private Switch"
+      }
+      else
+      {
+        New-VMSwitch -Name $HyperVPrivateSwitch -SwitchType Internal -Notes 'Private Switch'
+      }
+
+      if (Get-VMSwitch -Name $HyperVBridgedSwitch -ErrorAction SilentlyContinue)
+      {
+        Write-Verbose "Hyper-V already has a Bridged Switch"
+      }
+      else
+      {
+        $nic = Get-NetAdapter -Name $BridgedNetAdapterName -ErrorAction SilentlyContinue
+        if ($nic -eq $null) { Throw "Cannot find Network Adapter: $BridgedNetAdapterName, error: $LastExitCode" }
+        if ($nic.Status -ne 'UP') { Throw "Network Adapter '$BridgedNetAdapterName' is not connected, error: $LastExitCode" }
+        New-VMSwitch -Name $HyperVBridgedSwitch -NetAdapterName $nic.Name -AllowManagementOS $true -Notes 'Bridged Switch'
       }
 
       if ($OSVersion.Major -ge 10)
@@ -1280,7 +1425,7 @@ process # {{{2
 
   if ($Virtualization -eq 'Hyper-V')
   {
-    Install-PackerPlugin -Name 'Hyper-V' -Url "${GitHubRoot}/${CURRENT_VERSION}/config/windows/hyper-v/packer-hyper-v.7z"
+    Install-PackerPlugin -Name 'Hyper-V' -Url "${GitHubRoot}/${CURRENT_VERSION}/config/windows/hyper-v/packer-builder-hyperv-0.1.0-win.7z"
   }
 
   Install-PackerPlugin -Name 'Provisioner Wait' -Url https://github.com/gildas/packer-provisioner-wait/releases/download/v0.1.0/packer-provisioner-wait-0.1.0-win.7z
@@ -1351,7 +1496,7 @@ process # {{{2
   {
     Push-Location $PackerHome\packer-windows
     $PackerBuild | Foreach {
-      $rake_rule="build:$($Virtualization.ToLower()):$_"
+      $rake_rule="build:$($PackerVirtualization.ToLower()):$_"
       Write-Verbose "Raking $rake_rule"
       rake $rake_rule
     }
@@ -1361,7 +1506,7 @@ process # {{{2
   {
     Push-Location $PackerHome\packer-windows
     $PackerLoad | Foreach {
-      $rake_rule="load:$($Virtualization.ToLower()):$_"
+      $rake_rule="load:$($PackerVirtualization.ToLower()):$_"
       Write-Verbose "Raking $rake_rule"
       rake $rake_rule
     }

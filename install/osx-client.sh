@@ -37,7 +37,7 @@ MODULE_virtualization_done=0
 MODULES=(homebrew rubytools)
 ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
-CURRENT_VERSION='0.9.5'
+CURRENT_VERSION='0.9.6'
 GITHUB_ROOT='https://raw.githubusercontent.com/inin-apac/puppet-me'
 
 CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
@@ -1246,7 +1246,7 @@ function download() # {{{2
           ;;
           *)
             error "  Cannot mount ${source_share} on ${source_host} as ${source_user}\nError: $status"
-	    ((attempt++))
+            ((attempt++))
           ;;
         esac
       done
@@ -1350,6 +1350,14 @@ function download() # {{{2
           $NOOP $_SUDO chmod 664 "${target_path}"
           break
         ;;
+        18)
+          if [[ -n "$has_resume" ]]; then
+            verbose "  Download interrupted by the server, resuming ..."
+          else
+            error "  Unable to download from ${source}\nError $status: $(curl_get_error $status)"
+            ((attempt++))
+          fi
+        ;;
         67)
           error "  Wrong credentials, please enter new credentials"
           source_password=''
@@ -1357,7 +1365,7 @@ function download() # {{{2
         ;;
         *)
           error "  Unable to download from ${source}\nError $status: $(curl_get_error $status)"
-	  ((attempt++))
+          ((attempt++))
         ;;
       esac
     done
@@ -2368,6 +2376,7 @@ function cache_stuff() # {{{2
   local nic_names nic_name nic_info nic_ip nic_mask ip_addresses ip_address ip_masks ip_mask
 
   verbose "Caching ISO files"
+  trace "Fetching $CACHE_CONFIG"
   [[ -d "$CACHE_ROOT" ]]                          || $NOOP $SUDO mkdir -p "$CACHE_ROOT"
   status=$? && [[ $status != 0 ]] && return $status
   [[ $(stat -f "%Sg" "$CACHE_ROOT") == 'admin' ]] || $NOOP $SUDO chgrp -R admin "$CACHE_ROOT"
@@ -2376,7 +2385,10 @@ function cache_stuff() # {{{2
   status=$? && [[ $status != 0 ]] && return $status
   download "$CACHE_CONFIG" "${CACHE_ROOT}"
   status=$? && [[ $status != 0 ]] && return $status
-  document_catalog="${CACHE_ROOT}/sources.json"
+  cache_config_path=${CACHE_CONFIG#*\?}                       # extract file in archive
+  cache_config_filename=${cache_config_path##*/}              # remove path
+  document_catalog="${CACHE_ROOT}/${cache_config_filename}"
+  trace "Caching sources defined in $document_catalog"
 
   ip_addresses=( $NETWORK )
   ip_masks=()
@@ -2478,6 +2490,7 @@ function cache_stuff() # {{{2
             case $source_type in
               akamai)
                 source_auth='--ntlm'
+                source_has_resume='--has_resume'
               ;;
             esac
           fi
@@ -2725,11 +2738,19 @@ function parse_args() # {{{2
       --branch)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing"
         CURRENT_VERSION=$2
+        verbose "Using branch ${CURRENT_VERSION}"
+        [[ $CACHE_CONFIG =~ ^${GITHUB_ROOT}.* ]] && CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
+        MODULE_updateme_source="${GITHUB_ROOT}/${CURRENT_VERSION}/config/osx/UpdateMe.7z"
+        trace "Cache config is now: $CACHE_CONFIG"
         shift 2
         continue
       ;;
       --branch=*?)
         CURRENT_VERSION=${1#*=} # delete everything up to =
+        verbose "Using branch ${CURRENT_VERSION}"
+        [[ $CACHE_CONFIG =~ ^${GITHUB_ROOT}.* ]] && CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
+        MODULE_updateme_source="${GITHUB_ROOT}/${CURRENT_VERSION}/config/osx/UpdateMe.7z"
+        trace "Cache config is now: $CACHE_CONFIG"
       ;;
       --branch=)
         die "Argument for option $1 is missing"
@@ -3092,9 +3113,6 @@ function parse_args() # {{{2
     esac
     shift
   done
-
-  CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
-  MODULE_updateme_source="${GITHUB_ROOT}/${CURRENT_VERSION}/config/osx/UpdateMe.7z"
 
   if [[ -z $PROMPT_USE_GUI ]]; then
     trace "PROMPT_USE_GUI was not set, detecting..."
