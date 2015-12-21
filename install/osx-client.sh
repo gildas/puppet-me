@@ -2926,30 +2926,54 @@ function parse_args() # {{{2
         ;;
       --packer-build)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
-        MODULE_PACKER_BUILD=("${MODULE_PACKER_BUILD[@]}" ${2//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} --packer-build $2"
+        if [[ $2 =~ (.*)cic-[0-9]+R[0-9]+(.*) ]]; then
+          verbose "fixing old packer task $2 to \"cic\""
+          $packer_target="${BASH_REMATCH[1]}cic${BASH_REMATCH[2]}"
+        else
+          packer_target=$2
+        fi
+        MODULE_PACKER_BUILD=("${MODULE_PACKER_BUILD[@]}" ${packer_target//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} --packer-build $packer_target"
         shift 2
         continue
         ;;
       --packer-build=*?)
         build=${1#*=} # delete everything up to =
-        MODULE_PACKER_BUILD=("${MODULE_PACKER_BUILD[@]}" ${build//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} $1"
+        if [[ $build =~ (.*)cic-[0-9]+R[0-9]+(.*) ]]; then
+          verbose "fixing old packer task $build to \"cic\""
+          $packer_target="${BASH_REMATCH[1]}cic${BASH_REMATCH[2]}"
+        else
+          packer_target=$build
+        fi
+        MODULE_PACKER_BUILD=("${MODULE_PACKER_BUILD[@]}" ${packer_target//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} --packer-build $packer_target"
         ;;
       --packer-build=)
         die "Argument for option $1 is missing."
         ;;
       --packer-load)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
-        MODULE_PACKER_LOAD=("${MODULE_PACKER_LOAD[@]}" ${2//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} --packer-load $2"
+        if [[ $2 =~ (.*)cic-[0-9]+R[0-9]+(.*) ]]; then
+          verbose "fixing old packer task $2 to \"cic\""
+          $packer_target="${BASH_REMATCH[1]}cic${BASH_REMATCH[2]}"
+        else
+          packer_target=$2
+        fi
+        MODULE_PACKER_LOAD=("${MODULE_PACKER_LOAD[@]}" ${packer_target//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} --packer-load $packer_target"
         shift 2
         continue
         ;;
       --packer-load=*?)
         load=${1#*=} # delete everything up to =
-        MODULE_PACKER_LOAD=("${MODULE_PACKER_LOAD[@]}" ${load//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} $1"
+        if [[ $load =~ (.*)cic-[0-9]+R[0-9]+(.*) ]]; then
+          verbose "fixing old packer task $load to \"cic\""
+          $packer_target="${BASH_REMATCH[1]}cic${BASH_REMATCH[2]}"
+        else
+          packer_target=$load
+        fi
+        MODULE_PACKER_LOAD=("${MODULE_PACKER_LOAD[@]}" ${packer_target//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} --packer-load $packer_target"
         ;;
       --packer-load=)
         die "Argument for option $1 is missing."
