@@ -1109,7 +1109,7 @@ function download() # {{{2
     trace "  >> source_host: ${source_host}"
 
     if [[ -z "$source_user" ]]; then
-      trace "  Querying keychain for user on site $source_host over $source_protocol"
+      verbose "  Querying keychain for user on site $source_host over $source_protocol"
       source_user=$(keychain_get_user --kind=internet --protocol=$source_protocol --site=$source_host 2>&1)
       status=$?
       if [[ $status != 0 ]]; then
@@ -1120,7 +1120,7 @@ function download() # {{{2
       fi
     fi
     if [[ -z "$source_password" && -n "$source_user" ]]; then
-      trace "  Querying keychain for password for user $source_user on site $source_host over $source_protocol"
+      verbose "  Querying keychain for password for user $source_user on site $source_host over $source_protocol"
       source_password=$(keychain_get_password --kind=internet --protocol=$source_protocol --site=$source_host --user=$source_user)
       status=$?
       if [[ $status != 0 ]]; then
@@ -1195,6 +1195,7 @@ function download() # {{{2
 
     if [[ -n "$source_domain" ]]; then
       source_user="${source_domain}\\${source_user}"
+      verbose "SMB User: $source_user"
     fi
 
     smb_target=''
