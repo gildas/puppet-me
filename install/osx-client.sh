@@ -37,7 +37,7 @@ MODULE_virtualization_done=0
 MODULES=(homebrew rubytools)
 ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
-CURRENT_VERSION='0.9.8'
+CURRENT_VERSION='0.9.9'
 GITHUB_ROOT='https://raw.githubusercontent.com/inin-apac/puppet-me'
 
 CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
@@ -1109,7 +1109,7 @@ function download() # {{{2
     trace "  >> source_host: ${source_host}"
 
     if [[ -z "$source_user" ]]; then
-      trace "  Querying keychain for user on site $source_host over $source_protocol"
+      verbose "  Querying keychain for user on site $source_host over $source_protocol"
       source_user=$(keychain_get_user --kind=internet --protocol=$source_protocol --site=$source_host 2>&1)
       status=$?
       if [[ $status != 0 ]]; then
@@ -1120,7 +1120,7 @@ function download() # {{{2
       fi
     fi
     if [[ -z "$source_password" && -n "$source_user" ]]; then
-      trace "  Querying keychain for password for user $source_user on site $source_host over $source_protocol"
+      verbose "  Querying keychain for password for user $source_user on site $source_host over $source_protocol"
       source_password=$(keychain_get_password --kind=internet --protocol=$source_protocol --site=$source_host --user=$source_user)
       status=$?
       if [[ $status != 0 ]]; then
@@ -1195,6 +1195,7 @@ function download() # {{{2
 
     if [[ -n "$source_domain" ]]; then
       source_user="${source_domain}\\${source_user}"
+      verbose "SMB User: $source_user"
     fi
 
     smb_target=''
@@ -2166,24 +2167,28 @@ function install_vagrant() # {{{2
 
   if which vagrant > /dev/null 2>&1; then
     verbose "vagrant is already installed"
-    version=$(vagrant --version | awk '{print $2}')
+    installed_version=$(vagrant --version | awk '{print $2}')
     verbose "  current version: ${version}"
-    latest=$(brew cask info vagrant | awk '/^vagrant: / { print $2; }')
-    if [[ $version != $latest ]]; then # TODO: We should actually compare with the version we support
-      verbose "Vagrant ${latest} is available"
-      if [[ -n "$(brew cask info vagrant${version//\./} | grep '^Not installed$')" ]]; then
-        verbose "  uninstalling vagrant manually"
-        $NOOP $SUDO rm -rf /opt/vagrant
-        status=$? && [[ $status != 0 ]] && error "Error $status while removing /opt/vagrant" && return $status
-        $NOOP $SUDO rm -f /usr/bin/vagrant
-        status=$? && [[ $status != 0 ]] && error "Error $status while removing /usr/bin/vagrant" && return $status
+    latest_version=$(brew cask info vagrant | awk '/^vagrant: / { print $2; }')
+    if [[ $installed_version != $latest_version ]]; then # TODO: We should actually compare with the version we support
+      verbose "Vagrant ${latest_version} is available"
+      if [[ -n "$(brew cask info vagrant${version_version//\./} 2>&1 | grep 'No available Cask')" ]]; then
+        warn "Uninstall cask has not been created yet, ignoring and not installing version ${latest_version}"
       else
-        $NOOP cask_uninstall vagrant${version//\./}
-        status=$? && [[ $status != 0 ]] && error "Error $status while uninstalling vagrant" && return $status
+        if [[ -n "$(brew cask info vagrant${version_version//\./} | grep '^Not installed$')" ]]; then
+          verbose "  uninstalling vagrant manually"
+          $NOOP $SUDO rm -rf /opt/vagrant
+          status=$? && [[ $status != 0 ]] && error "Error $status while removing /opt/vagrant" && return $status
+          $NOOP $SUDO rm -f /usr/bin/vagrant
+          status=$? && [[ $status != 0 ]] && error "Error $status while removing /usr/bin/vagrant" && return $status
+        else
+          $NOOP cask_uninstall vagrant${version_version//\./}
+          status=$? && [[ $status != 0 ]] && error "Error $status while uninstalling vagrant" && return $status
+        fi
+        verbose "  installing vagrant"
+        $NOOP cask_install vagrant
+        status=$? && [[ $status != 0 ]] && error "Error $status while installing vagrant 1.6.5" && return $status
       fi
-      verbose "  installing vagrant"
-      $NOOP cask_install vagrant
-      status=$? && [[ $status != 0 ]] && error "Error $status while installing vagrant 1.6.5" && return $status
     fi
   else
     verbose "installing vagrant"
@@ -2925,30 +2930,54 @@ function parse_args() # {{{2
         ;;
       --packer-build)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
-        MODULE_PACKER_BUILD=("${MODULE_PACKER_BUILD[@]}" ${2//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} --packer-build $2"
+        if [[ $2 =~ (.*)cic-[0-9]+R[0-9]+(.*) ]]; then
+          verbose "fixing old packer task $2 to \"cic\""
+          $packer_target="${BASH_REMATCH[1]}cic${BASH_REMATCH[2]}"
+        else
+          packer_target=$2
+        fi
+        MODULE_PACKER_BUILD=("${MODULE_PACKER_BUILD[@]}" ${packer_target//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} --packer-build $packer_target"
         shift 2
         continue
         ;;
       --packer-build=*?)
         build=${1#*=} # delete everything up to =
-        MODULE_PACKER_BUILD=("${MODULE_PACKER_BUILD[@]}" ${build//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} $1"
+        if [[ $build =~ (.*)cic-[0-9]+R[0-9]+(.*) ]]; then
+          verbose "fixing old packer task $build to \"cic\""
+          $packer_target="${BASH_REMATCH[1]}cic${BASH_REMATCH[2]}"
+        else
+          packer_target=$build
+        fi
+        MODULE_PACKER_BUILD=("${MODULE_PACKER_BUILD[@]}" ${packer_target//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} --packer-build $packer_target"
         ;;
       --packer-build=)
         die "Argument for option $1 is missing."
         ;;
       --packer-load)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
-        MODULE_PACKER_LOAD=("${MODULE_PACKER_LOAD[@]}" ${2//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} --packer-load $2"
+        if [[ $2 =~ (.*)cic-[0-9]+R[0-9]+(.*) ]]; then
+          verbose "fixing old packer task $2 to \"cic\""
+          $packer_target="${BASH_REMATCH[1]}cic${BASH_REMATCH[2]}"
+        else
+          packer_target=$2
+        fi
+        MODULE_PACKER_LOAD=("${MODULE_PACKER_LOAD[@]}" ${packer_target//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} --packer-load $packer_target"
         shift 2
         continue
         ;;
       --packer-load=*?)
         load=${1#*=} # delete everything up to =
-        MODULE_PACKER_LOAD=("${MODULE_PACKER_LOAD[@]}" ${load//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} $1"
+        if [[ $load =~ (.*)cic-[0-9]+R[0-9]+(.*) ]]; then
+          verbose "fixing old packer task $load to \"cic\""
+          $packer_target="${BASH_REMATCH[1]}cic${BASH_REMATCH[2]}"
+        else
+          packer_target=$load
+        fi
+        MODULE_PACKER_LOAD=("${MODULE_PACKER_LOAD[@]}" ${packer_target//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} --packer-load $packer_target"
         ;;
       --packer-load=)
         die "Argument for option $1 is missing."
