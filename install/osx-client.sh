@@ -2168,7 +2168,7 @@ function install_vagrant() # {{{2
   if which vagrant > /dev/null 2>&1; then
     verbose "vagrant is already installed"
     installed_version=$(vagrant --version | awk '{print $2}')
-    verbose "  current version: ${version}"
+    verbose "  current version: ${installed_version}"
     latest_version=$(brew cask info vagrant | awk '/^vagrant: / { print $2; }')
     if [[ $installed_version != $latest_version ]]; then # TODO: We should actually compare with the version we support
       verbose "Vagrant ${latest_version} is available"
