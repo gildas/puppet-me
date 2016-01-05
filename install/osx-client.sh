@@ -1890,7 +1890,7 @@ function install_homebrew() # {{{2
   fi
 
   taps=('homebrew/completions' 'homebrew/binary' 'caskroom/cask' 'homebrew/versions' 'caskroom/versions')
-  brews=(bash-completion brew-cask bar p7zip)
+  brews=(bash-completion bar p7zip)
 
   for tap in ${taps[*]} ; do
     brew_tap $tap
@@ -1901,6 +1901,12 @@ function install_homebrew() # {{{2
     brew_install $brew
     status=$? && [[ $status != 0 ]] && return $status
   done
+
+  # Check if brew-cask has already been installed and remove it
+  if [[ -z "$(brew info brew-cask | grep '^Not installed$')" ]]; then
+    verbose "Uninstalling obsolete brew: brew-cask"
+    brew uninstall brew-cask
+  fi
 
   MODULE_homebrew_done=1
   return 0
