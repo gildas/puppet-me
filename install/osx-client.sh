@@ -1594,6 +1594,94 @@ function vpn_stop() #{{{2
   return 0
 } # }}}2
 
+function cisco_vpn_status() #{{2
+{
+  local status = $(echo "state" | /opt/cisco/anyconnect/bin/vpn -s | grep '  >> state: ' | tail -1 | awk '{ print $6 }')
+  verbose "Cisco AnyConnect status: ${status}"
+  return $status
+} # }}}2
+
+function cisco_vpn_start() #{{{2
+{
+  local vpn_id
+  local user
+  local password
+
+  while :; do # Parse aguments {{{3
+    case $1 in
+      --id|--server)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+        vpn_id=$2
+        shift 2
+        continue
+      ;;
+      --id=*?|--server=*?)
+        vpn_id=${1#*=} # delete everything up to =
+      ;;
+      --id=|--server=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      --user|--userid|--username|-u)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+        user=$2
+        shift 2
+        continue
+      ;;
+      --user=*?|--userid=*?|--username=*?)
+        user=${1#*=} # delete everything up to =
+      ;;
+      --user=|--userid=|--username=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      --password)
+        [[ -z $2 || ${2:0:1} == '-' ]] && error "${FUNCNAME}: Argument for option $1 is missing" && return 1
+        password=$2
+        shift 2
+        continue
+      ;;
+      --password=*?)
+        password=${1#*=} # delete everything up to =
+      ;;
+      --password=)
+        error "${FUNCNAME}: Argument for option $1 is missing"
+        return 1
+        ;;
+      -?*) # Invalid options
+        warn "${FUNCTNAME}: Unknown option $1 will be ignored"
+      ;;
+      *)  # End of options
+        break
+      ;;
+    esac
+    shift
+  done # }}}3
+  # Validate Arguments {{{3
+  [[ -z "$vpn_id" ]] && error "At least one of these options must be given: --server, --id" && return 2
+  [[ -n $user ]] && [[ -z $password ]] && error "password is mandatory when user is provided" && return 3
+  # }}}3
+
+  if [[ cisco_vpn_status != 'Disconnected' ]]; then
+    # stop if not same server
+    cisco_vpn_stop
+  fi
+
+  printf %s "Starting Cisco AnyConnect on ${vpn_id}..."
+  trace "Starting VPN $vpn_id ${user:+as} $user"
+  #/usr/sbin/scutil --nc start $vpn_id ${user:+--user} $user ${password:+--password} $password
+  cat << EOF
+connect $vpn_id
+$vpn_user
+$vpn_password
+EOF | /opt/cisco/anyconnect/bin/vpn -s
+      CONNECTED_VPNS+=( $vpn_id )
+      trace "Connected VPNs: ${CONNECTED_VPNS[@]}"
+      return 0
+  error "Cannot connect to VPN $vpn_id"
+  return 1
+} # }}}2
+
 function sudo_init() #{{{2
 {
   dseditgroup -o checkmember -m $userid admin &> /dev/null
