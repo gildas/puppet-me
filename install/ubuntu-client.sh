@@ -37,7 +37,7 @@ MODULE_virtualization_done=0
 MODULES=(puppet rubytools)
 ALL_MODULES=(cache packer puppet rubytools vagrant virtualbox)
 
-CURRENT_VERSION='0.9.2'
+CURRENT_VERSION='0.9.10'
 GITHUB_ROOT='https://raw.githubusercontent.com/inin-apac/puppet-me'
 
 CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
@@ -1328,6 +1328,14 @@ function download() # {{{2
           $NOOP $_SUDO chmod 664 "${target_path}"
           break
         ;;
+        18)
+          if [[ -n "$has_resume" ]]; then
+            verbose "  Download interrupted by the server, resuming ..."
+          else
+            error "  Unable to download from ${source}\nError $status: $(curl_get_error $status)"
+            ((attempt++))
+          fi
+        ;;
         67)
           error "  Wrong credentials, please enter new credentials"
           source_password=''
@@ -2096,6 +2104,14 @@ function cache_stuff() # {{{2
           [[ "$(echo "$location" | jq '.has_resume')" == 'true' ]] && source_has_resume='--has_resume'
           source_need_auth=''
           [[ "$(echo "$location" | jq '.need_auth')" == 'true' ]] && source_need_auth='--need_auth'
+          if [[ -n $source_need_auth ]]; then
+            case $source_type in
+              akamai)
+                source_auth='--ntlm'
+                source_has_resume='--has_resume'
+              ;;
+            esac
+          fi
           source_vpn="$(echo "$location" | jq --raw-output '.vpn' | grep -v null)"
           verbose "  Downloading from $source_location"
           trace   "  Source URL: $source_url"

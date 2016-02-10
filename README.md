@@ -28,13 +28,13 @@ As of today, the following modules can be installed:
 The module list can be bundled using the special --macmini options.
 
 - --macmini-vmware  
-  => homebrew, rubytools, puppet, vmware, vagrant, cache, and packer.
+  => homebrew, rubytools, vmware, vagrant, cache, and packer.
 - --macmini-parallels  
-  => homebrew, rubytools, puppet, parallels, vagrant, cache, and packer.
+  => homebrew, rubytools, parallels, vagrant, cache, and packer.
 - --macmini-virtualbox  
-  => homebrew, rubytools, puppet, virtualbox, vagrant, cache, and packer.
+  => homebrew, rubytools, virtualbox, vagrant, cache, and packer.
 - --macmini-all  
-  => homebrew, rubytools, puppet, parallels, virtualbox, vmware, vagrant, cache, and packer.
+  => homebrew, rubytools, parallels, virtualbox, vmware, vagrant, cache, and packer.
 - --macmini  
   is an alias to --macmini-vmware
 
@@ -97,7 +97,7 @@ The possible options are:
   contains a comma-separated list of modules to install.  
   The complete list can be obtained with --help.  
   The --macmini options will change that list.  
-  Default: homebrew,puppet,rubytools
+  Default: homebrew,rubytools
 - --network  *ip_address*/*cidr*
   can be used to force the script to believe it is run in a given network.  
   Both an ip address and a network (in the cidr form) must be given.  
@@ -183,6 +183,11 @@ Start-BitsTransfer http://tinyurl.com/puppet-me-win-8 $env:TEMP\_.ps1 ; & $env:T
 
 Where *options* are:
 
+- -Branch *name*  
+  Use a different git branch to run puppet-me.  
+  This is used for Beta, Release Candidate phases.  
+- -BridgedNetAdapterName  
+  Contains the name of the network adapter to build a bridged switch for the Virtual Machines.  
 - -CacheKeep  
   Keep previous versions of downloads (e.g., keep CIC 2015R1, 2015R2, patches)  
   Default: previous versions are deleted  
@@ -191,6 +196,10 @@ Where *options* are:
   When used, it will update $env:DAAS_CACHE  
   Alias: DaasCache  
   Default: $env:DAAS_CACHE or $env:ProgramData\DaaS\Cache  
+- -CacheSource *list of path_or_url*  
+  Contains a comma separated list of URLs or paths where the sources can be downloaded before the configuration.  
+  Alias: CacheSources  
+  Default: None  
 - -Credential *credential*  
   Contains some **[PSCredential](https://msdn.microsoft.com/en-us/library/system.management.automation.pscredential.aspx)** to use by default when connecting to VPNs, Windows Share, etc.  
   To get a dialog box that queries for the credentials, use the following:  
@@ -201,6 +210,10 @@ Where *options* are:
   ```powershell
   Start-BitsTransfer ... win-8.1-client.ps1 -Credential (Get-Credential ACME\john.doe) [options]
   ```
+- -HyperV  
+  When used, Hyper-V will be configured.  
+  A reboot might be necessary before building the first box.  
+  Only one of -HyperV, -Virtualbox, -VMWare can be specified.  
 - -PackerBuild  
   When all software is installed, [packer-windows](https://github.com/gildas/packer-windows) will build the given list of [Vagrant](http://vagrantup.com) boxes.  
 - -PackerHome *path*  
@@ -224,10 +237,13 @@ Where *options* are:
 - -Virtualbox  
   When used, [Virtualbox](http://www.virtualbox.org) will be installed and configured.  
   Only one of -HyperV, -Virtualbox, -VMWare can be specified.  
-- -VirtualMachinesHome *path*  
+- -VirtualHardDiskPath *path*  
+  Contains the location where virtual hard disks will be stored, this is for Hyper-V only.  
+  Alias: VHDHome, VirtualHardDisks, VirtualHardDisksHome, VirtualHardDisksPath  
+- -VirtualMachinePath *path*  
   Contains the location virtual machines will be stored.    
   The Default value depends on the Virtualization platform that was chosen.  
-  Alias: VMHome  
+  Alias: VMHome, VirtualMachines, VirtualMachinesHome  
 - -VMWare  
   When used, [VMWare Workstation](http://www.vmware.com/products/workstation) will be installed and configured.  
   Only one of -HyperV, -Virtualbox, -VMWare can be specified.  
@@ -240,7 +256,7 @@ Note:
 
 To use the development version, use this command instead:
 ```powershell
-Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-dev $env:TEMP\_.ps1 ; & $env:TEMP\_.ps1 -CacheConfig https://raw.githubusercontent.com/inin-apac/puppet-me/dev/config/sources.json [options]
+Start-BitsTransfer http://tinyurl.com/puppet-me-win-8-dev $env:TEMP\_.ps1 ; & $env:TEMP\_.ps1 -Branch dev [options]
 ```
 
 AUTHORS
