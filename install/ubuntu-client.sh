@@ -37,7 +37,7 @@ MODULE_virtualization_done=0
 MODULES=(puppet rubytools)
 ALL_MODULES=(cache packer puppet rubytools vagrant virtualbox)
 
-CURRENT_VERSION='0.9.10'
+CURRENT_VERSION='0.9.11'
 GITHUB_ROOT='https://raw.githubusercontent.com/inin-apac/puppet-me'
 
 CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
@@ -1862,6 +1862,13 @@ function install_rubytools() # {{{2
     verbose "Bundler is already installed"
   else
     $NOOP $SUDO gem install bundler
+    status=$? && [[ $status != 0 ]] && return $status
+  fi
+
+  if [[ ! -z $(gem list --local | grep savon) ]]; then
+    verbose "Savon is already installed"
+  else
+    $NOOP $SUDO gem install savon
     status=$? && [[ $status != 0 ]] && return $status
   fi
   MODULE_rubytools_done=1
