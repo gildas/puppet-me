@@ -34,10 +34,10 @@ MODULE_virtualbox_done=0
 MODULE_vmware_done=0
 MODULE_virtualization_done=0
 
-MODULES=(homebrew puppet rubytools)
+MODULES=(homebrew rubytools)
 ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
-CURRENT_VERSION='0.9.3'
+CURRENT_VERSION='0.9.12'
 GITHUB_ROOT='https://raw.githubusercontent.com/inin-apac/puppet-me'
 
 CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
@@ -1109,7 +1109,7 @@ function download() # {{{2
     trace "  >> source_host: ${source_host}"
 
     if [[ -z "$source_user" ]]; then
-      trace "  Querying keychain for user on site $source_host over $source_protocol"
+      verbose "  Querying keychain for user on site $source_host over $source_protocol"
       source_user=$(keychain_get_user --kind=internet --protocol=$source_protocol --site=$source_host 2>&1)
       status=$?
       if [[ $status != 0 ]]; then
@@ -1120,7 +1120,7 @@ function download() # {{{2
       fi
     fi
     if [[ -z "$source_password" && -n "$source_user" ]]; then
-      trace "  Querying keychain for password for user $source_user on site $source_host over $source_protocol"
+      verbose "  Querying keychain for password for user $source_user on site $source_host over $source_protocol"
       source_password=$(keychain_get_password --kind=internet --protocol=$source_protocol --site=$source_host --user=$source_user)
       status=$?
       if [[ $status != 0 ]]; then
@@ -1195,6 +1195,7 @@ function download() # {{{2
 
     if [[ -n "$source_domain" ]]; then
       source_user="${source_domain}\\${source_user}"
+      verbose "SMB User: $source_user"
     fi
 
     smb_target=''
@@ -1246,7 +1247,7 @@ function download() # {{{2
           ;;
           *)
             error "  Cannot mount ${source_share} on ${source_host} as ${source_user}\nError: $status"
-	    ((attempt++))
+            ((attempt++))
           ;;
         esac
       done
@@ -1350,6 +1351,14 @@ function download() # {{{2
           $NOOP $_SUDO chmod 664 "${target_path}"
           break
         ;;
+        18)
+          if [[ -n "$has_resume" ]]; then
+            verbose "  Download interrupted by the server, resuming ..."
+          else
+            error "  Unable to download from ${source}\nError $status: $(curl_get_error $status)"
+            ((attempt++))
+          fi
+        ;;
         67)
           error "  Wrong credentials, please enter new credentials"
           source_password=''
@@ -1357,7 +1366,7 @@ function download() # {{{2
         ;;
         *)
           error "  Unable to download from ${source}\nError $status: $(curl_get_error $status)"
-	  ((attempt++))
+          ((attempt++))
         ;;
       esac
     done
@@ -1756,6 +1765,13 @@ function cask_install() # {{{2
 
   if [[ -z "$(brew cask info $app_name | grep '^Not installed$')" ]]; then
     verbose "$app_name is already installed via Homebrew"
+  elif [[ -d /opt/homebrew-cask/Caskroom/${app_name} ]]; then
+    verbose "$app_name is already installed but outdated, zapping old versions..."
+    $NOOP brew cask zap $app_binary
+    status=$? && [[ $status != 0 ]] && return $status
+    verbose "Installing $app_name"
+    $NOOP brew cask install --appdir=/Applications "$app_name"
+    status=$? && [[ $status != 0 ]] && return $status
   elif which "$app_binary" > /dev/null 2>&1; then
     verbose "$app_name was manually installed (no automatic updates possible)"
   else
@@ -1881,7 +1897,7 @@ function install_homebrew() # {{{2
   fi
 
   taps=('homebrew/completions' 'homebrew/binary' 'caskroom/cask' 'homebrew/versions' 'caskroom/versions')
-  brews=(bash-completion brew-cask bar p7zip)
+  brews=(bash-completion bar p7zip)
 
   for tap in ${taps[*]} ; do
     brew_tap $tap
@@ -1892,6 +1908,12 @@ function install_homebrew() # {{{2
     brew_install $brew
     status=$? && [[ $status != 0 ]] && return $status
   done
+
+  # Check if brew-cask has already been installed and remove it
+  if [[ -z "$(brew info brew-cask | grep '^Not installed$')" ]]; then
+    verbose "Uninstalling obsolete brew: brew-cask"
+    brew uninstall brew-cask
+  fi
 
   MODULE_homebrew_done=1
   return 0
@@ -2134,6 +2156,13 @@ function install_rubytools() # {{{2
     $NOOP $SUDO gem install bundler
     status=$? && [[ $status != 0 ]] && return $status
   fi
+
+  if [[ ! -z $(gem list --local | grep savon) ]]; then
+    verbose "Savon is already installed"
+  else
+    $NOOP $SUDO gem install savon
+    status=$? && [[ $status != 0 ]] && return $status
+  fi
   MODULE_rubytools_done=1
   return 0
 } # }}}2
@@ -2158,24 +2187,28 @@ function install_vagrant() # {{{2
 
   if which vagrant > /dev/null 2>&1; then
     verbose "vagrant is already installed"
-    version=$(vagrant --version | awk '{print $2}')
-    verbose "  current version: ${version}"
-    latest=$(brew cask info vagrant | awk '/^vagrant: / { print $2; }')
-    if [[ $version != $latest ]]; then # TODO: We should actually compare with the version we support
-      verbose "Vagrant ${latest} is available"
-      if [[ -n "$(brew cask info vagrant${version//\./} | grep '^Not installed$')" ]]; then
-        verbose "  uninstalling vagrant manually"
-        $NOOP $SUDO rm -rf /opt/vagrant
-        status=$? && [[ $status != 0 ]] && error "Error $status while removing /opt/vagrant" && return $status
-        $NOOP $SUDO rm -f /usr/bin/vagrant
-        status=$? && [[ $status != 0 ]] && error "Error $status while removing /usr/bin/vagrant" && return $status
+    installed_version=$(vagrant --version | awk '{print $2}')
+    verbose "  current version: ${installed_version}"
+    latest_version=$(brew cask info vagrant | awk '/^vagrant: / { print $2; }')
+    if [[ $installed_version != $latest_version ]]; then # TODO: We should actually compare with the version we support
+      verbose "Vagrant ${latest_version} is available"
+      if [[ -n "$(brew cask info vagrant${version_version//\./} 2>&1 | grep 'No available Cask')" ]]; then
+        warn "Uninstall cask has not been created yet, ignoring and not installing version ${latest_version}"
       else
-        $NOOP cask_uninstall vagrant${version//\./}
-        status=$? && [[ $status != 0 ]] && error "Error $status while uninstalling vagrant" && return $status
+        if [[ -n "$(brew cask info vagrant${version_version//\./} | grep '^Not installed$')" ]]; then
+          verbose "  uninstalling vagrant manually"
+          $NOOP $SUDO rm -rf /opt/vagrant
+          status=$? && [[ $status != 0 ]] && error "Error $status while removing /opt/vagrant" && return $status
+          $NOOP $SUDO rm -f /usr/bin/vagrant
+          status=$? && [[ $status != 0 ]] && error "Error $status while removing /usr/bin/vagrant" && return $status
+        else
+          $NOOP cask_uninstall vagrant${version_version//\./}
+          status=$? && [[ $status != 0 ]] && error "Error $status while uninstalling vagrant" && return $status
+        fi
+        verbose "  installing vagrant"
+        $NOOP cask_install vagrant
+        status=$? && [[ $status != 0 ]] && error "Error $status while installing vagrant 1.6.5" && return $status
       fi
-      verbose "  installing vagrant"
-      $NOOP cask_install vagrant
-      status=$? && [[ $status != 0 ]] && error "Error $status while installing vagrant 1.6.5" && return $status
     fi
   else
     verbose "installing vagrant"
@@ -2243,9 +2276,20 @@ function install_parallels() # {{{2
   if [[ -z "$(brew cask info parallels10 | grep '^Not installed$')"  || -d /opt/homebrew-cask/parallels-desktop/10.* ]]; then
     cask_uninstall parallels10 --force
   fi
-  cask_install parallels-desktop
-  status=$? && [[ $status != 0 ]] && return $status
+  if [[ -L '/Applications/Parallels Desktop.app' ]]; then
+    cask_install parallels-desktop
+    status=$? && [[ $status != 0 ]] && return $status
+  elif [[ -d '/Applications/Parallels Desktop.app' ]]; then
+    echo "Parallels Desktop was installed manually, do not forget to keep it up-to-date!"
+  else
+    cask_install parallels-desktop
+    status=$? && [[ $status != 0 ]] && return $status
+  fi
 
+  if [[ $(mdfind kMDItemCFBundleIdentifier '==' "com.parallels.desktop.console" | wc -l) -gt 1 ]]; then
+    current_dirs=$(mdfind kMDItemCFBundleIdentifier '==' "com.parallels.desktop.console")
+    die "Found more than 1 version of Parallels Desktop (${current_dirs}), please remove one of them and re-run this script"
+  fi
   [[ -d "/Applications/Parallels Desktop.app/Contents/MacOS"      ]] && parallels_tools_root="/Applications/Parallels Desktop.app/Contents/MacOS"
   [[ -d "$HOME/Applications/Parallels Desktop.app/Contents/MacOS" ]] && parallels_tools_root="$HOME/Applications/Parallels Desktop.app/Contents/MacOS"
   if ! which prlsrvctl > /dev/null 2>&1; then
@@ -2368,6 +2412,7 @@ function cache_stuff() # {{{2
   local nic_names nic_name nic_info nic_ip nic_mask ip_addresses ip_address ip_masks ip_mask
 
   verbose "Caching ISO files"
+  trace "Fetching $CACHE_CONFIG"
   [[ -d "$CACHE_ROOT" ]]                          || $NOOP $SUDO mkdir -p "$CACHE_ROOT"
   status=$? && [[ $status != 0 ]] && return $status
   [[ $(stat -f "%Sg" "$CACHE_ROOT") == 'admin' ]] || $NOOP $SUDO chgrp -R admin "$CACHE_ROOT"
@@ -2376,7 +2421,10 @@ function cache_stuff() # {{{2
   status=$? && [[ $status != 0 ]] && return $status
   download "$CACHE_CONFIG" "${CACHE_ROOT}"
   status=$? && [[ $status != 0 ]] && return $status
-  document_catalog="${CACHE_ROOT}/sources.json"
+  cache_config_path=${CACHE_CONFIG#*\?}                       # extract file in archive
+  cache_config_filename=${cache_config_path##*/}              # remove path
+  document_catalog="${CACHE_ROOT}/${cache_config_filename}"
+  trace "Caching sources defined in $document_catalog"
 
   ip_addresses=( $NETWORK )
   ip_masks=()
@@ -2478,6 +2526,7 @@ function cache_stuff() # {{{2
             case $source_type in
               akamai)
                 source_auth='--ntlm'
+                source_has_resume='--has_resume'
               ;;
             esac
           fi
@@ -2640,16 +2689,16 @@ function usage() # {{{2
   echo " --help  "
   echo "   Prints some help on the output."
   echo " --macmini-parallels  "
-  echo "   will install these modules: noidle homebrew rubytools puppet parallels vagrant cache packer"
+  echo "   will install these modules: noidle homebrew rubytools parallels vagrant cache packer"
   echo " --macmini-virtualbox  "
-  echo "   will install these modules: noidle homebrew rubytools puppet virtualbox vagrant cache packer"
+  echo "   will install these modules: noidle homebrew rubytools virtualbox vagrant cache packer"
   echo " --macmini-vmware or --macmini  "
-  echo "   will install these modules: noidle homebrew rubytools puppet vmware vagrant cache packer"
+  echo "   will install these modules: noidle homebrew rubytools vmware vagrant cache packer"
   echo " --modules  "
   echo "   contains a comma-separated list of modules to install.  "
   echo "   The complete list can be obtained with --help.  "
   echo "   The --macmini options will change that list.  "
-  echo "   Default: homebrew,puppet,rubytools"
+  echo "   Default: homebrew,rubytools"
   echo " --network  *ip_address*/*cidr*"
   echo "   can be used to force the script to believe it is run in a given network.  "
   echo "   Both an ip address and a network (in the cidr form) must be given.  "
@@ -2722,6 +2771,26 @@ function parse_args() # {{{2
   while :; do
     trace "Analyzing option \"$1\""
     case $1 in
+      --branch)
+        [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing"
+        CURRENT_VERSION=$2
+        verbose "Using branch ${CURRENT_VERSION}"
+        [[ $CACHE_CONFIG =~ ^${GITHUB_ROOT}.* ]] && CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
+        MODULE_updateme_source="${GITHUB_ROOT}/${CURRENT_VERSION}/config/osx/UpdateMe.7z"
+        trace "Cache config is now: $CACHE_CONFIG"
+        shift 2
+        continue
+      ;;
+      --branch=*?)
+        CURRENT_VERSION=${1#*=} # delete everything up to =
+        verbose "Using branch ${CURRENT_VERSION}"
+        [[ $CACHE_CONFIG =~ ^${GITHUB_ROOT}.* ]] && CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
+        MODULE_updateme_source="${GITHUB_ROOT}/${CURRENT_VERSION}/config/osx/UpdateMe.7z"
+        trace "Cache config is now: $CACHE_CONFIG"
+      ;;
+      --branch=)
+        die "Argument for option $1 is missing"
+        ;;
       --credentials|--creds)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing"
         keychain_set_password --kind=internet --url=$2
@@ -2762,19 +2831,19 @@ function parse_args() # {{{2
         die "Argument for option $1 is missing"
         ;;
       --macmini|--macmini-vmware)
-        MODULES=(noidle homebrew updateme rubytools puppet vmware vagrant cache packer)
+        MODULES=(noidle homebrew updateme rubytools vmware vagrant cache packer)
         MODULE_updateme_args="${MODULE_updateme_args} --macmini-vmware"
         ;;
       --macmini-parallels)
-        MODULES=(noidle homebrew updateme rubytools puppet parallels vagrant cache packer)
+        MODULES=(noidle homebrew updateme rubytools parallels vagrant cache packer)
         MODULE_updateme_args="${MODULE_updateme_args} --macmini-parallels"
         ;;
       --macmini-virtualbox)
-        MODULES=(noidle homebrew updateme rubytools puppet virtualbox vagrant cache packer)
+        MODULES=(noidle homebrew updateme rubytools virtualbox vagrant cache packer)
         MODULE_updateme_args="${MODULE_updateme_args} --macmini-virtualbox"
         ;;
       --macmini-all)
-        MODULES=(noidle homebrew updateme rubytools puppet parallels virtualbox vmware vagrant cache packer)
+        MODULES=(noidle homebrew updateme rubytools parallels virtualbox vmware vagrant cache packer)
         MODULE_updateme_args="${MODULE_updateme_args} --macmini-all"
         ;;
       --modules)
@@ -2892,30 +2961,54 @@ function parse_args() # {{{2
         ;;
       --packer-build)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
-        MODULE_PACKER_BUILD=("${MODULE_PACKER_BUILD[@]}" ${2//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} --packer-build $2"
+        if [[ $2 =~ (.*)cic-[0-9]+R[0-9]+(.*) ]]; then
+          verbose "fixing old packer task $2 to \"cic\""
+          $packer_target="${BASH_REMATCH[1]}cic${BASH_REMATCH[2]}"
+        else
+          packer_target=$2
+        fi
+        MODULE_PACKER_BUILD=("${MODULE_PACKER_BUILD[@]}" ${packer_target//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} --packer-build $packer_target"
         shift 2
         continue
         ;;
       --packer-build=*?)
         build=${1#*=} # delete everything up to =
-        MODULE_PACKER_BUILD=("${MODULE_PACKER_BUILD[@]}" ${build//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} $1"
+        if [[ $build =~ (.*)cic-[0-9]+R[0-9]+(.*) ]]; then
+          verbose "fixing old packer task $build to \"cic\""
+          $packer_target="${BASH_REMATCH[1]}cic${BASH_REMATCH[2]}"
+        else
+          packer_target=$build
+        fi
+        MODULE_PACKER_BUILD=("${MODULE_PACKER_BUILD[@]}" ${packer_target//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} --packer-build $packer_target"
         ;;
       --packer-build=)
         die "Argument for option $1 is missing."
         ;;
       --packer-load)
         [[ -z $2 || ${2:0:1} == '-' ]] && die "Argument for option $1 is missing."
-        MODULE_PACKER_LOAD=("${MODULE_PACKER_LOAD[@]}" ${2//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} --packer-load $2"
+        if [[ $2 =~ (.*)cic-[0-9]+R[0-9]+(.*) ]]; then
+          verbose "fixing old packer task $2 to \"cic\""
+          $packer_target="${BASH_REMATCH[1]}cic${BASH_REMATCH[2]}"
+        else
+          packer_target=$2
+        fi
+        MODULE_PACKER_LOAD=("${MODULE_PACKER_LOAD[@]}" ${packer_target//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} --packer-load $packer_target"
         shift 2
         continue
         ;;
       --packer-load=*?)
         load=${1#*=} # delete everything up to =
-        MODULE_PACKER_LOAD=("${MODULE_PACKER_LOAD[@]}" ${load//,/ })
-        MODULE_updateme_args="${MODULE_updateme_args} $1"
+        if [[ $load =~ (.*)cic-[0-9]+R[0-9]+(.*) ]]; then
+          verbose "fixing old packer task $load to \"cic\""
+          $packer_target="${BASH_REMATCH[1]}cic${BASH_REMATCH[2]}"
+        else
+          packer_target=$load
+        fi
+        MODULE_PACKER_LOAD=("${MODULE_PACKER_LOAD[@]}" ${packer_target//,/ })
+        MODULE_updateme_args="${MODULE_updateme_args} --packer-load $packer_target"
         ;;
       --packer-load=)
         die "Argument for option $1 is missing."
