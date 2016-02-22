@@ -1765,6 +1765,13 @@ function cask_install() # {{{2
 
   if [[ -z "$(brew cask info $app_name | grep '^Not installed$')" ]]; then
     verbose "$app_name is already installed via Homebrew"
+  elif [[ -d /opt/homebrew-cask/Caskroom/${app_name} ]]; then
+    verbose "$app_name is already installed but outdated, zapping old versions..."
+    $NOOP brew cask zap $app_binary
+    status=$? && [[ $status != 0 ]] && return $status
+    verbose "Installing $app_name"
+    $NOOP brew cask install --appdir=/Applications "$app_name"
+    status=$? && [[ $status != 0 ]] && return $status
   elif which "$app_binary" > /dev/null 2>&1; then
     verbose "$app_name was manually installed (no automatic updates possible)"
   else
@@ -2269,9 +2276,20 @@ function install_parallels() # {{{2
   if [[ -z "$(brew cask info parallels10 | grep '^Not installed$')"  || -d /opt/homebrew-cask/parallels-desktop/10.* ]]; then
     cask_uninstall parallels10 --force
   fi
-  cask_install parallels-desktop
-  status=$? && [[ $status != 0 ]] && return $status
+  if [[ -L '/Applications/Parallels Desktop.app' ]]; then
+    cask_install parallels-desktop
+    status=$? && [[ $status != 0 ]] && return $status
+  elif [[ -d '/Applications/Parallels Desktop.app' ]]; then
+    echo "Parallels Desktop was installed manually, do not forget to keep it up-to-date!"
+  else
+    cask_install parallels-desktop
+    status=$? && [[ $status != 0 ]] && return $status
+  fi
 
+  if [[ $(mdfind kMDItemCFBundleIdentifier '==' "com.parallels.desktop.console" | wc -l) -gt 1 ]]; then
+    current_dirs=$(mdfind kMDItemCFBundleIdentifier '==' "com.parallels.desktop.console")
+    die "Found more than 1 version of Parallels Desktop (${current_dirs}), please remove one of them and re-run this script"
+  fi
   [[ -d "/Applications/Parallels Desktop.app/Contents/MacOS"      ]] && parallels_tools_root="/Applications/Parallels Desktop.app/Contents/MacOS"
   [[ -d "$HOME/Applications/Parallels Desktop.app/Contents/MacOS" ]] && parallels_tools_root="$HOME/Applications/Parallels Desktop.app/Contents/MacOS"
   if ! which prlsrvctl > /dev/null 2>&1; then
