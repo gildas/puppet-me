@@ -1766,12 +1766,16 @@ function cask_install() # {{{2
   if [[ -z "$(brew cask info $app_name | grep '^Not installed$')" ]]; then
     verbose "$app_name is already installed via Homebrew"
   elif [[ -d /opt/homebrew-cask/Caskroom/${app_name} ]]; then
-    verbose "$app_name is already installed but outdated, zapping old versions..."
-    $NOOP brew cask zap $app_binary
-    status=$? && [[ $status != 0 ]] && return $status
     verbose "Installing $app_name"
     $NOOP brew cask install --appdir=/Applications "$app_name"
     status=$? && [[ $status != 0 ]] && return $status
+    old_versions="$(ls -r /opt/homebrew-cask/Caskroom/${app_name} | sed 1,1d)"
+    for old_version in "$old_versions" ; do
+      verbose "nuking old version ${old_version}..."
+      $NOOP $SUDO rm -rf "/opt/homebrew-cask/Caskroom/${app_name}/${old_version}"
+    done
+    #$NOOP brew cask zap $app_binary
+    #status=$? && [[ $status != 0 ]] && return $status
   elif which "$app_binary" > /dev/null 2>&1; then
     verbose "$app_name was manually installed (no automatic updates possible)"
   else
