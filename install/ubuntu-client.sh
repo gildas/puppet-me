@@ -37,7 +37,7 @@ MODULE_virtualization_done=0
 MODULES=(puppet rubytools)
 ALL_MODULES=(cache packer puppet rubytools vagrant virtualbox)
 
-CURRENT_VERSION='0.9.13'
+CURRENT_VERSION='0.9.14'
 GITHUB_ROOT='https://raw.githubusercontent.com/inin-apac/puppet-me'
 
 CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
