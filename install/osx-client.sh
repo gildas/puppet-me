@@ -1770,7 +1770,7 @@ function cask_install() # {{{2
     $NOOP brew cask install --appdir=/Applications "$app_name"
     status=$? && [[ $status != 0 ]] && return $status
     old_versions="$(ls -r /opt/homebrew-cask/Caskroom/${app_name} | sed 1,1d)"
-    for old_version in "$old_versions" ; do
+    for old_version in $old_versions ; do
       verbose "nuking old version ${old_version}..."
       $NOOP $SUDO rm -rf "/opt/homebrew-cask/Caskroom/${app_name}/${old_version}"
     done
