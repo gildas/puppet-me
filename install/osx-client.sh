@@ -2195,18 +2195,18 @@ function install_vagrant() # {{{2
     verbose "  current version: ${installed_version}"
     latest_version=$(brew cask info vagrant | awk '/^vagrant: / { print $2; }')
     if [[ $installed_version != $latest_version ]]; then # TODO: We should actually compare with the version we support
-      verbose "Vagrant ${latest_version} is available"
-      if [[ -n "$(brew cask info vagrant${version_version//\./} 2>&1 | grep 'No available Cask')" ]]; then
+      verbose "  Vagrant ${latest_version} is available"
+      if [[ -n "$(brew cask info vagrant${installed_version//\./} 2>&1 | grep 'No available Cask')" ]]; then
         warn "Uninstall cask has not been created yet, ignoring and not installing version ${latest_version}"
       else
-        if [[ -n "$(brew cask info vagrant${version_version//\./} | grep '^Not installed$')" ]]; then
+        if [[ -n "$(brew cask info vagrant${installed_version//\./} | grep '^Not installed$')" ]]; then
           verbose "  uninstalling vagrant manually"
           $NOOP $SUDO rm -rf /opt/vagrant
           status=$? && [[ $status != 0 ]] && error "Error $status while removing /opt/vagrant" && return $status
           $NOOP $SUDO rm -f /usr/bin/vagrant
           status=$? && [[ $status != 0 ]] && error "Error $status while removing /usr/bin/vagrant" && return $status
         else
-          $NOOP cask_uninstall vagrant${version_version//\./}
+          $NOOP cask_uninstall vagrant${installed_version//\./}
           status=$? && [[ $status != 0 ]] && error "Error $status while uninstalling vagrant" && return $status
         fi
         verbose "  installing vagrant"
