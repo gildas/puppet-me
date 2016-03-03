@@ -104,6 +104,9 @@ The possible options are:
   Default: N/A.
 - --noop, --dry-run  
   Do not execute instructions that would make changes to the system (write files, install software, etc).
+- --no-updates *module_list*  
+  contains a comma-separated list of modules to not update.  
+  Default: N/A.  
 - --packer-home *path*  
   Contains the location where packer user work data will be stored.  
   Default value: $HOME/Documents/packer
