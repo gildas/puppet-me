@@ -104,6 +104,9 @@ The possible options are:
   Default: N/A.
 - --noop, --dry-run  
   Do not execute instructions that would make changes to the system (write files, install software, etc).
+- --no-updates *module_list*  
+  contains a comma-separated list of modules to not update.  
+  Default: N/A.  
 - --packer-home *path*  
   Contains the location where packer user work data will be stored.  
   Default value: $HOME/Documents/packer
@@ -170,6 +173,13 @@ For example, if your Mac mini has an HDD and an SSD, you would want to run all v
 
 ```sh
 curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- --macmini-virtualbox --packer-home /Volumes/SSD/packer --vagrant-home /Volumes/SSD/vagrant --virtualbox-home /Volumes/SSD/Virtualbox
+```
+Note:
+-----
+
+To use the development version, use this command instead:
+```powershell
+curl -sSL http://tinyurl.com/puppet-me-osx-dev | bash -s -- [options]
 ```
 
 
