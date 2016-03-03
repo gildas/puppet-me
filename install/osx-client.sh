@@ -2328,20 +2328,25 @@ function install_virtualbox() # {{{2
   if which VBoxManage > /dev/null 2>&1; then
     version=$(VBoxManage --version)
     verbose "Virtualbox ${version} is already installed"
-    latest=$(brew cask info virtualbox | awk '/^virtualbox: / { print $2; }')
-    if [[ ${version/r/-} != $latest ]]; then # TODO: We should actually compare with the version we support
-      verbose "Virtualbox ${latest} is available"
+    latest_cask=$(brew cask info virtualbox | awk '/^virtualbox: / { print $2; }')
+    if [[ ${version/r/-} != $latest_cask ]]; then # TODO: We should actually compare with the version we support
+      verbose "Virtualbox ${latest_cask} is available"
       if [[ -n "$(brew cask info virtualbox${version//[\.r]/} | grep '^Not installed$')" ]]; then
-        verbose "Please uninstall Virtualbox ${version} manually"
+        verbose "Please upgrade Virtualbox ${version} manually"
       else
         $NOOP cask_uninstall virtualbox${version//[\.r]/}
+        $NOOP cask_install virtualbox
+        status=$? && [[ $status != 0 ]] && return $status
+        $NOOP cask_install virtualbox-extension-pack
+        status=$? && [[ $status != 0 ]] && return $status
       fi
     fi
+  else
+    $NOOP cask_install virtualbox
+    status=$? && [[ $status != 0 ]] && return $status
+    $NOOP cask_install virtualbox-extension-pack
+    status=$? && [[ $status != 0 ]] && return $status
   fi
-  $NOOP cask_install virtualbox
-  status=$? && [[ $status != 0 ]] && return $status
-  $NOOP cask_install virtualbox-extension-pack
-  status=$? && [[ $status != 0 ]] && return $status
 
   if [[ -n "$MODULE_VIRTUALBOX_HOME" ]]; then
     current=$(VBoxManage list systemproperties | grep 'Default machine folder' | cut -d: -f2 | sed -e 's/^ *//')
