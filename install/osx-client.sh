@@ -1823,7 +1823,7 @@ function install_xcode_tools() # {{{2
   if [[ $os_min -ge 9 ]]; then # Mavericks or later
     if xcode-select -p > /dev/null 2>&1; then
       verbose "XCode Command Line tools are already installed"
-      [[ -n ${NO_UPDATES[xcode]} ]] && echo "Not updating" && return 0
+      [[ -n ${NO_UPDATES[xcode]} ]] && echo "Not updating XCode" && return 0
       verbose "  Checking Apple.com for updates..."
       updates=$(softwareupdate --list 2>&1)
       status=$? && [[ $status != 0 ]] && error "Cannot contact Apple Software Update. Error: $status" && return $status
@@ -1864,7 +1864,7 @@ function install_homebrew() # {{{2
   if which brew > /dev/null 2>&1; then
     verbose "Homebrew is already installed."
     if [[ -n ${NO_UPDATES[homebrew]} ]]; then
-      echo "Not updating"
+      echo "Not updating Homebrew"
     else
       [[ -w /usr/local ]] || $NOOP $SUDO chown -R $(whoami):admin /usr/local
       [[ -f $filestamp ]] && trace "filestamp: $filestamp, $(stat -f "%Sm" $filestamp)"
@@ -1952,8 +1952,18 @@ function install_packer() # {{{2
       brew uninstall packer
     fi
   fi
-  brew_install packer
-  status=$? && [[ $status != 0 ]] && return $status
+  if which vagrant > /dev/null 2>&1; then
+    verbose "vagrant is already installed"
+    if [[ -n ${NO_UPDATES[packer]} ]]; then
+      echo "Not updating Packer $(packer --version)"
+    else
+      brew_install packer
+      status=$? && [[ $status != 0 ]] && return $status
+    fi
+  else
+    brew_install packer
+    status=$? && [[ $status != 0 ]] && return $status
+  fi
 
   if [[ ! -w $MODULE_PACKER_LOG_ROOT ]]; then
     trace "Adding the log folder in $MODULE_PACKER_LOG_ROOT"
@@ -2190,9 +2200,9 @@ function install_vagrant() # {{{2
   fi
 
   if which vagrant > /dev/null 2>&1; then
-    verbose "vagrant is already installed"
     installed_version=$(vagrant --version | awk '{print $2}')
-    verbose "  current version: ${installed_version}"
+    verbose "vagrant ${installed_version} is already installed"
+    [[ -n ${NO_UPDATES[vagrant]} ]] && echo "Not updating Vagrant ${installed_version}" && return 0
     latest_version=$(brew cask info vagrant | awk '/^vagrant: / { print $2; }')
     if [[ $installed_version != $latest_version ]]; then # TODO: We should actually compare with the version we support
       verbose "  Vagrant ${latest_version} is available"
@@ -2281,11 +2291,19 @@ function install_parallels() # {{{2
     cask_uninstall parallels10 --force
   fi
   if [[ -L '/Applications/Parallels Desktop.app' ]]; then
+    if ! which prlsrvctl > /dev/null 2>&1; then
+      [[ -n ${NO_UPDATES[parallels]} ]] && echo "Not updating Parallels Desktop" && return 0
+      [[ -n ${NO_UPDATES[parallels-desktop]} ]] && echo "Not updating Parallels Desktop" && return 0
+    fi
     cask_install parallels-desktop
     status=$? && [[ $status != 0 ]] && return $status
   elif [[ -d '/Applications/Parallels Desktop.app' ]]; then
     echo "Parallels Desktop was installed manually, do not forget to keep it up-to-date!"
   else
+    if ! which prlsrvctl > /dev/null 2>&1; then
+      [[ -n ${NO_UPDATES[parallels]} ]] && echo "Not updating" && return 0
+      [[ -n ${NO_UPDATES[parallels-desktop]} ]] && echo "Not updating" && return 0
+    fi
     cask_install parallels-desktop
     status=$? && [[ $status != 0 ]] && return $status
   fi
@@ -2332,17 +2350,21 @@ function install_virtualbox() # {{{2
   if which VBoxManage > /dev/null 2>&1; then
     version=$(VBoxManage --version)
     verbose "Virtualbox ${version} is already installed"
-    latest_cask=$(brew cask info virtualbox | awk '/^virtualbox: / { print $2; }')
-    if [[ ${version/r/-} != $latest_cask ]]; then # TODO: We should actually compare with the version we support
-      verbose "Virtualbox ${latest_cask} is available"
-      if [[ -n "$(brew cask info virtualbox${version//[\.r]/} | grep '^Not installed$')" ]]; then
-        verbose "Please upgrade Virtualbox ${version} manually"
-      else
-        $NOOP cask_uninstall virtualbox${version//[\.r]/}
-        $NOOP cask_install virtualbox
-        status=$? && [[ $status != 0 ]] && return $status
-        $NOOP cask_install virtualbox-extension-pack
-        status=$? && [[ $status != 0 ]] && return $status
+    if [[ -n ${NO_UPDATES[virtualbox]} ]]; then
+      echo "Not updating Virtualbox ${version}"
+    else
+      latest_cask=$(brew cask info virtualbox | awk '/^virtualbox: / { print $2; }')
+      if [[ ${version/r/-} != $latest_cask ]]; then # TODO: We should actually compare with the version we support
+        verbose "Virtualbox ${latest_cask} is available"
+        if [[ -n "$(brew cask info virtualbox${version//[\.r]/} | grep '^Not installed$')" ]]; then
+          verbose "Please upgrade Virtualbox ${version} manually"
+        else
+          $NOOP cask_uninstall virtualbox${version//[\.r]/}
+          $NOOP cask_install virtualbox
+          status=$? && [[ $status != 0 ]] && return $status
+          $NOOP cask_install virtualbox-extension-pack
+          status=$? && [[ $status != 0 ]] && return $status
+        fi
       fi
     fi
   else
@@ -2369,6 +2391,10 @@ function install_vmware() # {{{2
 {
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
 
+  if [[ -x '/Applications/VMware Fusion.app/Contents/Library/vmrun' ]]; then
+    [[ -n ${NO_UPDATES[vmware]} ]] && echo "Not updating" && return 0
+    [[ -n ${NO_UPDATES[vmware-fusion]} ]] && echo "Not updating" && return 0
+  fi
   cask_install vmware-fusion '/Applications/VMware Fusion.app/Contents/Library/vmrun'
   status=$? && [[ $status != 0 ]] && return $status
 
@@ -2420,6 +2446,7 @@ function cache_stuff() # {{{2
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
   local nic_names nic_name nic_info nic_ip nic_mask ip_addresses ip_address ip_masks ip_mask
 
+  [[ -n ${NO_UPDATES[cache]} ]] && echo "Not updating" && return 0
   verbose "Caching ISO files"
   trace "Fetching $CACHE_CONFIG"
   [[ -d "$CACHE_ROOT" ]]                          || $NOOP $SUDO mkdir -p "$CACHE_ROOT"
@@ -2627,6 +2654,8 @@ function install_updateme() # {{{2
   local script
 
   [[ $MODULE_homebrew_done == 0 ]] && install_homebrew
+  [[ -n ${NO_UPDATES[updateme]} ]] && echo "Not updating UpdateMe" && return 0
+  [[ -n ${NO_UPDATES[update-me]} ]] && echo "Not updating UpdateMe" && return 0
 
   [[ -d "$MODULE_updateme_root" ]] || $NOOP mkdir -p "$MODULE_updateme_root"
   status=$? && [[ $status != 0 ]] && return $status
