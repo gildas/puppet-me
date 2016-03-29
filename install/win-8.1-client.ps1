@@ -1344,10 +1344,6 @@ process # {{{2
     {
       Import-Module "C:\Program Files\WindowsPowerShell\Modules\PsGet\PsGet.psm1" -ErrorAction Stop -Verbose:$false
     }
-    elseif (Test-Path "C:\Program Files\Common Files\Modules")
-    {
-      Import-Module "C:\Program Files\Common Files\Modules\PsGet\PsGet.psm1" -ErrorAction Stop -Verbose:$false
-    }
     else
     {
       Import-Module PsGet -ErrorAction Stop -Verbose:$false
