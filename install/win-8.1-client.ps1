@@ -1340,7 +1340,18 @@ process # {{{2
   if ($?)
   {
     $env:PsModulePath = [Environment]::GetEnvironmentVariable("PsModulePath")
-    Import-Module "C:\Program Files\Common Files\Modules\PsGet\PsGet.psm1" -ErrorAction Stop -Verbose:$false
+    if (Test-Path "C:\Program Files\WindowsPowerShell\Modules")
+    {
+      Import-Module "C:\Program Files\WindowsPowerShell\Modules\PsGet\PsGet.psm1" -ErrorAction Stop -Verbose:$false
+    }
+    elseif (Test-Path "C:\Program Files\Common Files\Modules")
+    {
+      Import-Module "C:\Program Files\Common Files\Modules\PsGet\PsGet.psm1" -ErrorAction Stop -Verbose:$false
+    }
+    else
+    {
+      Import-Module PsGet -ErrorAction Stop -Verbose:$false
+    }
   }
   #Install-Module  Posh-VPN -Update -Verbose:$Verbose
   Install-Module  -ModuleUrl https://github.com/gildas/posh-vpn/releases/download/0.1.3/posh-vpn-0.1.3.zip -Update -Verbose:$false
