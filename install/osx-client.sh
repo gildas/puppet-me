@@ -1885,8 +1885,8 @@ function install_homebrew() # {{{2
 
   # Preparing brew for first time or sanitizing it if already installed
   verbose "Checking Homebrew's sanity"
-  $NOOP brew doctor
-  status=$? && [[ $status != 0 ]] && echo "Your brew installation has some issues, let's use the Force and keep on..."
+  $NOOP brew doctor 2> $LOG
+  status=$? && [[ $status != 0 ]] && echo "Your brew installation has some issues, please check the logs..."
 
   # Installing jq for querying json from bash
   # We need this early so we can query brew via json as well
