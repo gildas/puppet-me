@@ -37,7 +37,7 @@ MODULE_virtualization_done=0
 MODULES=(homebrew rubytools)
 ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
-CURRENT_VERSION='0.9.14'
+CURRENT_VERSION='0.9.15'
 GITHUB_ROOT='https://raw.githubusercontent.com/inin-apac/puppet-me'
 
 CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
@@ -1885,8 +1885,8 @@ function install_homebrew() # {{{2
 
   # Preparing brew for first time or sanitizing it if already installed
   verbose "Checking Homebrew's sanity"
-  $NOOP brew doctor
-  status=$? && [[ $status != 0 ]] && return $status
+  $NOOP brew doctor 2> $LOG
+  status=$? && [[ $status != 0 ]] && echo "Your brew installation has some issues, please check the logs..."
 
   # Installing jq for querying json from bash
   # We need this early so we can query brew via json as well
