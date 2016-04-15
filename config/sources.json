@@ -114,7 +114,7 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2016r2/P00/"
+        "url": "https://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC/packaging.2016r2/P00/"
       }
     ]
   },
@@ -155,7 +155,7 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2016r2/P00/"
+        "url": "https://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/Interaction_Dialer/2016r2/P00/"
       }
     ]
   },
@@ -196,7 +196,7 @@
         "has_resume": true,
         "need_auth": true,
         "type": "akamai",
-        "url": "http://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC_Web_Applications/IC_Web_Packaging_2016r2/P00/"
+        "url": "https://www2.inin.com/AkamaiFileHandler/File.ashx?path=/Service%20Updates/CIC_Web_Applications/IC_Web_Packaging_2016r2/P00/"
       }
     ]
   },
