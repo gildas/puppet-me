@@ -1032,6 +1032,10 @@ function download() # {{{2
         need_auth=1
         trace "The source URL needs authentication"
       ;;
+      --basic)
+        auth_type='--basic'
+        trace "The authentication mechanism is Basic"
+      ;;
       --ntlm)
         auth_type='--ntlm'
         trace "The authentication mechanism is NTLM"
