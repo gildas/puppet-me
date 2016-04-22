@@ -1137,7 +1137,18 @@ process # {{{2
                     $creds = Get-Credential -Message "Enter your credentials to connect to Akamai"
                   }
                   $request_args['Credential']     = $creds
-                  $request_args['Authentication'] = 'Ntlm'
+                  if ($creds.Username -match '.*@inin\.com')
+                  {
+                    $request_args['Authentication'] = 'Ntlm'
+                  }
+                  elseif ($creds.Username -match '.*@.*')
+                  {
+                    $request_args['Authentication'] = 'Basic'
+                  }
+                  else
+                  {
+                    $request_args['Authentication'] = 'Ntlm'
+                  }
                 }
                 'smb'
                 {
