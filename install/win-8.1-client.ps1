@@ -118,7 +118,7 @@
   Will install all the software and Virtualbox in their default locations.
   Once installed, packer is invoked to build all Vagrant box available with VMWare Workstation.
 .NOTES
-  Version 0.9.15
+  Version 0.9.16
 #>
 [CmdLetBinding(SupportsShouldProcess, DefaultParameterSetName="Usage")]
 Param( # {{{2
@@ -202,7 +202,7 @@ Param( # {{{2
 ) # }}}2
 begin # {{{2
 {
-  $CURRENT_VERSION = '0.9.15'
+  $CURRENT_VERSION = '0.9.16'
   $GitHubRoot      = "https://raw.githubusercontent.com/inin-apac/puppet-me"
   $PuppetMeLastUpdate      = "${env:TEMP}/last_updated-puppetme"
   $PuppetMeUpdateFrequency = 4 # hours
@@ -1137,7 +1137,18 @@ process # {{{2
                     $creds = Get-Credential -Message "Enter your credentials to connect to Akamai"
                   }
                   $request_args['Credential']     = $creds
-                  $request_args['Authentication'] = 'Ntlm'
+                  if ($creds.Username -match '.*@inin\.com')
+                  {
+                    $request_args['Authentication'] = 'Ntlm'
+                  }
+                  elseif ($creds.Username -match '.*@.*')
+                  {
+                    $request_args['Authentication'] = 'Basic'
+                  }
+                  else
+                  {
+                    $request_args['Authentication'] = 'Ntlm'
+                  }
                 }
                 'smb'
                 {
@@ -1340,7 +1351,14 @@ process # {{{2
   if ($?)
   {
     $env:PsModulePath = [Environment]::GetEnvironmentVariable("PsModulePath")
-    Import-Module "C:\Program Files\Common Files\Modules\PsGet\PsGet.psm1" -ErrorAction Stop -Verbose:$false
+    if (Test-Path "C:\Program Files\WindowsPowerShell\Modules")
+    {
+      Import-Module "C:\Program Files\WindowsPowerShell\Modules\PsGet\PsGet.psm1" -ErrorAction Stop -Verbose:$false
+    }
+    else
+    {
+      Import-Module PsGet -ErrorAction Stop -Verbose:$false
+    }
   }
   #Install-Module  Posh-VPN -Update -Verbose:$Verbose
   Install-Module  -ModuleUrl https://github.com/gildas/posh-vpn/releases/download/0.1.3/posh-vpn-0.1.3.zip -Update -Verbose:$false
@@ -1385,8 +1403,8 @@ process # {{{2
       else
       {
         $nic = Get-NetAdapter -Name $BridgedNetAdapterName -ErrorAction SilentlyContinue
-        if ($nic -eq $null) { Throw "Cannot find Network Adapter: $BridgedNetAdapterName, error: $LastExitCode" }
-        if ($nic.Status -ne 'UP') { Throw "Network Adapter '$BridgedNetAdapterName' is not connected, error: $LastExitCode" }
+        if ($nic -eq $null) { Throw "Cannot find Network Adapter: $BridgedNetAdapterName. Please specify a NIC to bridge with the -BridgedNetAdapterName option" }
+        if ($nic.Status -ne 'UP') { Throw "Network Adapter '$BridgedNetAdapterName' exists but is not connected. Please plug the NIC into a switch" }
         New-VMSwitch -Name $HyperVBridgedSwitch -NetAdapterName $nic.Name -AllowManagementOS $true -Notes 'Bridged Switch'
       }
 
