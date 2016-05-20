@@ -118,7 +118,7 @@
   Will install all the software and Virtualbox in their default locations.
   Once installed, packer is invoked to build all Vagrant box available with VMWare Workstation.
 .NOTES
-  Version 0.9.15
+  Version 0.9.16
 #>
 [CmdLetBinding(SupportsShouldProcess, DefaultParameterSetName="Usage")]
 Param( # {{{2
@@ -202,7 +202,7 @@ Param( # {{{2
 ) # }}}2
 begin # {{{2
 {
-  $CURRENT_VERSION = '0.9.15'
+  $CURRENT_VERSION = '0.9.16'
   $GitHubRoot      = "https://raw.githubusercontent.com/inin-apac/puppet-me"
   $PuppetMeLastUpdate      = "${env:TEMP}/last_updated-puppetme"
   $PuppetMeUpdateFrequency = 4 # hours
@@ -1137,7 +1137,18 @@ process # {{{2
                     $creds = Get-Credential -Message "Enter your credentials to connect to Akamai"
                   }
                   $request_args['Credential']     = $creds
-                  $request_args['Authentication'] = 'Ntlm'
+                  if ($creds.Username -match '.*@inin\.com')
+                  {
+                    $request_args['Authentication'] = 'Ntlm'
+                  }
+                  elseif ($creds.Username -match '.*@.*')
+                  {
+                    $request_args['Authentication'] = 'Basic'
+                  }
+                  else
+                  {
+                    $request_args['Authentication'] = 'Ntlm'
+                  }
                 }
                 'smb'
                 {

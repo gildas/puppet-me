@@ -37,7 +37,7 @@ MODULE_virtualization_done=0
 MODULES=(homebrew rubytools)
 ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
-CURRENT_VERSION='0.9.15'
+CURRENT_VERSION='0.9.16'
 GITHUB_ROOT='https://raw.githubusercontent.com/inin-apac/puppet-me'
 
 CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
@@ -1002,6 +1002,7 @@ function download() # {{{2
   # download "http://login:password@hostname/path/file?k1=v1&k2=v2" "local_folder"
   # download "smb://login:password@hostname/path/file?k1=v1&k2=v2" "local_folder"
   local need_auth=0
+  local use_akamai
   local has_resume
   local auth_type
   local source
@@ -1032,6 +1033,14 @@ function download() # {{{2
       --need_auth)
         need_auth=1
         trace "The source URL needs authentication"
+      ;;
+      --akamai)
+        use_akamai='yes'
+        trace "The authentication mechanism is driven by Akamai"
+      ;;
+      --basic)
+        auth_type='--basic'
+        trace "The authentication mechanism is Basic"
       ;;
       --ntlm)
         auth_type='--ntlm'
@@ -1335,6 +1344,18 @@ function download() # {{{2
           fi
           source_credentials_updated=1
           echo
+        fi
+        if [[ -n $use_akamai ]]; then
+          if [[ $source_user =~ .*@inin\.com ]]; then
+            verbose "  Akamai download (internal)"
+            auth_type=--ntlm
+          elif [[ $source_user =~ .*@.* ]]; then
+            verbose "  Akamai download (external)"
+            auth_type=--basic
+          else
+            verbose "  Akamai download (internal)"
+            auth_type=--ntlm
+          fi
         fi
       fi
       verbose "  Downloading..."
@@ -2558,11 +2579,11 @@ function cache_stuff() # {{{2
           [[ "$(echo "$location" | jq '.has_resume')" == 'true' ]] && source_has_resume='--has_resume'
           source_need_auth=''
           [[ "$(echo "$location" | jq '.need_auth')" == 'true' ]] && source_need_auth='--need_auth'
-          source_auth=''
+          source_kind=''
           if [[ -n $source_need_auth ]]; then
             case $source_type in
               akamai)
-                source_auth='--ntlm'
+                source_kind='--akamai'
                 source_has_resume='--has_resume'
               ;;
             esac
@@ -2596,7 +2617,7 @@ function cache_stuff() # {{{2
               fi
               status=$? && [[ $status != 0 ]] && failure=( "start_vpn|${status}|${source_vpn}" ) && continue
             fi
-            download $source_has_resume $source_need_auth $source_auth $source_url "$document_destination" $document_checksum_type $document_checksum
+            download $source_has_resume $source_need_auth $source_kind $source_url "$document_destination" $document_checksum_type $document_checksum
             status=$? && [[ $status != 0 ]] && failure=( "${document_action}|${status}|${document_name}|${source_url}" ) && continue
             if [[ -n $source_vpn ]]; then
               if [[ -n $vpn_user ]]; then
