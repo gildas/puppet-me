@@ -224,6 +224,8 @@ Where *options* are:
   When used, Hyper-V will be configured.  
   A reboot might be necessary before building the first box.  
   Only one of -HyperV, -Virtualbox, -VMWare can be specified.  
+- -NoUpdateCache  
+  When used, the cache will not be updated.  
 - -PackerBuild  
   When all software is installed, [packer-windows](https://github.com/gildas/packer-windows) will build the given list of [Vagrant](http://vagrantup.com) boxes.  
 - -PackerHome *path*  
