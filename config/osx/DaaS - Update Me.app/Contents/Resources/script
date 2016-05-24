@@ -3,5 +3,5 @@
 # Make sure the PATH is set correctly
 export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
-export PLATYPUS=1
-curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- --macmini-vmware
+[[ -z "$PLATYPUS" ]] && export PLATYPUS=1
+curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- --macmini-vmware $@

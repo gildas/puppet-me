@@ -37,7 +37,7 @@ MODULE_virtualization_done=0
 MODULES=(homebrew rubytools)
 ALL_MODULES=(homebrew cache noidle packer puppet rubytools vagrant virtualbox vmware parallels updateme)
 
-CURRENT_VERSION='0.9.16'
+CURRENT_VERSION='0.9.17'
 GITHUB_ROOT='https://raw.githubusercontent.com/inin-apac/puppet-me'
 
 CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
@@ -70,6 +70,7 @@ MODULE_VAGRANT_LOG_OWNER=$userid
 MODULE_VAGRANT_LOG_GROUP=staff
 
 MODULE_updateme_root="$HOME/Desktop"
+MODULE_updateme_bootstrap="http://tinyurl.com/puppet-me-osx"
 MODULE_updateme_source="${GITHUB_ROOT}/${CURRENT_VERSION}/config/osx/UpdateMe.7z"
 MODULE_updateme_args=""
 [[ $MODULE_PACKER_HOME  != "$HOME/Documents/packer" ]] && MODULE_updateme_args="${MODULE_updateme_args} --packer-home '${MODULE_PACKER_HOME}'"
@@ -2698,8 +2699,9 @@ function install_updateme() # {{{2
   rm -rf $temp_dir
 
   verbose "Configuring UpdateMe application"
-  install_me="curl -sSL http://tinyurl.com/puppet-me-osx | bash -s -- ${MODULE_updateme_args}"
+  install_me="curl -sSL $MODULE_updateme_bootstrap | bash -s -- ${MODULE_updateme_args} \$@"
   script="$HOME/Desktop/DaaS - Update Me.app/Contents/Resources/script"
+  trace "Bootstrap: $MODULE_updateme_bootstrap"
   trace "Updating [$script]"
   verbose "Updating $(basename "$(dirname "$(dirname "$(dirname "$script")")")" .app)"
   sed -i '.org' -e "s;^curl.*;${install_me};" "$script"
@@ -2835,6 +2837,7 @@ function parse_args() # {{{2
         CURRENT_VERSION=$2
         verbose "Using branch ${CURRENT_VERSION}"
         [[ $CACHE_CONFIG =~ ^${GITHUB_ROOT}.* ]] && CACHE_CONFIG="${GITHUB_ROOT}/${CURRENT_VERSION}/config/sources.json"
+        [[ $CURRENT_VERSION == 'dev' ]] && MODULE_updateme_bootstrap="http://tinyurl.com/puppet-me-osx-dev"
         MODULE_updateme_source="${GITHUB_ROOT}/${CURRENT_VERSION}/config/osx/UpdateMe.7z"
         trace "Cache config is now: $CACHE_CONFIG"
         shift 2
