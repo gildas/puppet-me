@@ -1483,7 +1483,6 @@ process # {{{2
   }
   # }}}3
   Install-Gem     bundler
-  Install-Gem     savon
   Install-PackerWindows
 
   # Create/Update the filestamp to indicate installs/upgrades where performed
