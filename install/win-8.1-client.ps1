@@ -1219,10 +1219,17 @@ process # {{{2
                       $elapsed     = $watch.Elapsed
                       $transferred = $job.BytesTransferred
                       $total       = $job.BytesTotal
-                      $percent     = [double]($transferred / $job.BytesTotal)
+                      if ($total -eq 0) { $percent = 0 } else { $percent = [double]($transferred / $total) }
                       $speed       = [double]($transferred / $elapsed.TotalSeconds)
-                      $eta         = [TimeSpan]::FromSeconds($total / $speed)
-                      $progress_text = "Downloaded {0} of {1} ({2:p}) at {3}. ETA: {4:g}." -f (DisplayBytes($transferred)),(DisplayBytes($total)),$percent,(DisplaySpeed($speed)),$eta
+                      if ($speed -eq 0.0)
+                      {
+                        $progress_text = "Downloaded {0} of {1} ({2:p}), stalled" -f (DisplayBytes($transferred)),(DisplayBytes($total)),$percent
+                      }
+                      else
+                      {
+                        $eta           = [TimeSpan]::FromSeconds($total / $speed)
+                        $progress_text = "Downloaded {0} of {1} ({2:p}) at {3}. ETA: {4:g}." -f (DisplayBytes($transferred)),(DisplayBytes($total)),$percent,(DisplaySpeed($speed)),$eta
+                      }
                       Write-Progress -Activity $progress_title -Status $progress_text -CurrentOperation $job.JobState -PercentComplete ($percent * 100)
                       Start-Sleep -s 5
                     } while ($job.BytesTransferred -lt $job.BytesTotal)
