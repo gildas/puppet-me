@@ -44,13 +44,13 @@
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/"
+        "url": "smb://i3domain.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/"
       },
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/"
+        "url": "smb://i3domain.inin.com/Software/Microsoft/Evaluation/WindowsServer/2012R2/"
       },
       {
         "location": "Internet",
@@ -72,13 +72,13 @@
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/Microsoft/Evaluation/SQLServer/2014/"
+        "url": "smb://i3domain.inin.com/Software/Microsoft/Evaluation/SQLServer/2014/"
       },
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/Microsoft/Evaluation/SQLServer/2014/"
+        "url": "smb://i3domain.inin.com/Software/Microsoft/Evaluation/SQLServer/2014/"
       },
       {
         "location": "Internet",
@@ -100,13 +100,13 @@
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Center/2016R3/"
+        "url": "smb://i3domain.inin.com/Software/ININ/Interaction%20Center/2016R3/"
       },
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Center/2016R3/"
+        "url": "smb://i3domain.inin.com/Software/ININ/Interaction%20Center/2016R3/"
       },
       {
         "location": "Internet",
@@ -141,13 +141,13 @@
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Interaction%20Dialer/2016R3/"
+        "url": "smb://i3domain.inin.com/Software/ININ/Interaction%20Dialer/2016R3/"
       },
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Interaction%20Dialer/2016R3/"
+        "url": "smb://i3domain.inin.com/Software/ININ/Interaction%20Dialer/2016R3/"
       },
       {
         "location": "Internet",
@@ -182,13 +182,13 @@
         "location": "APAC",
         "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://apac.inin.com/Software/ININ/Web%20Applications/2016R3/"
+        "url": "smb://i3domain.inin.com/Software/ININ/Web%20Applications/2016R3/"
       },
       {
         "location": "EMEA",
         "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
         "need_auth": true,
-        "url": "smb://emea.inin.com/Software/ININ/Web%20Applications/2016R3/"
+        "url": "smb://i3domain.inin.com/Software/ININ/Web%20Applications/2016R3/"
       },
       {
         "location": "Internet",
