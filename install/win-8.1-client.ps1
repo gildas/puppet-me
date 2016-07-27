@@ -1349,8 +1349,7 @@ process # {{{2
   else
   {
     Write-Verbose "Installing Chocolatey"
-    Download-File "https://chocolatey.org/install.ps1" "${env:TEMP}/Install-Chocolatey.ps1"
-    & $env:TEMP/Install-Chocolatey.ps1
+    Invoke-WebRequest https://chocolatey.org/install.ps1 -UseBasicParsing | Invoke-Expression
   }
 
   Install-Package MD5
