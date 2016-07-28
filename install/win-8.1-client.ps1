@@ -1021,7 +1021,7 @@ process # {{{2
             }
           }
           $locations=@()
-          if ($CacheSources -ne $nuul)
+          if ($CacheSources -ne $null)
           {
             foreach ($_ in $CacheSources)
             {
