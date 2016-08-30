@@ -424,6 +424,24 @@ process # {{{2
     }
   } # }}}3
 
+  function Remove-Package # {{{3
+  {
+    Param(
+      [Parameter(Mandatory=$true,ValueFromPipeline=$true)]
+      [string] $Package
+    )
+    $results = chocolatey list --local-only $Package | Select-String -Pattern "^${Package}\s+(.*)"
+
+    if ($results -ne $null)
+    {
+      $current = $results.matches[0].Groups[1].Value
+      Write-Debug "  Removing $Package v$current"
+      chocolatey uninstall -y $Package
+      if (! $?) { Throw "$Package not removed. Error: $LASTEXITCODE" }
+      $PuppetMeUpdated = $true
+    }
+  } # }}}3
+
   function Install-Gem([string] $Gem) # {{{3
   {
     if (! (Get-Command gem -ErrorAction SilentlyContinue))
