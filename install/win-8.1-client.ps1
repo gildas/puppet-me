@@ -1371,29 +1371,60 @@ process # {{{2
   }
 
   Install-Package MD5
-  Install-Package psget -Upgrade
-  if ($?)
+
+  Uninstall-Package psget
+
+  if (! (Get-Command Install-Module -ErrorAction SilentlyContinue))
   {
-    $env:PsModulePath = [Environment]::GetEnvironmentVariable("PsModulePath")
-    if (Test-Path "C:\Program Files\WindowsPowerShell\Modules")
+    Write-Verbose "Installing Windows Management Framework 5.0"
+    Install-Package powershell-packagemanagement -Upgrade
+    Import-Module PowerShellGet
+    Update-Help -Module PowerShellGet
+    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+  }
+
+  if (Get-Command Install-Module -ErrorAction SilentlyContinue)
+  {
+    $ModulesToCheck = @( 'posh-vault', 'posh-vpn' )
+    $ModulesRoot    = Join-Path (Split-Path $PROFILE -Parent) 'Modules'
+
+    if (!(Test-Path $ModulesRoot)) { New-Item -Path $ModulesRoot -Type Directory | Out-Null }
+
+    foreach ($module in $ModulesToCheck)
     {
-      Import-Module "C:\Program Files\WindowsPowerShell\Modules\PsGet\PsGet.psm1" -ErrorAction Stop -Verbose:$false
-    }
-    else
-    {
-      Import-Module PsGet -ErrorAction Stop -Verbose:$false
+      Write-Verbose "  Processing Module: $module"
+      Write-Verbose "    Checking if module is installed..."
+      $script:module_info = Get-InstalledModule -Name $module -ErrorAction SilentlyContinue
+      if ($script:module_info -eq $null)
+      {
+        Write-Verbose "  Processing Module Gallery: PSGallery"
+        $script:gallery_info = Get-PSRepository -Name PSGallery
+        if ($script:gallery_info.InstallationPolicy -ne 'Trusted')
+        {
+          Write-Verbose "    Trusting PSGallery"
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+        }
+        else
+        {
+          Write-Verbose "  Already trusted."
+        }
+        Write-Verbose "  Processed Module Gallery: PSGallery"
+
+        Write-Verbose "    Installing Module"
+        Install-Module $module -Scope CurrentUser
+        $script:module_info = Get-InstalledModule -Name $_ -ErrorAction SilentlyContinue
+      }
+      else
+      {
+        Write-Verbose "    Module is already installed. Version: $($script:module_info.Version)"
+      }
+      Write-Verbose "  Processed Module: $module (Version: $($script:module_info.Version))"
     }
   }
-  #Install-Module  Posh-VPN -Update -Verbose:$Verbose
-  Install-Module  -ModuleUrl https://github.com/gildas/posh-vpn/releases/download/0.1.3/posh-vpn-0.1.3.zip -Update -Verbose:$false
-  if ($?)
+  else
   {
-    Import-Module Posh-VPN -ErrorAction Stop -Verbose:$false
-  }
-  Install-Module  -ModuleUrl https://github.com/gildas/posh-vault/releases/download/0.1.2/posh-vault-0.1.2.zip -Update -Verbose:$false
-  if ($?)
-  {
-    Import-Module Posh-Vault -ErrorAction Stop -Verbose:$false
+    Write-Warn "There is no PowerShell Management tool"
+    Write-Warn "Not sure what to do now..."
   }
 
   Install-Package 7zip -AddPath (Join-Path $env:ProgramFiles '7-Zip')
