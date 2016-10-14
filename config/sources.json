@@ -62,6 +62,34 @@
     ]
   },
   {
+    "name": "Windows 2016 Evaluation",
+    "id": "Windows_2016",
+    "checksum": { "type": "MD5", "value": "458ff91f8abc21b75cb544744bf92e6a" },
+    "filename": "14393.0.160715-1616.RS1_RELEASE_SERVER_EVAL_X64FRE_EN-US.ISO",
+    "locations":
+    [
+      {
+        "location": "APAC",
+        "network":  "172.22.(16|32|40|80|81).[0-9]+/[0-9]+",
+        "need_auth": true,
+        "url": "smb://i3domain.inin.com/Software/Microsoft/Evaluation/WindowsServer/2016/"
+      },
+      {
+        "location": "EMEA",
+        "network":  "172.30.[0-9]+.[0-9]+/[0-9]+",
+        "need_auth": true,
+        "url": "smb://i3domain.inin.com/Software/Microsoft/Evaluation/WindowsServer/2016/"
+      },
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "has_resume": true,
+        "bits": false,
+        "url": "http://download.microsoft.com/dl/download/1/6/F/16FA20E6-4662-482A-920B-1A45CF5AAE3C/"
+      }
+    ]
+  },
+  {
     "name": "SQL 2014 Express",
     "id": "SQL_2014",
     "checksum": { "type": "MD5", "value": "3bb7d34aaf063b73ac92d31aad896ba6" },
