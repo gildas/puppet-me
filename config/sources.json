@@ -34,6 +34,150 @@
     ]
   },
   {
+    "name": "Chocolatey Package BGInfo",
+    "id": "choco_bginfo_4210",
+    "checksum": { "type": "MD5", "value": "0fe773c72a66dea32a056e1a4d0bf246" },
+    "filename": "bginfo.4.21.0.20160210.nupkg",
+    "locations":
+    [
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "has_resume": true,
+        "bits": false,
+        "url": "https://packages.chocolatey.org/"
+      }
+    ]
+  },
+  {
+    "name": "Chocolatey Package Classic Shell",
+    "id": "choco_classic_shell_430",
+    "checksum": { "type": "MD5", "value": "3cb189d0f63d6d29f83c9da7436b2562" },
+    "filename": "classic-shell.4.3.0.nupkg",
+    "locations":
+    [
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "has_resume": true,
+        "bits": false,
+        "url": "https://packages.chocolatey.org/"
+      }
+    ]
+  },
+  {
+    "name": "Chocolatey Package Git",
+    "id": "choco_git_2101",
+    "checksum": { "type": "MD5", "value": "3a563b1a5b695c4b15570729221a5732" },
+    "filename": "git.2.10.1.nupkg",
+    "locations":
+    [
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "has_resume": true,
+        "bits": false,
+        "url": "https://packages.chocolatey.org/"
+      }
+    ]
+  },
+  {
+    "name": "Chocolatey Package Git Install",
+    "id": "choco_git_install_2101",
+    "checksum": { "type": "MD5", "value": "9a145098d407d9f924d3c7a1d179a30f" },
+    "filename": "git.install.2.10.1.nupkg",
+    "locations":
+    [
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "has_resume": true,
+        "bits": false,
+        "url": "https://packages.chocolatey.org/"
+      }
+    ]
+  },
+  {
+    "name": "Chocolatey Package MD5",
+    "id": "choco_md5_22",
+    "checksum": { "type": "MD5", "value": "0c1565293a569baa5dbf890f28adbef6" },
+    "filename": "md5.2.2.nupkg",
+    "locations":
+    [
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "has_resume": true,
+        "bits": false,
+        "url": "https://packages.chocolatey.org/"
+      }
+    ]
+  },
+  {
+    "name": "Chocolatey Package Puppet",
+    "id": "choco_puppet_387",
+    "checksum": { "type": "MD5", "value": "17bb07e81929a6a5a3c595314e59cc57" },
+    "filename": "puppet.3.8.7.nupkg",
+    "locations":
+    [
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "has_resume": true,
+        "bits": false,
+        "url": "https://packages.chocolatey.org/"
+      }
+    ]
+  },
+  {
+    "name": "Chocolatey Package Ruby",
+    "id": "choco_ruby_231",
+    "checksum": { "type": "MD5", "value": "e793d25e6737d65e51d5ddf0a67780bd" },
+    "filename": "ruby.2.3.1.nupkg",
+    "locations":
+    [
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "has_resume": true,
+        "bits": false,
+        "url": "https://packages.chocolatey.org/"
+      }
+    ]
+  },
+  {
+    "name": "Chocolatey Package SysInternals",
+    "id": "choco_20160829",
+    "checksum": { "type": "MD5", "value": "6bd6f8aa59b6880d8c331e08f76ff13e" },
+    "filename": "sysinternals.2016.08.29.nupkg",
+    "locations":
+    [
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "has_resume": true,
+        "bits": false,
+        "url": "https://packages.chocolatey.org/"
+      }
+    ]
+  },
+  {
+    "name": "Chocolatey Package VIM",
+    "id": "choco_vim_803",
+    "checksum": { "type": "MD5", "value": "86b37fb079631cd29f67f6c0016ee304" },
+    "filename": "vim.8.0.3.nupkg",
+    "locations":
+    [
+      {
+        "location": "Internet",
+        "network":  ".*",
+        "has_resume": true,
+        "bits": false,
+        "url": "https://packages.chocolatey.org/"
+      }
+    ]
+  },
+  {
     "name": "Windows 2012R2 Evaluation",
     "id": "Windows_2012R2",
     "checksum": { "type": "MD5", "value": "458ff91f8abc21b75cb544744bf92e6a" },
