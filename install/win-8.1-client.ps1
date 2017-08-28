@@ -403,6 +403,11 @@ process # {{{2
       if ($PSBoundParameters.ContainsKey('PackageParameters')) { $choco_params['package-parameters'] = $PackageParameters }
       if ($PSBoundParameters.ContainsKey('InstallArguments'))  { $choco_params['install-arguments']  = $InstallArguments }
       chocolatey install -y $Package @choco_params
+      if ($$ -eq 3010)
+      {
+        Write-Warn "$Package needs to reboot. Please run the same scripts after rebooting"
+        exit 3010
+      }
       if (! $?) { Throw "$Package not installed. Error: $LASTEXITCODE" }
     }
 
@@ -518,7 +523,7 @@ process # {{{2
     if (! (Test-Path (Join-Path $env:WINDIR (Join-Path 'System32' 'lis4-0-11.iso'))))
     {
       Write-Verbose "Downloading Hyper-V Integration Services for Linux Guests"
-      Download-File "https://download.microsoft.com/download/F/C/2/FC210204-06E9-4E3B-9B50-08CF5FAB09D9/lis4-0-11.iso" (Join-Path $env:WINDIR (Join-Path 'System32' 'lis4-0-11.iso'))
+      Download-File "https://download.microsoft.com/download/7/6/B/76BE7A6E-E39F-436C-9353-F4B44EF966E9/LinuxIC-4.1.3-2.iso" (Join-Path $env:WINDIR (Join-Path 'System32' 'lis4-0-11.iso'))
     } # }}}4
 
     # Set Virtual Machines Home {{{4
