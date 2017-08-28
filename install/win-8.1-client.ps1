@@ -1367,7 +1367,8 @@ process # {{{2
   else
   {
     Write-Verbose "Installing Chocolatey"
-    Invoke-WebRequest https://chocolatey.org/install.ps1 -UseBasicParsing | Invoke-Expression
+    #Invoke-WebRequest https://chocolatey.org/install.ps1 -UseBasicParsing | Invoke-Expression
+    iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))w
   }
 
   Install-Package MD5
